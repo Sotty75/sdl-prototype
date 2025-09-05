@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Avvia Programma SDL",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/sdl-prototype.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
+            "preLaunchTask": "CMake: build"
+        }
+    ]
+}
