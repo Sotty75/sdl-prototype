@@ -18,7 +18,7 @@ find_package(SDL3_image REQUIRED CONFIG)
 
 # Define executable and entry point for the application
 # Find all files ending in .c in the current directory
-file(GLOB SOURCE_FILES "*.c")
+file(GLOB_RECURSE SOURCE_FILES "source/*.c")
 
 # Create the executable from the list of files found
 add_executable(sdl-prototype ${SOURCE_FILES})

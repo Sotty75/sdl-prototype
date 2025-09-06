@@ -1,5 +1,16 @@
 # Development Diary
 
+## September 3, 2025
+
+I am looking for some lemmings animation style look.
+Spent some time in replicating original lemmings sprites in aseprite and ended up with a pixel-perfect replica of the walk animation.
+
+I got some better feeling on how they got that result with so few pixels, and tried myself to animate a character on my own.
+
+I made a quick animation cycle of a monkey, which I plan to animate inside of this project in one of the next days.
+
+Just for fun.
+
 ## September 6, 2025
 
 In the last two days i spent some time to refine the build procedure with CMake and did some first experiments in loading textures and rendering them on a screen.
@@ -13,4 +24,4 @@ I linked the new library to the project and also this part was resolved.
 
 I finally reached the stage where i can display a 2D texture on the screen, following some examples from the SDL website itself.
 
-Paolo
+Just for fun
