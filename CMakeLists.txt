@@ -10,12 +10,27 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # SDL3 library path
 set(SDL3_DIR "F:\\Coding\\libraries\\SDL3\\cmake")
-
-# Get SDL library package
 find_package(SDL3 REQUIRED CONFIG)
 
+# SDL3 library path
+set(SDL3_image_DIR "F:\\Coding\\Libraries\\SDL_image\\build")
+find_package(SDL3_image REQUIRED CONFIG)
+
 # Define executable and entry point for the application
-add_executable(sdl-prototype main.c)
+# Find all files ending in .c in the current directory
+file(GLOB SOURCE_FILES "*.c")
+
+# Create the executable from the list of files found
+add_executable(sdl-prototype ${SOURCE_FILES})
 
 # Link the SDL library to the target executable
-target_link_libraries(sdl-prototype PRIVATE SDL3::SDL3)
+target_link_libraries(sdl-prototype PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
+
+# Add a custom command to copy the 'assets' folder after the build is complete
+add_custom_command(
+    TARGET sdl-prototype POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/assets"
+            "$<TARGET_FILE_DIR:sdl-prototype>/assets"
+    COMMENT "Copying assets folder to output directory"
+)
