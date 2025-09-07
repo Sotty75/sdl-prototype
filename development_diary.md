@@ -9,8 +9,6 @@ I got some better feeling on how they got that result with so few pixels, and tr
 
 I made a quick animation cycle of a monkey, which I plan to animate inside of this project in one of the next days.
 
-Just for fun.
-
 ## September 6, 2025
 
 In the last two days i spent some time to refine the build procedure with CMake and did some first experiments in loading textures and rendering them on a screen.
@@ -24,4 +22,15 @@ I linked the new library to the project and also this part was resolved.
 
 I finally reached the stage where i can display a 2D texture on the screen, following some examples from the SDL website itself.
 
-Just for fun
+## September 7, 2025
+
+Today I would like to spend some time animating the simple monkey spritesheet. 
+
+Before to write any code, let's see more or less what should be the approach:
+By looking into the documentation I can use a function to blit the spritesheet surface (which is a buffer of pixels in memory) inside a target surface (representing a frame). 
+The function is the following one [SDL_BlitSurface]https://wiki.libsdl.org/SDL3/SDL_BlitSurface
+
+With this surface I can update a texture that i use to render the character using the SDL_LockTexture and SDL_UnlockTexture functions.
+I therefore can maintain a list of surfaces, one per each frame, and update the texture on each iteration frame.
+
+

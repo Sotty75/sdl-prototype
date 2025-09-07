@@ -23,14 +23,35 @@ static SDL_Texture *texture = NULL;
 static int texture_width = 0;
 static int texture_height = 0;
 
+SDL_Surface *monkeySpriteSheet = NULL;
 
+/*
+    Takes a pointer to a 'SDL_Surface *' as an input
+    and an image and creates a surface linked by the surface pointer
+    to be reused to create for example a texture.
+*/
+SDL_AppResult getSurfaceFromImage(SDL_Surface **surface, char *assetName)
+{
+    char *spritesheetPath = NULL;
+
+    //... load the spritesheet inside of the texture
+    SDL_asprintf(&spritesheetPath, "%sassets\\%s", SDL_GetBasePath(), assetName);  /* allocate a string of the full file path */
+    *surface = IMG_Load(spritesheetPath);
+
+    if (!(*surface)) {
+        SDL_Log("Couldn't load spritesheet: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    free(spritesheetPath);
+
+    return SDL_APP_CONTINUE;
+}
 
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
-    char *spritesheet = NULL;
-
     SDL_SetAppMetadata("Example Renderer Clear", "1.0", "com.example.renderer-clear");
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -45,25 +66,25 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     SDL_SetRenderLogicalPresentation(renderer, 320, 200, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
-    
     //... load the spritesheet inside of the texture
-    SDL_asprintf(&spritesheet, "%sassets\\shimpanze1.bmp", SDL_GetBasePath());  /* allocate a string of the full file path */
+    getSurfaceFromImage(&monkeySpriteSheet, "monkey-sheet.png");
 
-    SDL_IOStream *stream = SDL_IOFromFile(spritesheet, "rb");
-    SDL_Surface *surface = IMG_LoadBMP_IO(stream);
-    free(stream);
-    free(spritesheet);
+    // ...define the clipping rectangle for "Frame 1".
+    // each frame is 16 bits wide
+    SDL_Rect *clip = malloc(sizeof(SDL_Rect));
+    clip->x = 0;
+    clip->y = 0;
+    clip->w = 16;
+    clip->h = 16;
 
-    if (!surface) {
-        SDL_Log("Couldn't load spritesheet: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    texture_width = surface->w;
-    texture_height = surface->h;
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
+    // ...i also need a destination surface for the frame.
+    SDL_Surface *frame0 =  SDL_CreateSurface(clip->w, clip->h, SDL_PIXELFORMAT_ABGR8888);
+    SDL_BlitSurface(monkeySpriteSheet, clip, frame0, NULL);
+    texture_width = clip->w;
+    texture_height = clip->h;
+    texture = SDL_CreateTextureFromSurface(renderer, frame0);
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-    SDL_DestroySurface(surface);
+    SDL_DestroySurface(frame0);
 
     if (!texture) {
         SDL_Log("Couldn't create static texture: %s", SDL_GetError());
