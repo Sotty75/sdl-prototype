@@ -2,14 +2,30 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "CMake: clean",
+            "type": "cmake",
+            "command": "clean",
+            "detail": "Pulisce gli artefatti della build."
+        },
+        {
             "label": "CMake: build",
             "type": "cmake",
             "command": "build",
+            "detail": "Costruisce il target predefinito (build incrementale)."
+        },
+        {
+            "label": "CMake: Clean & Rebuild",
+            "dependsOn": [
+                "CMake: clean",
+                "CMake: build"
+            ],
+            "dependsOrder": "sequence",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "Costruisce il target predefinito di CMake."
+            "problemMatcher": [],
+            "detail": "Esegue 'clean' e poi 'build' in sequenza."
         }
     ]
 }

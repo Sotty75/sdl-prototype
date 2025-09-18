@@ -22,7 +22,7 @@ I linked the new library to the project and also this part was resolved.
 
 I finally reached the stage where i can display a 2D texture on the screen, following some examples from the SDL website itself.
 
-## September 7, 2025
+## September 16, 2025
 
 Today I would like to spend some time animating the simple monkey spritesheet. 
 
@@ -32,5 +32,19 @@ The function is the following one [SDL_BlitSurface]https://wiki.libsdl.org/SDL3/
 
 With this surface I can update a texture that i use to render the character using the SDL_LockTexture and SDL_UnlockTexture functions.
 I therefore can maintain a list of surfaces, one per each frame, and update the texture on each iteration frame.
+
+## September 18, 2025
+
+Today, I spend some time refininf the sprites module. Finally implemented the loading of the sprite animation data from a spritesheet with generic size. The indexing of each sprite in the spritesheet is made using a simple "wrap-around" technique mased on a module and division operations.
+
+Also I did setup the basic logic for the update sprite animation, where we actually animate the sprite on the screen given a specific time step, which we can set at about 125ms. Next time i will implement this logic where the surface of the textrue will be udated using the lock texture function.
+
+
+
+## Later
+
+- Controlling the sprite with the keyboard and the controller
+- Mouse controls and projection on the screen
+- Adding a background
 
 
