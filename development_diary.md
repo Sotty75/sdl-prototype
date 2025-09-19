@@ -35,11 +35,18 @@ I therefore can maintain a list of surfaces, one per each frame, and update the 
 
 ## September 18, 2025
 
-Today, I spend some time refininf the sprites module. Finally implemented the loading of the sprite animation data from a spritesheet with generic size. The indexing of each sprite in the spritesheet is made using a simple "wrap-around" technique mased on a module and division operations.
+Today, I spent some time refininf the sprites module. Finally implemented the loading of the sprite animation data from a spritesheet with generic size. The indexing of each sprite in the spritesheet is made using a simple "wrap-around" technique mased on a module and division operations.
 
 Also I did setup the basic logic for the update sprite animation, where we actually animate the sprite on the screen given a specific time step, which we can set at about 125ms. Next time i will implement this logic where the surface of the textrue will be udated using the lock texture function.
 
+## September 19, 2025
 
+Today, I worked out the first sprite animation routine. I had to modify the initial strategy of blitting different frame surfaces on the target texture 
+of the GPU as Gemini recommended instead, for performance reasons, to create a texture per frame.
+Once done that, it was simply a matter of presenting a different texture on the screen at each frame.
+The frame rate in this case is passed to the CreateSprite function and so it can be adjusted easily.
+
+Next time I would like to on implementing some movement, for example using the Joypad as an input, and eventually start working on a collision detection routine.
 
 ## Later
 

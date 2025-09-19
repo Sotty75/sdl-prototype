@@ -7,11 +7,10 @@
 /   Struct to store an individual frame LP_Frame
 /       LP_Frame * - Pinter to next frame of the animation
 /       SDL_Surface * fs - with frame pixel information
-/       
 */
 typedef struct LP_Frame {
     struct LP_Frame *next;
-    SDL_Surface *fs;
+    SDL_Texture *texture;
 } Frame;
 
 
@@ -26,20 +25,21 @@ typedef struct LP_Frame {
 */
 typedef struct LP_Sprite {
     char *name;
+    bool cycle;
     int framesCount;
     int width;
     int height;
     int stepRateMillis;
+    Uint64 last_step;
     Frame *currentFrame;
-    SDL_Texture *texture;
     SDL_FRect postion;
 } Sprite;
 
 
 
 // Prototipi delle funzioni che usano la struttura
-Sprite *CreateSprite(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis);
-bool UpdateSprite(Sprite *animation, SDL_Renderer *renderer, int xPos, int yPos);
+Sprite *CreateSprite(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis, bool cycle, SDL_Renderer *renderer);
+bool UpdateSprite(Sprite *animation, int xPos, int yPos, SDL_Renderer *renderer);
 void DestroySprite(Sprite *animation);
 
 

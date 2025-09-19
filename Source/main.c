@@ -79,8 +79,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     //... load the spritesheet inside of the texture
     getSurfaceFromImage(&monkeySpriteSheet, "monkey-sheet.png");
-
-    monkey = CreateSprite("Monkey", monkeySpriteSheet, 0, 8, 16, 16, 125);
+    monkey = CreateSprite("Monkey", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as->renderer);
     
     as->last_step = SDL_GetTicks();
 
@@ -116,7 +115,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     SDL_RenderClear(as->renderer);
 
     // Start a new rendering pass
-    UpdateSprite(monkey, as->renderer, 0, 0);
+    UpdateSprite(monkey, 0, 0, as->renderer);
 
     /* put the newly-cleared rendering on the screen. */
     SDL_RenderPresent(as->renderer);
