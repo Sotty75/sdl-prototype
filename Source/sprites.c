@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "sprites.h"
 
-
 /*
  * Create an animation structure made of frames where each frame is loaded
  * from a spritesheet. the sprites in the spitesheet have to be sorted in order so that we can index the source 
