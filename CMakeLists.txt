@@ -16,15 +16,25 @@ find_package(SDL3 REQUIRED CONFIG)
 set(SDL3_image_DIR "F:\\Coding\\Libraries\\SDL_image\\build")
 find_package(SDL3_image REQUIRED CONFIG)
 
+
 # Define executable and entry point for the application
 # Find all files ending in .c in the current directory
-file(GLOB_RECURSE SOURCE_FILES "source/*.c")
+file(GLOB_RECURSE SOURCE_FILES "src/*.c")
 
 # Create the executable from the list of files found
 add_executable(sdl-prototype ${SOURCE_FILES})
 
 # Link the SDL library to the target executable
 target_link_libraries(sdl-prototype PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
+
+# Include header libraries
+target_include_directories(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/libs/cglm")
+
+# This will STILL print the path to "my_project/"
+message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")
+
+# This will correctly print the path to "my_project/src/"
+message("CMAKE_CURRENT_SOURCE_DIR in src is: ${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Add a custom command to copy the 'assets' folder after the build is complete
 add_custom_command(

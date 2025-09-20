@@ -48,6 +48,19 @@ The frame rate in this case is passed to the CreateSprite function and so it can
 
 Next time I would like to on implementing some movement, for example using the Joypad as an input, and eventually start working on a collision detection routine.
 
+## September 20, 2025
+
+Let's move on in writing some code to finally move the sprite on the screen. 
+I will implement a struct to bring to a higher level the information related to the position of an actor and eventually the speed, and obviously this struct will be called actor.
+
+We need a file specifically to handle this data. So the actor will represent a moving object on the screen.
+Since I will use some vector calculations to handle the position and velocity of objects on the screen, I looked for a library for this particular purpose and
+decided to select the cglm library, providing me a set of data types optimized for vector and matrix calculations.
+I am going to consider also including the Chipmunk2D physics engine that looks particularly useful in adding physics for the game.
+
+In the end I spent most of my time implementing and testing the Gamepad support for the game, as I need some input to drive the movements of the character.
+
+
 ## Later
 
 - Controlling the sprite with the keyboard and the controller

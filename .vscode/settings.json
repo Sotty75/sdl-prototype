@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "sprites.h": "c"
+        "sprites.h": "c",
+        "box.h": "c",
+        "sdl_gamepad.h": "c",
+        "sdl_image.h": "c"
     }
 }

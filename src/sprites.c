@@ -1,6 +1,30 @@
 #include <stdlib.h>
 #include "sprites.h"
 
+
+/*
+    Takes a pointer to a 'SDL_Surface *' as an input
+    and an image and creates a surface linked by the surface pointer
+    to be reused to create for example a texture.
+*/
+SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
+{
+    char *spritesheetPath = NULL;
+
+    //... load the spritesheet inside of the texture
+    SDL_asprintf(&spritesheetPath, "%sassets\\%s", SDL_GetBasePath(), assetName);  /* allocate a string of the full file path */
+    *surface = IMG_Load(spritesheetPath);
+
+    if (!(*surface)) {
+        SDL_Log("Couldn't load spritesheet: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    free(spritesheetPath);
+
+    return SDL_APP_CONTINUE;
+}
+
 /*
  * Create an animation structure made of frames where each frame is loaded
  * from a spritesheet. the sprites in the spitesheet have to be sorted in order so that we can index the source 
