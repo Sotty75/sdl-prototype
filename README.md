@@ -6,6 +6,14 @@ The idea of this project is to use it to experiment with the possibilities of th
 And take advantage of it to practice with C language.
 Also this serves as an example of ho to configure a C project using the CMAKE tool and build and debug it in VSCode.
 
+## Build
+
+```
+mdir build
+cd build
+cmake -G "MinGW Makefiles" ..
+```
+
 ## Current Dependencies
 
 The DLL of the following libraries should be copied in the build folder once your solution is setup.

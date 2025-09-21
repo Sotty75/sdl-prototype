@@ -17,20 +17,32 @@ set(SDL3_image_DIR "F:\\Coding\\Libraries\\SDL_image\\build")
 find_package(SDL3_image REQUIRED CONFIG)
 
 
-# Define executable and entry point for the application
-# Find all files ending in .c in the current directory
-file(GLOB_RECURSE SOURCE_FILES "src/*.c")
+# List all your project's source files here.
+# This is the recommended and most reliable way to manage sources.
+# When you add a new file to your project, add it to this list.
+set(SOURCE_FILES
+    src/main.c
+    src/scene.c
+    src/sprites.c   
+    src/actor.c
+)
 
-# Create the executable from the list of files found
+# Create the executable from the source files
 add_executable(sdl-prototype ${SOURCE_FILES})
 
-# Link the SDL library to the target executable
-target_link_libraries(sdl-prototype PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
-target_link_libraries(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/lib/box2d/box2dd.lib")
+# Link libraries to the target executable
+target_link_libraries(sdl-prototype PRIVATE
+    SDL3::SDL3
+    SDL3_image::SDL3_image
+    "${PROJECT_SOURCE_DIR}/lib/box2d/box2dd.lib"
+)
 
 # Include header libraries
-target_include_directories(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/include/cglm")
-target_include_directories(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/include/box2d")
+target_include_directories(sdl-prototype PRIVATE
+    "${PROJECT_SOURCE_DIR}/src/includes"
+    "${PROJECT_SOURCE_DIR}/include/cglm"
+    "${PROJECT_SOURCE_DIR}/include/box2d"
+)
 
 # This will STILL print the path to "my_project/"
 message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")

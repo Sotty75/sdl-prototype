@@ -1,5 +1,5 @@
-#ifndef SPRITES_H
-#define SPRITES_H
+#ifndef SOT_SPRITES_H
+#define SOT_SPRITES_H
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
@@ -12,7 +12,7 @@
 */
 typedef struct Frame {
     struct Frame *next;
-    SDL_Texture *texture;
+    SDL_FRect *sprite;
 } Frame;
 
 
@@ -32,9 +32,8 @@ typedef struct Sprite {
     int width;
     int height;
     int stepRateMillis;
-    Uint64 last_step;
+    SDL_Texture *atlas;
     Frame *currentFrame;
-    SDL_FRect postion;
 } Sprite;
 
 
@@ -42,7 +41,6 @@ typedef struct Sprite {
 // Prototipi delle funzioni che usano la struttura
 SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName);
 Sprite *CreateSprite(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis, bool cycle, SDL_Renderer *renderer);
-bool UpdateSprite(Sprite *animation, int xPos, int yPos, SDL_Renderer *renderer);
 void DestroySprite(Sprite *animation);
 
 

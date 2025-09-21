@@ -84,7 +84,13 @@ We can therefore have one actor and then an array of tiles maybe to render the b
 We may have one array per parallax level or even a multidimensional array for the background.
 We need therefore a datastructure to define a backgroun layer with the z-position and the scrolling speed.
 
-Each layer will basically work as a group of textures rendered
+Each layer will basically work as a group of textures rendered.
+
+I also shared my project with gemini to get some recommendations and a code review.
+He suggested me to refactor the sprite class to hanly have one texture in memory instead of many small ones (done) and revisit the logic for the time step to 
+have a time delta.
+
+I found out there is a problem in thetexturecreation and i will need to create a tecture manager soon.
 
 ## Later
 

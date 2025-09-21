@@ -3,6 +3,7 @@
         "sprites.h": "c",
         "box.h": "c",
         "sdl_gamepad.h": "c",
-        "sdl_image.h": "c"
+        "sdl_image.h": "c",
+        "sot_sprites.h": "c"
     }
 }

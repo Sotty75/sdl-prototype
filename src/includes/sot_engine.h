@@ -2,8 +2,8 @@
 #define SOT_ENGINE_H_
 
 #include "appstate.h"
-#include "scene.h"
-#include "sprites.h"
+#include "sot_scene.h"
+#include "sot_sprites.h"
 #include "sot_actor.h"
 #include "appstate.h"
 

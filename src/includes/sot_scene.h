@@ -2,6 +2,7 @@
 #define SCENE_H_
 
 #include <stdlib.h>
+#include "appstate.h"
 #include "sot_actor.h"
 
 typedef struct Scene {
@@ -12,7 +13,7 @@ typedef struct Scene {
 } Scene;
 
 
-void CreateScene(AppState *appState, Scene * scene);
+Scene* CreateScene(AppState *appState);
 
 
 /*****************************************************
