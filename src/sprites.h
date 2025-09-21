@@ -46,4 +46,4 @@ bool UpdateSprite(Sprite *animation, int xPos, int yPos, SDL_Renderer *renderer)
 void DestroySprite(Sprite *animation);
 
 
-#endif // PUNTO_H
+#endif // SPRITES_H

@@ -18,14 +18,17 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
 #include "sprites.h"
+#include "box2d.h"
 
 typedef struct
 {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Uint64 last_step;
+    bool full_screen;
 } AppState;
 
+static AppState *as = NULL;
 SDL_Gamepad *gamepad = NULL;
 SDL_Surface *monkeySpriteSheet = NULL;
 Sprite *monkey = NULL;
@@ -35,9 +38,10 @@ Sprite *monkey = NULL;
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
 
-    AppState *as = (AppState *)SDL_calloc(1, sizeof(AppState));
+    as = (AppState *)SDL_calloc(1, sizeof(AppState));
     if (!as) { return SDL_APP_FAILURE; }
-    *appstate = as;
+    
+
 
     SDL_SetAppMetadata("Example Renderer Clear", "1.0", "com.example.renderer-clear");
 
@@ -63,7 +67,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     GetSurfaceFromImage(&monkeySpriteSheet, "monkey-sheet.png");
     monkey = CreateSprite("Monkey", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as->renderer);
     
+
+
+    //...store initialized application state so it will be shared in other
+    // functions.
+    as->full_screen = false;
     as->last_step = SDL_GetTicks();
+    *appstate = as;
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
@@ -71,6 +81,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
+    // AppState *as = (AppState *)appstate;
+
     if (event->type == SDL_EVENT_QUIT) {
         return SDL_APP_SUCCESS;  /* end the program, reporting success to the OS. */
     }
@@ -80,13 +92,22 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
             if (event->gaxis.value > GAMEPAD_DEADZONE || event->gaxis.value < -GAMEPAD_DEADZONE)
                 SDL_Log("Gamepad Axis Motion: %d Value: %d", event->gaxis.axis, event->gaxis.value);
-        break;
+            break;
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
             SDL_Log("Gamepad Button: %d Is Down: %d ", event->gbutton.button, event->gbutton.down);
-        break;
-        break;
+            break;
+        case SDL_EVENT_KEY_DOWN:
+            if (event->key.scancode == SDL_SCANCODE_0 && as->full_screen) {
+                as->full_screen = false;
+                SDL_SetWindowFullscreen(as->window, false);
+            }
+            else if (event->key.scancode == SDL_SCANCODE_0) {
+                as->full_screen = true;    
+                SDL_SetWindowFullscreen(as->window, SDL_WINDOW_FULLSCREEN);
+            }
+            break;
         default:
-        break;
+            break;
     }
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
@@ -95,9 +116,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-   
-    
-    AppState *as = (AppState *)appstate;
+    // AppState *as = (AppState *)appstate;
     const Uint64 now = SDL_GetTicks();
 
     // run game logic if we're at or past the time to run it.

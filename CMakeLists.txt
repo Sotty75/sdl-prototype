@@ -26,9 +26,11 @@ add_executable(sdl-prototype ${SOURCE_FILES})
 
 # Link the SDL library to the target executable
 target_link_libraries(sdl-prototype PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
+target_link_libraries(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/lib/box2d/box2dd.lib")
 
 # Include header libraries
-target_include_directories(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/libs/cglm")
+target_include_directories(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/include/cglm")
+target_include_directories(sdl-prototype PRIVATE "${PROJECT_SOURCE_DIR}/include/box2d")
 
 # This will STILL print the path to "my_project/"
 message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")
