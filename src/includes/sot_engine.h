@@ -3,8 +3,9 @@
 
 #include "appstate.h"
 #include "sot_scene.h"
-#include "sot_sprites.h"
+#include "sot_animation.h"
 #include "sot_actor.h"
 #include "appstate.h"
+#include "sot_texture.h"
 
 #endif

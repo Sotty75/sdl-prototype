@@ -5,6 +5,9 @@
         "sdl_gamepad.h": "c",
         "sdl_image.h": "c",
         "sot_sprites.h": "c",
-        "sdl_render.h": "c"
+        "sdl_render.h": "c",
+        "sot_texture.h": "c",
+        "sot_actor.h": "c",
+        "sot_animation.h": "c"
     }
 }
