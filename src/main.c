@@ -64,6 +64,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     //...store initialized application state so it will be shared in other
     // functions.
+    as->texturesPool = NULL;
     as->full_screen_enabled = false;
     as->last_step = SDL_GetTicks();
     *appstate = as;
@@ -138,7 +139,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+    DestroyTexturePool(as);
+    SDL_DestroyRenderer(as->renderer);
+    SDL_DestroyWindow(as->window);
     SDL_QuitSubSystem(SDL_INIT_VIDEO||SDL_INIT_GAMEPAD);
     SDL_CloseGamepad(gamepad);
     DestroyScene(currentScene);
+    
 }

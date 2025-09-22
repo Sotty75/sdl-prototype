@@ -90,7 +90,15 @@ I also shared my project with gemini to get some recommendations and a code revi
 He suggested me to refactor the sprite class to hanly have one texture in memory instead of many small ones (done) and revisit the logic for the time step to 
 have a time delta.
 
-I found out there is a problem in thetexturecreation and i will need to create a tecture manager soon.
+I found out there is a problem in the texture creation and i will need to create a texture manager soon.
+
+## September 22, 2025
+
+The texture manager will have to:
+
+- store a linked list of texture pointers 
+- include in each node the name of the texture
+- return a texture by name or create a new one
 
 ## Later
 

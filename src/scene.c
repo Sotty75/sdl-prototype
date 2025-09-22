@@ -17,16 +17,15 @@ Scene *CreateScene(AppState *appState) {
 
     //... load the spritesheet inside of the texture
     SDL_Surface *monkeySpriteSheet = NULL;
-    Sprite *walkRight = NULL;
-    Sprite *walkLeft = NULL;
-    Sprite *idle = NULL;
-    GetSurfaceFromImage(&monkeySpriteSheet, "monkey-sheet.png");
-    walkRight = CreateSprite("Monkey", monkeySpriteSheet, 0, 8, 16, 16, 75, true, appState->renderer);
-    walkLeft = CreateSprite("Monkey", monkeySpriteSheet, 9, 17, 16, 16, 75, true, appState->renderer);
-    idle = CreateSprite("Monkey", monkeySpriteSheet, 18, 23, 16, 16, 75, true, appState->renderer);
+    Animation *walkRight = NULL;
+    Animation *walkLeft = NULL;
+    Animation *idle = NULL;
+    walkRight = CreateAnimation("Monkey", monkeySpriteSheet, 0, 8, 16, 16, 75, true, appState);
+    walkLeft = CreateAnimation("Monkey", monkeySpriteSheet, 9, 17, 16, 16, 75, true, appState);
+    idle = CreateAnimation("Monkey", monkeySpriteSheet, 18, 23, 16, 16, 75, true, appState);
 
     //...pack the animations in a NULL terminated array
-    Sprite **animations = malloc(sizeof(Sprite*) * 4);
+    Animation **animations = malloc(sizeof(Animation*) * 4);
     animations[0] = walkRight;
     animations[1] = walkLeft;
     animations[2] = idle;

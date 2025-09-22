@@ -3,7 +3,7 @@
 #include "appstate.h"
 
 
-Actor *CreateActor(char *name, vec2 pos, vec2 vel, Sprite **anims) 
+Actor *CreateActor(char *name, vec2 pos, vec2 vel, Animation **anims) 
 {
     Actor *actor = malloc(sizeof(Actor));
     if (actor == NULL) return NULL;
@@ -32,7 +32,7 @@ void SetVelocity(Actor *actor, vec2 pos) {
 
 void RenderActor(Actor *actor, AppState *appState) {
 
-    Sprite *animation = actor->currentAnim;
+    Animation *animation = actor->currentAnim;
 
     // Get the current time different from last step
     // if higher than the animation time step

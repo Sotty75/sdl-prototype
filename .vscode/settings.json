@@ -4,6 +4,7 @@
         "box.h": "c",
         "sdl_gamepad.h": "c",
         "sdl_image.h": "c",
-        "sot_sprites.h": "c"
+        "sot_sprites.h": "c",
+        "sdl_render.h": "c"
     }
 }

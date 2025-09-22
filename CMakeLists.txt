@@ -25,6 +25,7 @@ set(SOURCE_FILES
     src/scene.c
     src/sprites.c   
     src/actor.c
+    src/sot_texture.c
 )
 
 # Create the executable from the source files

@@ -30,12 +30,12 @@ typedef struct {
     vec2 pos;
     vec2 vel;
     SDL_FRect postion;
-    Sprite **anims;
-    Sprite *currentAnim;
+    Animation **anims;
+    Animation *currentAnim;
     Uint64 last_step;
 } Actor;
 
-Actor *CreateActor(char *name, vec2 pos, vec2 vel, Sprite **anims); 
+Actor *CreateActor(char *name, vec2 pos, vec2 vel, Animation **anims); 
 void SetPosition(Actor *actor, vec2 pos);
 void SetVelocity(Actor *actor, vec2 vel);
 void Move(Directions direction);

@@ -1,40 +1,15 @@
-#include <stdlib.h>
 #include "sot_sprites.h"
-
-
-/*
-    Takes a pointer to a 'SDL_Surface *' as an input
-    and an image and creates a surface linked by the surface pointer
-    to be reused to create for example a texture.
-*/
-SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
-{
-    char *spritesheetPath = NULL;
-
-    //... load the spritesheet inside of the texture
-    SDL_asprintf(&spritesheetPath, "%sassets\\%s", SDL_GetBasePath(), assetName);  /* allocate a string of the full file path */
-    *surface = IMG_Load(spritesheetPath);
-
-    if (!(*surface)) {
-        SDL_Log("Couldn't load spritesheet: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    free(spritesheetPath);
-
-    return SDL_APP_CONTINUE;
-}
 
 /*
  * Create an animation structure made of frames where each frame is loaded
  * from a spritesheet. the sprites in the spitesheet have to be sorted in order so that we can index the source 
  * sprite efrom the spritesheet by providing the index of the first sprite, the index of the last sprite and the size of each sprite
  */
-Sprite *CreateSprite(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
-    int stepRateMillis, bool cycle,  SDL_Renderer *renderer)
+Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
+    int stepRateMillis, bool cycle,  AppState *appstate)
 {
     // ..initialize the animation structure
-    Sprite *animation = malloc(sizeof(Sprite));
+    Animation *animation = malloc(sizeof(Animation));
     if (animation == NULL) return NULL; 
 
     animation->name = name;
@@ -46,22 +21,14 @@ Sprite *CreateSprite(char *name, SDL_Surface *spritesheet, int startIndex, int e
     animation->cycle = cycle;
 
     // Load the spritesheet in a texture atlas
-    SDL_Surface *spritesheetSurface = NULL;
-    GetSurfaceFromImage(&spritesheetSurface, "monkey-sheet.png");
-    animation->atlas = SDL_CreateTextureFromSurface(renderer, spritesheetSurface);
-    if (animation->atlas == NULL) {
-            SDL_Log("Couldn't create texture from surface: %s", SDL_GetError());
-            return NULL;
-    }
-    SDL_SetTextureScaleMode(animation->atlas, SDL_SCALEMODE_NEAREST);
-    SDL_DestroySurface(spritesheetSurface);
+    animation->atlas = GetTexture("monkey-sheet.png", appstate);
 
     // ...we use a variable to store the previous frame for the current iteration, 
     // so that we can build the chain of frames.
     Frame *previousFrame = NULL;
 
-    int spritesPerRow = spritesheet->w / width;
-    int spritesPerColumn = spritesheet->h / height;
+    int spritesPerRow = animation->atlas->w / width;
+    int spritesPerColumn = animation->atlas->h / height;
 
     // ...we iteratie across all the sprites in the spritesheet there are making up the animation
     // and each iteration we recalculate the source rectangle to match the position of the sprite of
@@ -111,7 +78,7 @@ Sprite *CreateSprite(char *name, SDL_Surface *spritesheet, int startIndex, int e
 *   Free the memory allocated for the animation
 *   in the heap.
 */
-void DestroySprite(Sprite *animation) {
+void DestroySprite(Animation *animation) {
     Frame *currentFrame = animation->currentFrame; 
     for (int i = 0; i < animation->framesCount; i++) 
     {
