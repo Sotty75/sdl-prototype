@@ -22,7 +22,7 @@ Scene* CreateScene(AppState *appState);
  *   the current game state / player input
  * 
  *****************************************************/
-void UpdateScene(Scene * scene);
+void UpdateScene(Scene * scene, float deltaTime);
 
 /*****************************************************
  * 

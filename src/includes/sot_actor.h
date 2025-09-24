@@ -16,29 +16,34 @@
    (x,y)
 */
 
+#define GAMEPAD_DEADZONE 8000
+
+
 typedef enum {
+    IDLE,
     MOVE_RIGHT,
     MOVE_LEFT,
     MOVE_UP,
     MOVE_DOWN,
     JUMP
-} Directions;
+} Direction;
 
-
-typedef struct {
+typedef struct Actor {
     char *name;
     vec2 pos;
     vec2 vel;
-    SDL_FRect postion;
+    SDL_FRect position;
     Animation **anims;
     Animation *currentAnim;
     Uint64 last_step;
+    Direction direction;
 } Actor;
 
 Actor *CreateActor(char *name, vec2 pos, vec2 vel, Animation **anims); 
 void SetPosition(Actor *actor, vec2 pos);
 void SetVelocity(Actor *actor, vec2 vel);
-void Move(Directions direction);
+void MoveActor(Actor *actor, SDL_Event *event);
+void UpdateActor(Actor *actor, float deltaTime);
 void RenderActor(Actor *actor, AppState *appState);
 void DestroyActor(Actor *actor);
 

@@ -9,7 +9,7 @@
  */
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
-#define GAMEPAD_DEADZONE 8000
+
 
 
 #include <stdlib.h>
@@ -84,11 +84,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     switch (event->type)
     {
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-            if (event->gaxis.value > GAMEPAD_DEADZONE || event->gaxis.value < -GAMEPAD_DEADZONE)
-                SDL_Log("Gamepad Axis Motion: %d Value: %d", event->gaxis.axis, event->gaxis.value);
-            break;
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-            SDL_Log("Gamepad Button: %d Is Down: %d ", event->gbutton.button, event->gbutton.down);
+            MoveActor(currentScene->player, event);
             break;
         case SDL_EVENT_KEY_DOWN:
             if (event->key.scancode == SDL_SCANCODE_0 && as->full_screen_enabled) {
@@ -111,23 +108,17 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *as = (AppState *)appstate;
+
     const Uint64 now = SDL_GetTicks();
-
-    // run game logic if we're at or past the time to run it.
-    // if we're _really_ behind the time to run it, run it
-    // several times.
-    // while ((now - as->last_step) >= STEP_RATE_IN_MILLISECONDS) {
-    //     snake_step(ctx);
-    //     as->last_step += STEP_RATE_IN_MILLISECONDS;
-    // }
-
+    const float deltaTime = (now - as->last_step) / 1000.0f; // Delta time in seconds
+    as->last_step = now;
 
     /* clear the window to the draw color. */
     SDL_SetRenderDrawColor(as->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
     SDL_RenderClear(as->renderer);
 
     // Start a new rendering pass
-    UpdateScene(currentScene);
+    UpdateScene(currentScene, deltaTime);
     RenderScene(as, currentScene);
 
     /* put the newly-cleared rendering on the screen. */

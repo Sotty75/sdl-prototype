@@ -6,6 +6,7 @@
 // Forward-declare the SOT_Texture struct
 // This tells the compiler that "struct SOT_Texture" is a valid type
 struct SOT_Texture;
+struct Actor;
 
 typedef struct
 {

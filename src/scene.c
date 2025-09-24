@@ -20,34 +20,37 @@ Scene *CreateScene(AppState *appState) {
     Animation *walkRight = NULL;
     Animation *walkLeft = NULL;
     Animation *idle = NULL;
-    walkRight = CreateAnimation("Monkey", monkeySpriteSheet, 0, 8, 16, 16, 75, true, appState);
-    walkLeft = CreateAnimation("Monkey", monkeySpriteSheet, 9, 17, 16, 16, 75, true, appState);
-    idle = CreateAnimation("Monkey", monkeySpriteSheet, 18, 23, 16, 16, 75, true, appState);
+    walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, appState);
+    walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, appState);
+    idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, appState);
 
     //...pack the animations in a NULL terminated array
     Animation **animations = malloc(sizeof(Animation*) * 4);
-    animations[0] = walkRight;
+    animations[0] = idle;
     animations[1] = walkLeft;
-    animations[2] = idle;
+    animations[2] = walkRight;
     animations[3] = NULL;
 
     //...create the player actor and add it to the scene
     vec2 pos = {0,0};
-    vec2 vel = {0,0};   
+    vec2 vel = {40,0};   
     Actor *player = CreateActor("Player", pos, vel, animations);
     currentScene->player = player;
+
 
     return currentScene;
 }
 
 
-void UpdateScene(Scene * scene) {
+void UpdateScene(Scene * scene, float deltaTime) {
 
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
     // update game status
 
     // update camera
+    UpdateActor(scene->player, deltaTime);
+    return;
 }
 
 
@@ -56,7 +59,6 @@ void RenderScene(AppState *appState, Scene * scene) {
     // for each actor in the scene, render it on the screen.
     RenderActor(scene->player, appState);    
 }
-
 
 void DestroyScene(Scene * scene) {
     DestroyActor(scene->player);

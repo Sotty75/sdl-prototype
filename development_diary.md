@@ -94,16 +94,63 @@ I found out there is a problem in the texture creation and i will need to create
 
 ## September 22, 2025
 
-The texture manager will have to:
+I have completed the development of a simple texture manager component.
+It is based on the introduction of a texture pool entity, which is nothing but a linked list of textures.
+The resposibilities of this components will be:
 
-- store a linked list of texture pointers 
-- include in each node the name of the texture
-- return a texture by name or create a new one
+- to maintain and store a linked list of texture pointers 
+- return a texture by name or create a new one depending on the availability or not of the requested texture in the memory
+- release the memory once the application is closed.
+
+## September 23, 2025
+
+Let's try to implement a basic controller support. 
+The idea is to move my character to the left, to he right and keep it in the Idle position when no input is provided.
+
+I need the Player to be accessible from the main loop, in order to push an event to it when an event is received.
+TO do so, I have to add it to the AppState struct, at least for the moment.
+
+The AppState is emerging as a struct used to hold static data, but it may become too large with time.
+It is possible we need to add other structs similar to this one but specialized to hold some other type of information, like
+level, game objects and so on. We can think about this later.
+
+In the end i have decided to use, at least fo the moment, the player reference accessible from the scene.
+
+## September 24, 2025 - 8.23 PM
+
+Yesterday I have completed the implementation of the controller support. Needless to say, it does not work.
+When moving the joypad stick, the character moves erratically, with no clear explanation.
+I had to check with Gemini the reason of the issue, which looks rooted in a complete misunderstanding of the events cycle.
+
+The error was in the inclusion of bot the event processing (move stick to the left for example), with the update of the characters position.
+
+Why is that a problem? Looks like the update function being calle dalso for many other events caused the update of the position
+to depend directly on the number of events in the queue, which is obviously not at all constant.
+
+I can fix it by decoupling the reading of the controller input from the character update, which is expected to happen once per frame to have consistency.
+Applying the equation of movement the character position will be updated as follows
+
+   X' = X + (dx/dt) * dt
+   Y' = Y + (dy/dt) * dt
+
+so if we set a given constant velocity, the next position will be the previous one plus the velocity multiply by the delta time.
+Today i will process the decoupling of the update function from the input polling method and see if this is fixing the issue.
+
+...1 hour and a few Gemini prompts later...
+
+I think that before to ask the AI i should better read the documentation, i had several issues and most of them where due to the fact that
+while all my logi was essentially correct, i was not checking which one of the axis i was reading, so i was mixing up the X axis and the Y axis.
+
+The motion is now correct and I was able also to handle the animations properly.
+
 
 ## Later
 
+- Implementation of a precise delta time logic which does not depend on the system framerate.
 - Controlling the sprite with the keyboard and the controller
 - Mouse controls and projection on the screen
 - Adding a background
-
+- Move the init appstate logic in a different place as in main it is becoming too crowded, next to appState we may have other similar entities
+  like gameState, playerState, rendererState, audioState. and so on. that may be useful to exchange data across different components. For example, the rendererState is a better place to hold the textures pool.
+- We may also want to include a defines file esplicitly to create the constants, as is the GAMEPAD_DEADZONE
 
