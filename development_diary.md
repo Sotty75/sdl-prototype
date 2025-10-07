@@ -143,6 +143,49 @@ while all my logi was essentially correct, i was not checking which one of the a
 
 The motion is now correct and I was able also to handle the animations properly.
 
+## September 25, 2025
+
+Now that i managed to implement the input of the controller and a basic movement, we can move forward in two directions, starting to build an example level using LDtk and develop the logic to include it in my game or implement additional motions like a jump or double jump or a dash.
+
+For tonigith I have decided to spend an hour in aseprite and add a couple more animations, maybe I will write a draft of gameplay document for a first level.
+
+## September 26, 2025
+
+Yesterday I worked out a jump animation and i think i feel ready to implement some collider related logic.
+
+## September 27, 2025
+
+In the end, I started looking some video tutorials about working with Tiled, in order to have a kind of level to work with.
+So no coding for today.
+
+## September 28, 2025
+
+I am still working with tiled. I also reviewed the idea of using 16x16 pixel sprites, they are just too little, and decided to switch to a 32x32 sprite size.
+I scaled all my animations to the new size and recreated the spritesheet.
+
+## October 5, 2025
+
+I had a tough week, with some personal issues that cause me a lot of stress. So i was not in the right mindset to proceed with the work.
+Today I feel a bit more relaxed (even if tomorrow it is time to go back to work again). In any case, it is time to go back to work with a fresh mind.
+I can proceed in two different directions:
+
+- Import of a tiled map in the game and on screen rendering.
+- Implementation of some collision logic.
+
+Since it will be easier to implement the collision with some map elements to map to, I will start with the first point.
+To import the map, I can either use an external library or implement it by myself.
+I will start looking at some existing code to see how it is done, and then decide how to proceed (implementing my own version or using the existing logic).
+
+A C library I was looking at for this task is a colleciton of headers known as "cute_headers": https://github.com/RandyGaul/cute_headers which includes both logic for collisions and tiled maps loding implementations.
+
+## October 7, 2025
+
+I have decided to use this library as it looks fairly complicated and it will save me a lot of time, also since it is a single header library, I can modify the code if necessary.
+
+I need to put the loading logic of the map in some place, so for the moment I will use the Scene entity manager, and will test the loading logic in the CreateScene function. The render scene will instead take the responsibility to render the tiles based on the loaded map.
+
+The map is loaded, tomorrow we can work on the rendering of the tiles on the screen.
+
 
 ## Later
 
@@ -153,4 +196,5 @@ The motion is now correct and I was able also to handle the animations properly.
 - Move the init appstate logic in a different place as in main it is becoming too crowded, next to appState we may have other similar entities
   like gameState, playerState, rendererState, audioState. and so on. that may be useful to exchange data across different components. For example, the rendererState is a better place to hold the textures pool.
 - We may also want to include a defines file esplicitly to create the constants, as is the GAMEPAD_DEADZONE
-
+- Create a Scene descriptor file so we do not need to hardcode all the inputs needed to create a scene.
+  - Eventually, it will have a reference to some Sprite Descriptor file where we can identify in a text format the sprite properties, animations and so forth.

@@ -54,7 +54,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     if (gamepads != NULL && gamepadsCount > 0) { gamepad = SDL_OpenGamepad(gamepads[0]); }
 
 
-    SDL_SetRenderLogicalPresentation(as->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    SDL_SetRenderLogicalPresentation(as->renderer, 320, 240, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     
     // Initialize our main scene

@@ -40,9 +40,11 @@ target_link_libraries(sdl-prototype PRIVATE
 
 # Include header libraries
 target_include_directories(sdl-prototype PRIVATE
+    "${PROJECT_SOURCE_DIR}/include/cute_headers"    
     "${PROJECT_SOURCE_DIR}/src/includes"
     "${PROJECT_SOURCE_DIR}/include/cglm"
     "${PROJECT_SOURCE_DIR}/include/box2d"
+    
 )
 
 # This will STILL print the path to "my_project/"
