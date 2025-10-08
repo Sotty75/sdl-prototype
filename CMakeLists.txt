@@ -22,10 +22,11 @@ find_package(SDL3_image REQUIRED CONFIG)
 # When you add a new file to your project, add it to this list.
 set(SOURCE_FILES
     src/main.c
-    src/scene.c
+    src/sot_scene.c
     src/sot_actor.c
     src/sot_animation.c   
     src/sot_texture.c
+    src/sot_tilemap.c
 )
 
 # Create the executable from the source files

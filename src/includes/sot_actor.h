@@ -2,11 +2,11 @@
 #define ACTOR_H
 
 #include <stdlib.h>
-#include "cglm.h"
-#include "sot_animation.h"
-#include "appstate.h"
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+#include "appstate.h"
+#include "cglm.h"
+#include "sot_animation.h"
 
 /*
     +-------+

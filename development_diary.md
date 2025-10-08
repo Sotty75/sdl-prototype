@@ -187,10 +187,19 @@ I need to put the loading logic of the map in some place, so for the moment I wi
 The map is loaded, tomorrow we can work on the rendering of the tiles on the screen.
 
 
+## October 8, 2025
+
+Today we will work on the map rendering. We will not implement any scrolling at least for the moment, the prototype will be in Rick Dangerous style, static screens. To render the scene we need basically to load the tileset in an atlas and create a tile for each of them by converting the tile index in the target tile by rendering only the required tile, indexed by some wrap-around logic.
+
+I ended up adding a new entity to model the tiled map. It will support the creation, rendering and destroy of a tilemap.
+THe renderer can be done tomorrow.
+
+
+
 ## Later
 
 - Implementation of a precise delta time logic which does not depend on the system framerate.
-- Controlling the sprite with the keyboard and the controller
+- [DONE] Controlling the sprite with the keyboard and the controller
 - Mouse controls and projection on the screen
 - Adding a background
 - Move the init appstate logic in a different place as in main it is becoming too crowded, next to appState we may have other similar entities
@@ -198,3 +207,5 @@ The map is loaded, tomorrow we can work on the rendering of the tiles on the scr
 - We may also want to include a defines file esplicitly to create the constants, as is the GAMEPAD_DEADZONE
 - Create a Scene descriptor file so we do not need to hardcode all the inputs needed to create a scene.
   - Eventually, it will have a reference to some Sprite Descriptor file where we can identify in a text format the sprite properties, animations and so forth.
+- The texture pool is cleaned once when a scene is destroyed, maybe we can fine tune it to destory individual textures when needed, 
+  to make better use of the memory. To do that, we may need to use another type of data structure so we can remove a texture from the list whatever is its position.

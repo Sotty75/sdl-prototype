@@ -23,6 +23,11 @@ SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
     return SDL_APP_CONTINUE;
 }
 
+/*
+Creates a texture, this is not adding the texture automatically to the textures pool.
+The texture pool is managed by the GetTexture function, which checks if the texture is in the pool.
+If not, it will be created using this function, added to the pool, and returned to the user.
+*/
 SOT_Texture *CreateTexture(char *name, AppState* appState) {
     SDL_Surface *spritesheetSurface = NULL;
     GetSurfaceFromImage(&spritesheetSurface, name);
@@ -56,10 +61,16 @@ SDL_Texture *GetTexture(char *name, AppState* appState) {
     // look for a texture with the same name
     if (appState->texturesPool != NULL) {
         for (int i = 0; sotTexture != NULL; i++) {
+
+            // if the texture is found in the pool,
+            // return the texture.
             if (strcmp(sotTexture->name, name) == 0) {
                 return sotTexture->texture;
             }
 
+            // if we reeach the end of the pool we create a new texture
+            // and add it to the pool. 
+            // then it is returned to the user.
             if (sotTexture->next == NULL) {
                 sotTexture->next = CreateTexture(name, appState);
                 return sotTexture->next->texture;

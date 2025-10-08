@@ -18,14 +18,10 @@ Scene *CreateScene(AppState *appState) {
     // set the scene ID
     currentScene->id = 1;
 
-    char *tileMapPath = NULL;
+    // ...create the tilemap and include it into the scene
     char *assetName = "level.json";
-
-    //...load the tilemap from a json file stored in the assets folder.
-    SDL_asprintf(&tileMapPath, "%sassets\\%s", SDL_GetBasePath(), assetName);
-    cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
-    int width = map->width;
-    int height = map->height;
+    currentScene->sot_tilemap = CreateTilemap(assetName, appState);
+    if (currentScene->sot_tilemap == NULL) return NULL;
 
     //... load the spritesheet inside of the texture
     SDL_Surface *monkeySpriteSheet = NULL;
@@ -60,6 +56,9 @@ void UpdateScene(Scene * scene, float deltaTime) {
     // recalculate actors position (collision check)
     // update game status
 
+    
+
+
     // update camera
     UpdateActor(scene->player, deltaTime);
     return;
@@ -68,11 +67,15 @@ void UpdateScene(Scene * scene, float deltaTime) {
 
 void RenderScene(AppState *appState, Scene * scene) {
 
+    // render the map
+    RenderTilemap(scene->sot_tilemap, appState);
+
     // for each actor in the scene, render it on the screen.
     RenderActor(scene->player, appState);    
 }
 
 void DestroyScene(Scene * scene) {
     DestroyActor(scene->player);
+    DestroyTilemap(scene->sot_tilemap);
     free(scene);
 }

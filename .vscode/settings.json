@@ -10,6 +10,7 @@
         "sot_actor.h": "c",
         "sot_animation.h": "c",
         "sdl_main.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "cglm.h": "c"
     }
 }
