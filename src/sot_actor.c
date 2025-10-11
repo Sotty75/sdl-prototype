@@ -4,18 +4,28 @@
 
 
 
-Actor *CreateActor(char *name, vec2 pos, vec2 vel, Animation **anims) 
+Actor *CreateActor(char *name, vec2 pos, Animation **anims) 
 {
     Actor *actor = malloc(sizeof(Actor));
     if (actor == NULL) return NULL;
 
     actor->name = name;
-    glm_vec2_copy(pos, actor->pos);
-    glm_vec2_copy(vel, actor->vel);
+    actor->applyGravity = true;
+
+    // set actor position and velocity
+    actor->pos[0]=pos[0];
+    actor->pos[1]=pos[1];
+    actor->vel[0]=10;
+    actor->vel[1]=0;
+
     actor->anims = anims;
     actor->last_step = SDL_GetTicks();
     actor->currentAnim = actor->anims[0];
-    actor->position = (SDL_FRect){0,0,16,16};
+    actor->position = (SDL_FRect){
+        .x = pos[0],
+        .y = pos[1], 
+        .w = 16,
+        .h = 16};
 
     return actor;
 }
@@ -84,6 +94,9 @@ void UpdateActor(Actor *actor, float deltaTime) {
 
     if (actor == NULL)
         return;
+
+    if (actor->applyGravity)
+        actor->direction = FALL;
     
     switch (actor->direction)
     {
@@ -94,6 +107,9 @@ void UpdateActor(Actor *actor, float deltaTime) {
         case MOVE_LEFT:
             if (actor->currentAnim != actor->anims[1]) actor->currentAnim = actor->anims[1];
             actor->position.x -= actor->vel[0] * deltaTime;
+            break;
+        case FALL:
+            actor->position.y += 80 * deltaTime;
             break;
         case IDLE:
             if (actor->currentAnim != actor->anims[0]) actor->currentAnim = actor->anims[0];

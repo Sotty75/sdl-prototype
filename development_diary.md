@@ -197,6 +197,17 @@ THe renderer can be done tomorrow.
 
 ## October 9, 2025
 
+Rendering of a simple tiled map has been completed. 
+
+## October 11, 2025
+
+Today I would like to focus on the collissions and in putting some additional information in my tiled map. I cna breakdown this part in three steps. 
+
+- Add a start position object to the map, so that the main character will be rendered over there in the first place.
+- Add a collision shape to the tiles in the tileset and read them from the code
+- Add some gravity to the world, meaning the carachter will fall until he founds some ground (and, why not, a fall animation)
+- Implementing the collision logic so that when the character hits the ground, the fall is stopped.
+
 
 
 

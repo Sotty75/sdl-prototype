@@ -25,11 +25,13 @@ typedef enum {
     MOVE_LEFT,
     MOVE_UP,
     MOVE_DOWN,
+    FALL,
     JUMP
 } Direction;
 
 typedef struct Actor {
     char *name;
+    bool applyGravity;
     vec2 pos;
     vec2 vel;
     SDL_FRect position;
@@ -39,7 +41,7 @@ typedef struct Actor {
     Direction direction;
 } Actor;
 
-Actor *CreateActor(char *name, vec2 pos, vec2 vel, Animation **anims); 
+Actor *CreateActor(char *name, vec2 pos, Animation **anims); 
 void SetPosition(Actor *actor, vec2 pos);
 void SetVelocity(Actor *actor, vec2 vel);
 void MoveActor(Actor *actor, SDL_Event *event);

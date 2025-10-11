@@ -39,12 +39,22 @@ Scene *CreateScene(AppState *appState) {
     animations[2] = walkRight;
     animations[3] = NULL;
 
-    //...create the player actor and add it to the scene
-    vec2 pos = {0,0};
-    vec2 vel = {40,0};   
-    Actor *player = CreateActor("Player", pos, vel, animations);
+    // Create the player actor and add it to the scene.
+    // ...get the player start position from the marker in the tiled-map
+    cute_tiled_layer_t *mapLayer = &currentScene->sot_tilemap->tilemap->layers[0];
+    cute_tiled_object_t *currentObject = currentScene->sot_tilemap->tilemap->layers[1].objects;
+    char *playerStart = "player_start";
+    vec2 startPosition = {0,0};
+    while (currentObject != NULL) {
+        if (strcmp(currentObject->name.ptr, playerStart) == 0) {
+            vec2 currentPosition = { currentObject->x, currentObject->y };
+            glm_vec2_copy(currentPosition, startPosition);
+        }
+        currentObject = currentObject->next;
+    }
+    
+    Actor *player = CreateActor("Player", startPosition, animations);
     currentScene->player = player;
-
 
     return currentScene;
 }
@@ -55,9 +65,6 @@ void UpdateScene(Scene * scene, float deltaTime) {
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
     // update game status
-
-    
-
 
     // update camera
     UpdateActor(scene->player, deltaTime);

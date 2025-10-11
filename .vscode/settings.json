@@ -11,7 +11,10 @@
         "sot_animation.h": "c",
         "sdl_main.h": "c",
         "stdlib.h": "c",
-        "cglm.h": "c"
+        "cglm.h": "c",
+        "chrono": "c",
+        "text_encoding": "c",
+        "typeinfo": "c"
     },
     "editor.suggestOnTriggerCharacters": true,
     "editor.parameterHints.enabled": true,
