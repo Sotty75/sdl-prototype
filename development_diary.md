@@ -191,8 +191,12 @@ The map is loaded, tomorrow we can work on the rendering of the tiles on the scr
 
 Today we will work on the map rendering. We will not implement any scrolling at least for the moment, the prototype will be in Rick Dangerous style, static screens. To render the scene we need basically to load the tileset in an atlas and create a tile for each of them by converting the tile index in the target tile by rendering only the required tile, indexed by some wrap-around logic.
 
-I ended up adding a new entity to model the tiled map. It will support the creation, rendering and destroy of a tilemap.
+I ended up adding a new entity to model the tiled map. It will support the creation, rendering and destruction of a tilemap.
 THe renderer can be done tomorrow.
+
+
+## October 9, 2025
+
 
 
 

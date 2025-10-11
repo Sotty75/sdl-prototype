@@ -15,10 +15,8 @@ SOT_Tilemap *CreateTilemap(char *tilemapName, AppState *appState)
     int height = map->height;
 
     //...load the atlas in the textures pool.
-    char *tilesetPath = NULL;
-    SDL_asprintf(&tilesetPath, "%sassets\\%s", SDL_GetBasePath(), map->tilesets->name.ptr);
-    SDL_Texture *tileset = GetTexture(tilesetPath, appState);
-
+    char *tilesetImage = (char *)map->tilesets->image.ptr;
+    SDL_Texture *tileset = GetTexture(tilesetImage, appState);
     SOT_Tilemap *sot_tilemap = malloc(sizeof(SOT_Tilemap));
     sot_tilemap->tilemap = map;
     sot_tilemap->tilesetTexture = tileset;
@@ -34,9 +32,45 @@ void RenderTilemap(SOT_Tilemap *current_tilemap, AppState *appState) {
 
     for (int y = 0; y < map->height; y++) {
         for (int x = 0; x < map->width; x++) {
-            // get tile index from the map
-            // calculate render position
-            // 
+            int currentTile = x + map->width * y;
+            int size = map->layers[0].data_count;
+            int currentTileIndex = map->layers[0].data[currentTile];
+
+            // tiles with index 0 are empty, move to the next one
+            if (currentTileIndex == 0)
+                continue;
+
+            // we need to decrement the tile index to have a zero starting index.
+            currentTileIndex--;
+
+            // source rectangle depends in the currentTileIndex
+            // i need also to know the size of the tileset in terms of width and height and the size of each tile
+            int tileWidth = map->tilesets[0].tilewidth;
+            int tileHeight = map->tilesets[0].tileheight;
+            int tilesetWidth = map->tilesets[0].imagewidth;
+            int tilesetHeight = map->tilesets[0].imageheight;
+
+            SDL_FRect sourceTile = 
+            {   
+                .x = (currentTileIndex * tileWidth) % tilesetWidth,
+                .y = tileHeight * ((currentTileIndex * tileWidth) / tilesetWidth),
+                .w = tileWidth,
+                .h = tileHeight
+            };
+
+            // destination rectangle are the tiles on the screen.
+            // The tiled map should already containing this information
+            //      Tiles per row
+            //      Tiles per column
+            // in this case we move from the top to the bottom, we are already in the cycle, so we have both X and Y.
+            SDL_FRect destinationTile = {
+                .x = (x % map->width) * tileWidth,
+                .y = y * tileHeight,
+                .w = tileWidth,
+                .h = tileHeight
+            };
+
+            SDL_RenderTexture(appState->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
         }
     }
 }

@@ -12,5 +12,9 @@
         "sdl_main.h": "c",
         "stdlib.h": "c",
         "cglm.h": "c"
-    }
+    },
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.parameterHints.enabled": true,
+    "editor.inlineSuggest.enabled": false,
+    "editor.suggest.showWords": false
 }
