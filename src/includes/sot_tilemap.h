@@ -2,11 +2,11 @@
 #include "appstate.h"
 #include "cute_tiled.h"
 
-typedef struct SOT_Tilemap {
+typedef struct sot_tilemap_t {
     cute_tiled_map_t *tilemap;
     SDL_Texture *tilesetTexture;
-} SOT_Tilemap;
+} sot_tilemap_t;
 
-SOT_Tilemap *CreateTilemap(char *name, AppState *appState); 
-void RenderTilemap(SOT_Tilemap *tilemap, AppState *appState);
-void DestroyTilemap(SOT_Tilemap *tilemap);
+sot_tilemap_t *CreateTilemap(char *name, AppState *appState); 
+void RenderTilemap(sot_tilemap_t *tilemap, AppState *appState);
+void DestroyTilemap(sot_tilemap_t *tilemap);

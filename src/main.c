@@ -23,7 +23,7 @@
 
 
 AppState *as = NULL;
-static Scene *currentScene = NULL;    
+static sot_scene_t *currentScene = NULL;    
 SDL_Gamepad *gamepad = NULL;
 
 

@@ -27,6 +27,7 @@ set(SOURCE_FILES
     src/sot_animation.c   
     src/sot_texture.c
     src/sot_tilemap.c
+    src/sot_collider.c
 )
 
 # Create the executable from the source files

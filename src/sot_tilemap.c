@@ -6,7 +6,7 @@
 #include "sot_texture.h"
 
 
-SOT_Tilemap *CreateTilemap(char *tilemapName, AppState *appState) 
+sot_tilemap_t *CreateTilemap(char *tilemapName, AppState *appState) 
 {
     char *tileMapPath = NULL;
     SDL_asprintf(&tileMapPath, "%sassets\\%s", SDL_GetBasePath(), tilemapName);
@@ -17,7 +17,7 @@ SOT_Tilemap *CreateTilemap(char *tilemapName, AppState *appState)
     //...load the atlas in the textures pool.
     char *tilesetImage = (char *)map->tilesets->image.ptr;
     SDL_Texture *tileset = GetTexture(tilesetImage, appState);
-    SOT_Tilemap *sot_tilemap = malloc(sizeof(SOT_Tilemap));
+    sot_tilemap_t *sot_tilemap = malloc(sizeof(sot_tilemap_t));
     sot_tilemap->tilemap = map;
     sot_tilemap->tilesetTexture = tileset;
 
@@ -25,7 +25,7 @@ SOT_Tilemap *CreateTilemap(char *tilemapName, AppState *appState)
     return sot_tilemap;
 }
 
-void RenderTilemap(SOT_Tilemap *current_tilemap, AppState *appState) {
+void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
 
     //...render the map
     cute_tiled_map_t *map = current_tilemap->tilemap;
@@ -75,7 +75,7 @@ void RenderTilemap(SOT_Tilemap *current_tilemap, AppState *appState) {
     }
 }
 
-void DestroyTilemap(SOT_Tilemap *current_tilemap) {
+void DestroyTilemap(sot_tilemap_t *current_tilemap) {
     cute_tiled_free_map(current_tilemap->tilemap);
     
     free(current_tilemap);

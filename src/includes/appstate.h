@@ -5,8 +5,8 @@
 
 // Forward-declare the SOT_Texture struct
 // This tells the compiler that "struct SOT_Texture" is a valid type
-struct SOT_Texture;
-struct Actor;
+struct sot_texture_t;
+struct sot_actor_t;
 
 typedef struct
 {
@@ -14,7 +14,7 @@ typedef struct
     SDL_Renderer *renderer;
     Uint64 last_step;
     bool full_screen_enabled;
-    struct SOT_Texture *texturesPool;
+    struct sot_texture_t *texturesPool;
 } AppState;
 
  #endif

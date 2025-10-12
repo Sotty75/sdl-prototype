@@ -7,12 +7,12 @@
 
 
 
-Scene *CreateScene(AppState *appState) {
+sot_scene_t *CreateScene(AppState *appState) {
     // Create all the actors
     // Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
     // player, later we will use a file as an input (JSON, XML....)
 
-    Scene *currentScene = malloc(sizeof(Scene));
+    sot_scene_t *currentScene = malloc(sizeof(sot_scene_t));
     if (currentScene == NULL) return NULL;
 
     // set the scene ID
@@ -25,15 +25,15 @@ Scene *CreateScene(AppState *appState) {
 
     //... load the spritesheet inside of the texture
     SDL_Surface *monkeySpriteSheet = NULL;
-    Animation *walkRight = NULL;
-    Animation *walkLeft = NULL;
-    Animation *idle = NULL;
+    sot_sprite_t *walkRight = NULL;
+    sot_sprite_t *walkLeft = NULL;
+    sot_sprite_t *idle = NULL;
     walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 32, 32, 75, true, appState);
     walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 32, 32, 75, true, appState);
     idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 32, 32, 75, true, appState);
 
     //...pack the animations in a NULL terminated array
-    Animation **animations = malloc(sizeof(Animation*) * 4);
+    sot_sprite_t **animations = malloc(sizeof(sot_sprite_t*) * 4);
     animations[0] = idle;
     animations[1] = walkLeft;
     animations[2] = walkRight;
@@ -53,14 +53,14 @@ Scene *CreateScene(AppState *appState) {
         currentObject = currentObject->next;
     }
     
-    Actor *player = CreateActor("Player", startPosition, animations);
+    sot_actor_t *player = CreateActor("Player", startPosition, animations);
     currentScene->player = player;
 
     return currentScene;
 }
 
 
-void UpdateScene(Scene * scene, float deltaTime) {
+void UpdateScene(sot_scene_t * scene, float deltaTime) {
 
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
@@ -72,7 +72,7 @@ void UpdateScene(Scene * scene, float deltaTime) {
 }
 
 
-void RenderScene(AppState *appState, Scene * scene) {
+void RenderScene(AppState *appState, sot_scene_t * scene) {
 
     // render the map
     RenderTilemap(scene->sot_tilemap, appState);
@@ -81,7 +81,7 @@ void RenderScene(AppState *appState, Scene * scene) {
     RenderActor(scene->player, appState);    
 }
 
-void DestroyScene(Scene * scene) {
+void DestroyScene(sot_scene_t * scene) {
     DestroyActor(scene->player);
     DestroyTilemap(scene->sot_tilemap);
     free(scene);

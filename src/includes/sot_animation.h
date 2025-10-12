@@ -27,7 +27,7 @@ typedef struct Frame {
 /       - frame->height
 /       - frames array
 */
-typedef struct Animation {
+typedef struct sot_sprite_t {
     char *name;
     bool cycle;
     int framesCount;
@@ -36,13 +36,13 @@ typedef struct Animation {
     int stepRateMillis;
     SDL_Texture *atlas;
     Frame *currentFrame;
-} Animation;
+} sot_sprite_t;
 
 
 
 // Prototipi delle funzioni che usano la struttura
-Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis, bool cycle, AppState* appState);
-void DestroySprite(Animation *animation);
+sot_sprite_t *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis, bool cycle, AppState* appState);
+void DestroySprite(sot_sprite_t *animation);
 
 
 #endif // SPRITES_H

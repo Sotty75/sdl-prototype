@@ -4,46 +4,58 @@
 
 
 
-Actor *CreateActor(char *name, vec2 pos, Animation **anims) 
+sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims) 
 {
-    Actor *actor = malloc(sizeof(Actor));
+    sot_actor_t *actor = malloc(sizeof(sot_actor_t));
     if (actor == NULL) return NULL;
 
     actor->name = name;
     actor->applyGravity = true;
 
     // set actor position and velocity
-    actor->pos[0]=pos[0];
-    actor->pos[1]=pos[1];
-    actor->vel[0]=10;
-    actor->vel[1]=0;
+    actor->position[0]=pos[0];
+    actor->position[1]=pos[1];
+    actor->velocity[0]=10;
+    actor->velocity[1]=0;
 
-    actor->anims = anims;
+    actor->sprites = anims;
     actor->last_step = SDL_GetTicks();
-    actor->currentAnim = actor->anims[0];
-    actor->position = (SDL_FRect){
-        .x = pos[0],
-        .y = pos[1], 
-        .w = 16,
-        .h = 16};
+    actor->currentSprite = actor->sprites[0];
+    SetRenderPosition(actor);
 
     return actor;
 }
 
 
-void SetPosition(Actor *actor, vec2 pos) { 
-    glm_vec2_copy(pos, actor->pos);
+
+
+void SetPosition(sot_actor_t *actor, vec2 pos) { 
+    glm_vec2_copy(pos, actor->position);
     return; 
 }
 
-void SetVelocity(Actor *actor, vec2 pos) { 
-    glm_vec2_copy(pos, actor->vel);
+void SetVelocity(sot_actor_t *actor, vec2 pos) { 
+    glm_vec2_copy(pos, actor->velocity);
     return; 
 }
 
-void RenderActor(Actor *actor, AppState *appState) {
+// Updates the renderRect position based on the the current actor position.
+// Position is applied to the center of the sprite.
+void SetRenderPosition(sot_actor_t *actor) 
+{
+    int deltaX = actor->currentSprite->width/2;
+    int deltaY = actor->currentSprite->height/2;
 
-    Animation *animation = actor->currentAnim;
+    actor->renderRect = (SDL_FRect) {
+        .x = actor->position[0]-deltaX,
+        .y = actor->position[1]-deltaY,
+        .w = 16,
+        .h = 16};
+}
+
+void RenderActor(sot_actor_t *actor, AppState *appState) {
+
+    sot_sprite_t *animation = actor->currentSprite;
 
     // Get the current time different from last step
     // if higher than the animation time step
@@ -60,13 +72,14 @@ void RenderActor(Actor *actor, AppState *appState) {
         actor->last_step = now;            
     }
 
-    SDL_RenderTexture(appState->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->position));
+    SetRenderPosition(actor);
+    SDL_RenderTexture(appState->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
 
     return;
 }
 
 
-void MoveActor(Actor *actor, SDL_Event *event) 
+void MoveActor(sot_actor_t *actor, SDL_Event *event) 
 {
     if (actor == NULL) return;
 
@@ -90,7 +103,7 @@ void MoveActor(Actor *actor, SDL_Event *event)
     return; 
 }
 
-void UpdateActor(Actor *actor, float deltaTime) {
+void UpdateActor(sot_actor_t *actor, float deltaTime) {
 
     if (actor == NULL)
         return;
@@ -101,28 +114,28 @@ void UpdateActor(Actor *actor, float deltaTime) {
     switch (actor->direction)
     {
         case MOVE_RIGHT:
-            if (actor->currentAnim != actor->anims[2]) actor->currentAnim = actor->anims[2];
-            actor->position.x += actor->vel[0] * deltaTime;
+            if (actor->currentSprite != actor->sprites[2]) actor->currentSprite = actor->sprites[2];
+            actor->position[0] += actor->velocity[0] * deltaTime;
             break;
         case MOVE_LEFT:
-            if (actor->currentAnim != actor->anims[1]) actor->currentAnim = actor->anims[1];
-            actor->position.x -= actor->vel[0] * deltaTime;
+            if (actor->currentSprite != actor->sprites[1]) actor->currentSprite = actor->sprites[1];
+            actor->position[0] -= actor->velocity[0] * deltaTime;
             break;
         case FALL:
-            actor->position.y += 80 * deltaTime;
+            actor->renderRect.y += 80 * deltaTime;
             break;
         case IDLE:
-            if (actor->currentAnim != actor->anims[0]) actor->currentAnim = actor->anims[0];
+            if (actor->currentSprite != actor->sprites[0]) actor->currentSprite = actor->sprites[0];
         default:
             break;
     }
 }
 
-void DestroyActor(Actor *actor) { 
+void DestroyActor(sot_actor_t *actor) { 
     if (actor == NULL) return;
     
-    for (int i = 0; actor->anims[i] != NULL; i++) {
-        DestroySprite(actor->anims[i]);
+    for (int i = 0; actor->sprites[i] != NULL; i++) {
+        DestroySprite(actor->sprites[i]);
     }
 
     free(actor);

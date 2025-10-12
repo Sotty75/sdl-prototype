@@ -8,15 +8,15 @@
 #include "cute_tiled.h"
 
 
-typedef struct Scene {
+typedef struct sot_scene_t {
 
     int id;
-    Actor *player;
-    SOT_Tilemap *sot_tilemap;
-} Scene;
+    sot_actor_t *player;
+    sot_tilemap_t *sot_tilemap;
+} sot_scene_t;
 
 
-Scene* CreateScene(AppState *appState);
+sot_scene_t* CreateScene(AppState *appState);
 
 
 /*****************************************************
@@ -25,14 +25,14 @@ Scene* CreateScene(AppState *appState);
  *   the current game state / player input
  * 
  *****************************************************/
-void UpdateScene(Scene * scene, float deltaTime);
+void UpdateScene(sot_scene_t * scene, float deltaTime);
 
 /*****************************************************
  * 
  *   Renders the scene on the screen
  *    
  *****************************************************/
-void RenderScene(AppState *appState, Scene * scene);
-void DestroyScene(Scene * scene);
+void RenderScene(AppState *appState, sot_scene_t * scene);
+void DestroyScene(sot_scene_t * scene);
 
 #endif

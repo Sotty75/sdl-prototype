@@ -28,7 +28,7 @@ Creates a texture, this is not adding the texture automatically to the textures 
 The texture pool is managed by the GetTexture function, which checks if the texture is in the pool.
 If not, it will be created using this function, added to the pool, and returned to the user.
 */
-SOT_Texture *CreateTexture(char *name, AppState* appState) {
+sot_texture_t *CreateTexture(char *name, AppState* appState) {
     SDL_Surface *spritesheetSurface = NULL;
     GetSurfaceFromImage(&spritesheetSurface, name);
     SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->renderer, spritesheetSurface);
@@ -39,7 +39,7 @@ SOT_Texture *CreateTexture(char *name, AppState* appState) {
     SDL_SetTextureScaleMode(txt, SDL_SCALEMODE_NEAREST);
     SDL_DestroySurface(spritesheetSurface);
 
-    SOT_Texture *sotTexture = malloc(sizeof(SOT_Texture));
+    sot_texture_t *sotTexture = malloc(sizeof(sot_texture_t));
     sotTexture->name = name;
     sotTexture->texture = txt;
     sotTexture->next = NULL;
@@ -50,7 +50,7 @@ SOT_Texture *CreateTexture(char *name, AppState* appState) {
 
 SDL_Texture *GetTexture(char *name, AppState* appState) {
 
-    SOT_Texture *sotTexture = appState->texturesPool;
+    sot_texture_t *sotTexture = appState->texturesPool;
 
     if (sotTexture == NULL) {
         sotTexture = CreateTexture(name, appState);
@@ -84,13 +84,13 @@ SDL_Texture *GetTexture(char *name, AppState* appState) {
 }
 
 void DestroyTexturePool(AppState* appState) {
-    SOT_Texture *sotTexture = appState->texturesPool;
+    sot_texture_t *sotTexture = appState->texturesPool;
     
     if (appState->texturesPool != NULL) 
     {
         for (int i = 0; sotTexture != NULL; i++) 
         {
-            SOT_Texture *nextTexture = sotTexture->next;
+            sot_texture_t *nextTexture = sotTexture->next;
             SDL_DestroyTexture(sotTexture->texture);
             free(sotTexture);
             sotTexture = nextTexture;

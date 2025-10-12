@@ -5,11 +5,11 @@
  * from a spritesheet. the sprites in the spitesheet have to be sorted in order so that we can index the source 
  * sprite efrom the spritesheet by providing the index of the first sprite, the index of the last sprite and the size of each sprite
  */
-Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
+sot_sprite_t *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
     int stepRateMillis, bool cycle,  AppState *appstate)
 {
     // ..initialize the animation structure
-    Animation *animation = malloc(sizeof(Animation));
+    sot_sprite_t *animation = malloc(sizeof(sot_sprite_t));
     if (animation == NULL) return NULL; 
 
     animation->name = name;
@@ -78,7 +78,7 @@ Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex,
 *   Free the memory allocated for the animation
 *   in the heap.
 */
-void DestroySprite(Animation *animation) {
+void DestroySprite(sot_sprite_t *animation) {
     Frame *currentFrame = animation->currentFrame; 
     for (int i = 0; i < animation->framesCount; i++) 
     {
