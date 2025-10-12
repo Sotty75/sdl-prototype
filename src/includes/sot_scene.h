@@ -9,7 +9,6 @@
 
 
 typedef struct Scene {
-
     int id;
     sot_actor_t *player;
     sot_tilemap_t *sot_tilemap;
