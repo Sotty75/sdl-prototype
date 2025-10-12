@@ -7,12 +7,12 @@
 
 
 
-sot_scene_t *CreateScene(AppState *appState) {
+Scene *CreateScene(AppState *appState) {
     // Create all the actors
     // Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
     // player, later we will use a file as an input (JSON, XML....)
 
-    sot_scene_t *currentScene = malloc(sizeof(sot_scene_t));
+    Scene *currentScene = malloc(sizeof(Scene));
     if (currentScene == NULL) return NULL;
 
     // set the scene ID
@@ -53,14 +53,14 @@ sot_scene_t *CreateScene(AppState *appState) {
         currentObject = currentObject->next;
     }
     
-    sot_actor_t *player = CreateActor("Player", startPosition, animations);
+    sot_actor_t *player = CreateActor("Player", startPosition, animations, C2_TYPE_CIRCLE);
     currentScene->player = player;
 
     return currentScene;
 }
 
 
-void UpdateScene(sot_scene_t * scene, float deltaTime) {
+void UpdateScene(Scene * scene, float deltaTime) {
 
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
@@ -72,7 +72,7 @@ void UpdateScene(sot_scene_t * scene, float deltaTime) {
 }
 
 
-void RenderScene(AppState *appState, sot_scene_t * scene) {
+void RenderScene(AppState *appState, Scene * scene) {
 
     // render the map
     RenderTilemap(scene->sot_tilemap, appState);
@@ -81,7 +81,7 @@ void RenderScene(AppState *appState, sot_scene_t * scene) {
     RenderActor(scene->player, appState);    
 }
 
-void DestroyScene(sot_scene_t * scene) {
+void DestroyScene(Scene * scene) {
     DestroyActor(scene->player);
     DestroyTilemap(scene->sot_tilemap);
     free(scene);

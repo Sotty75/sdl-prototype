@@ -44,12 +44,13 @@ typedef struct sot_actor_t {
     sot_sprite_t *currentSprite;
     Uint64 last_step;
     Direction direction;
-    sot_collider_t collider;
+    sot_collider_t *collider;
 } sot_actor_t;
 
-sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims); 
+sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType); 
 void SetPosition(sot_actor_t *actor, vec2 pos);
 void SetVelocity(sot_actor_t *actor, vec2 vel);
+void SetCollider(sot_actor_t *actor, sot_collider_t *collider);
 void MoveActor(sot_actor_t *actor, SDL_Event *event);
 void UpdateActor(sot_actor_t *actor, float deltaTime);
 void SetRenderPosition(sot_actor_t *actor);

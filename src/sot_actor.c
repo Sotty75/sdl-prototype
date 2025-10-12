@@ -4,7 +4,7 @@
 
 
 
-sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims) 
+sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType) 
 {
     sot_actor_t *actor = malloc(sizeof(sot_actor_t));
     if (actor == NULL) return NULL;
@@ -21,12 +21,36 @@ sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims)
     actor->sprites = anims;
     actor->last_step = SDL_GetTicks();
     actor->currentSprite = actor->sprites[0];
+
+    sot_collider_t *collider = malloc(sizeof(sot_collider_t));
+
+    switch (colliderType) {
+        case C2_TYPE_CIRCLE:
+            collider->type = C2_TYPE_CIRCLE;
+            collider->circle.p.x = actor->position[0];
+            collider->circle.p.y = actor->position[1];
+            collider->circle.r = actor->sprites[0]->width/2;
+            break;
+        case C2_TYPE_AABB:
+            collider->type = C2_TYPE_AABB;
+            collider->AABB.min.x = -actor->sprites[0]->width/2;
+            collider->AABB.max.x = actor->sprites[0]->width/2;
+            collider->AABB.min.y = -actor->sprites[0]->height/2;
+            collider->AABB.max.y = actor->sprites[0]->height/2;
+            break;
+        case C2_TYPE_NONE:
+        case C2_TYPE_CAPSULE:
+        case C2_TYPE_POLY:
+        default:
+        collider->type = C2_TYPE_NONE;
+            break;
+    }
+
+    actor->collider = collider;
     SetRenderPosition(actor);
 
     return actor;
 }
-
-
 
 
 void SetPosition(sot_actor_t *actor, vec2 pos) { 
@@ -38,6 +62,18 @@ void SetVelocity(sot_actor_t *actor, vec2 pos) {
     glm_vec2_copy(pos, actor->velocity);
     return; 
 }
+
+void SetCollider(sot_actor_t *actor, sot_collider_t *collider) {
+    
+    // release the memory taken by the previous collider
+    if (actor->collider != NULL)
+        free(actor->collider);
+
+    actor->collider = collider;
+    return;
+}
+
+
 
 // Updates the renderRect position based on the the current actor position.
 // Position is applied to the center of the sprite.
@@ -108,8 +144,8 @@ void UpdateActor(sot_actor_t *actor, float deltaTime) {
     if (actor == NULL)
         return;
 
-    if (actor->applyGravity)
-        actor->direction = FALL;
+   // if (actor->applyGravity)
+   //     actor->direction = FALL;
     
     switch (actor->direction)
     {
@@ -122,7 +158,7 @@ void UpdateActor(sot_actor_t *actor, float deltaTime) {
             actor->position[0] -= actor->velocity[0] * deltaTime;
             break;
         case FALL:
-            actor->renderRect.y += 80 * deltaTime;
+            actor->position[1] += 80 * deltaTime;
             break;
         case IDLE:
             if (actor->currentSprite != actor->sprites[0]) actor->currentSprite = actor->sprites[0];
