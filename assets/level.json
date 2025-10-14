@@ -53,6 +53,12 @@
                  "height":64,
                  "id":3,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"colliderType",
+                         "type":"string",
+                         "value":"AABB"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -64,6 +70,12 @@
                  "height":96,
                  "id":5,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"colliderType",
+                         "type":"string",
+                         "value":"AABB"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -75,6 +87,12 @@
                  "height":25,
                  "id":6,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"colliderType",
+                         "type":"string",
+                         "value":"AABB"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,

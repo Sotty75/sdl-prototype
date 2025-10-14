@@ -1,4 +1,4 @@
-#include "sot_animation.h"
+#include "sot_sprite.h"
 
 /*
  * Create an animation structure made of frames where each frame is loaded

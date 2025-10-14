@@ -24,7 +24,7 @@ set(SOURCE_FILES
     src/main.c
     src/sot_scene.c
     src/sot_actor.c
-    src/sot_animation.c   
+    src/sot_sprite.c   
     src/sot_texture.c
     src/sot_tilemap.c
     src/sot_collider.c

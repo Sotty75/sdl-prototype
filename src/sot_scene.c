@@ -1,9 +1,7 @@
 #define CUTE_TILED_IMPLEMENTATION
 
 #include "sot_scene.h"
-#include "sot_animation.h"
-#include "sot_actor.h"
-#include "cute_tiled.h"
+
 
 
 

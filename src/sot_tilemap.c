@@ -21,8 +21,63 @@ sot_tilemap_t *CreateTilemap(char *tilemapName, AppState *appState)
     sot_tilemap->tilemap = map;
     sot_tilemap->tilesetTexture = tileset;
 
+    //...load the colliders in the colliders list
+    
+    cute_tiled_layer_t *collidersLayer = GetLayer(map, "Game-Collisions");
+    cute_tiled_object_t *currentObject = collidersLayer->objects;
+
+    //...fill the colliders list
+    sot_collider_node_t *previousNode = NULL;
+    while (currentObject != NULL) {
+        sot_collider_node_t *currentNode = malloc(sizeof(sot_collider_node_t));
+        currentNode->collider = GetCollider(currentObject);
+        if (previousNode == NULL) { sot_tilemap->colliders = currentNode; }
+        else { previousNode->next = currentNode; }
+        previousNode = currentNode;
+
+        currentObject = currentObject->next;
+    }
+
 
     return sot_tilemap;
+}
+
+sot_collider_t *GetCollider(cute_tiled_object_t *tiledObject) {
+    // get collider type
+    char *colliderType = NULL;
+    cute_tiled_property_t *properties = tiledObject->properties;
+    for (int i=0; i < tiledObject->property_count; ++i) {
+        if (strcmp(properties[i].name.ptr, "colliderType") == 0) {
+            colliderType = (char *)properties[i].data.string.ptr;
+            break;
+        }
+    }
+
+    if (colliderType == NULL) return NULL;
+
+    // create collider and return
+    sot_collider_t *collider = malloc(sizeof(sot_collider_t));
+    if (strcmp(colliderType, "AABB") == 0) {
+        collider->type = C2_TYPE_AABB; 
+        collider->shape.AABB.min.x = tiledObject->x;
+        collider->shape.AABB.min.y = tiledObject->y;
+        collider->shape.AABB.max.x = tiledObject->x + tiledObject->width;
+        collider->shape.AABB.max.y = tiledObject->y + tiledObject->height;
+    }
+    
+    return collider;
+}
+
+
+cute_tiled_layer_t *GetLayer(cute_tiled_map_t *map, char *layerName) {
+    cute_tiled_layer_t *currentLayer = map->layers;
+    while (currentLayer != NULL) {
+        if (strcmp(layerName, currentLayer->name.ptr) == 0) 
+            return currentLayer;
+        currentLayer = currentLayer->next;
+    }
+
+    return currentLayer;
 }
 
 void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {

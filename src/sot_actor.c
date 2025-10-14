@@ -27,16 +27,16 @@ sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE col
     switch (colliderType) {
         case C2_TYPE_CIRCLE:
             collider->type = C2_TYPE_CIRCLE;
-            collider->circle.p.x = actor->position[0];
-            collider->circle.p.y = actor->position[1];
-            collider->circle.r = actor->sprites[0]->width/2;
+            collider->shape.circle.p.x = actor->position[0];
+            collider->shape.circle.p.y = actor->position[1];
+            collider->shape.circle.r = actor->sprites[0]->width/2;
             break;
         case C2_TYPE_AABB:
             collider->type = C2_TYPE_AABB;
-            collider->AABB.min.x = -actor->sprites[0]->width/2;
-            collider->AABB.max.x = actor->sprites[0]->width/2;
-            collider->AABB.min.y = -actor->sprites[0]->height/2;
-            collider->AABB.max.y = actor->sprites[0]->height/2;
+            collider->shape.AABB.min.x = -actor->sprites[0]->width/2;
+            collider->shape.AABB.max.x = actor->sprites[0]->width/2;
+            collider->shape.AABB.min.y = -actor->sprites[0]->height/2;
+            collider->shape.AABB.max.y = actor->sprites[0]->height/2;
             break;
         case C2_TYPE_NONE:
         case C2_TYPE_CAPSULE:

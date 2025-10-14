@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include "appstate.h"
 #include "sot_actor.h"
+#include "sot_sprite.h"
 #include "sot_tilemap.h"
 #include "cute_tiled.h"
+
 
 
 typedef struct Scene {

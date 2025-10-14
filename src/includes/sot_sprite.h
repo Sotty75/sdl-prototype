@@ -27,7 +27,7 @@ typedef struct Frame {
 /       - frame->height
 /       - frames array
 */
-typedef struct sot_sprite_t {
+typedef struct {
     char *name;
     bool cycle;
     int framesCount;
