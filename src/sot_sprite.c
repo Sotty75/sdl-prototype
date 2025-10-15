@@ -21,7 +21,7 @@ sot_sprite_t *CreateAnimation(char *name, SDL_Surface *spritesheet, int startInd
     animation->cycle = cycle;
 
     // Load the spritesheet in a texture atlas
-    animation->atlas = GetTexture("monkey-sheet.png", appstate);
+    animation->atlas = GetTexture("monkey-sheet-16.png", appstate);
 
     // ...we use a variable to store the previous frame for the current iteration, 
     // so that we can build the chain of frames.

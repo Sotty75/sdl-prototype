@@ -10,11 +10,11 @@ struct sot_actor_t;
 
 typedef struct
 {
-    SDL_Window *window;
-    SDL_Renderer *renderer;
+    SDL_Window *pWindow;
+    SDL_Renderer *pRenderer;
     Uint64 last_step;
     bool full_screen_enabled;
-    struct sot_texture_t *texturesPool;
+    struct sot_texture_t *pTexturesPool;
 } AppState;
 
  #endif

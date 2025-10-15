@@ -26,9 +26,9 @@ Scene *CreateScene(AppState *appState) {
     sot_sprite_t *walkRight = NULL;
     sot_sprite_t *walkLeft = NULL;
     sot_sprite_t *idle = NULL;
-    walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 32, 32, 75, true, appState);
-    walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 32, 32, 75, true, appState);
-    idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 32, 32, 75, true, appState);
+    walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, appState);
+    walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, appState);
+    idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, appState);
 
     //...pack the animations in a NULL terminated array
     sot_sprite_t **animations = malloc(sizeof(sot_sprite_t*) * 4);

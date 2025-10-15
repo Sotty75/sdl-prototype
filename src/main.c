@@ -43,7 +43,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("Test Creazione Finestra", 1024, 768, 0, &as->window, &as->renderer)) {
+    if (!SDL_CreateWindowAndRenderer("Test Creazione Finestra", 1024, 768, 0, &as->pWindow, &as->pRenderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -54,7 +54,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     if (gamepads != NULL && gamepadsCount > 0) { gamepad = SDL_OpenGamepad(gamepads[0]); }
 
 
-    SDL_SetRenderLogicalPresentation(as->renderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     
     // Initialize our main scene
@@ -64,7 +64,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     //...store initialized application state so it will be shared in other
     // functions.
-    as->texturesPool = NULL;
+    as->pTexturesPool = NULL;
     as->full_screen_enabled = false;
     as->last_step = SDL_GetTicks();
     *appstate = as;
@@ -90,11 +90,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         case SDL_EVENT_KEY_DOWN:
             if (event->key.scancode == SDL_SCANCODE_0 && as->full_screen_enabled) {
                 as->full_screen_enabled = false;
-                SDL_SetWindowFullscreen(as->window, false);
+                SDL_SetWindowFullscreen(as->pWindow, false);
             }
             else if (event->key.scancode == SDL_SCANCODE_0) {
                 as->full_screen_enabled = true;    
-                SDL_SetWindowFullscreen(as->window, SDL_WINDOW_FULLSCREEN);
+                SDL_SetWindowFullscreen(as->pWindow, SDL_WINDOW_FULLSCREEN);
             }
             break;
         default:
@@ -114,15 +114,15 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     as->last_step = now;
 
     /* clear the window to the draw color. */
-    SDL_SetRenderDrawColor(as->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
-    SDL_RenderClear(as->renderer);
+    SDL_SetRenderDrawColor(as->pRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
+    SDL_RenderClear(as->pRenderer);
 
     // Start a new rendering pass
     UpdateScene(currentScene, deltaTime);
     RenderScene(as, currentScene);
 
     /* put the newly-cleared rendering on the screen. */
-    SDL_RenderPresent(as->renderer);
+    SDL_RenderPresent(as->pRenderer);
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
@@ -131,8 +131,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     DestroyTexturePool(as);
-    SDL_DestroyRenderer(as->renderer);
-    SDL_DestroyWindow(as->window);
+    SDL_DestroyRenderer(as->pRenderer);
+    SDL_DestroyWindow(as->pWindow);
     SDL_QuitSubSystem(SDL_INIT_VIDEO||SDL_INIT_GAMEPAD);
     SDL_CloseGamepad(gamepad);
     DestroyScene(currentScene);

@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include "cute_c2.h"
+#include "appstate.h"
 
 typedef struct sot_collider_t {
     C2_TYPE type;
@@ -21,7 +22,7 @@ typedef struct sot_collider_node_t {
 } sot_collider_node_t;
 
 void AddCollider(sot_collider_node_t* , sot_collider_t *);
-void ClearList(sot_collider_node_t* );
-void DestroyList(sot_collider_node_t* );
+void DestroyColliders(sot_collider_node_t* );
+void DrawCollidersDebugInfo(sot_collider_t* , AppState* state);
 
 #endif

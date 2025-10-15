@@ -31,7 +31,7 @@ If not, it will be created using this function, added to the pool, and returned 
 sot_texture_t *CreateTexture(char *name, AppState* appState) {
     SDL_Surface *spritesheetSurface = NULL;
     GetSurfaceFromImage(&spritesheetSurface, name);
-    SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->renderer, spritesheetSurface);
+    SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->pRenderer, spritesheetSurface);
     if (txt == NULL) {
             SDL_Log("Couldn't create texture from surface: %s", SDL_GetError());
             return NULL;
@@ -50,16 +50,16 @@ sot_texture_t *CreateTexture(char *name, AppState* appState) {
 
 SDL_Texture *GetTexture(char *name, AppState* appState) {
 
-    sot_texture_t *sotTexture = appState->texturesPool;
+    sot_texture_t *sotTexture = appState->pTexturesPool;
 
     if (sotTexture == NULL) {
         sotTexture = CreateTexture(name, appState);
-        appState->texturesPool = sotTexture;
+        appState->pTexturesPool = sotTexture;
         return sotTexture->texture;
     }
 
     // look for a texture with the same name
-    if (appState->texturesPool != NULL) {
+    if (appState->pTexturesPool != NULL) {
         for (int i = 0; sotTexture != NULL; i++) {
 
             // if the texture is found in the pool,
@@ -84,9 +84,9 @@ SDL_Texture *GetTexture(char *name, AppState* appState) {
 }
 
 void DestroyTexturePool(AppState* appState) {
-    sot_texture_t *sotTexture = appState->texturesPool;
+    sot_texture_t *sotTexture = appState->pTexturesPool;
     
-    if (appState->texturesPool != NULL) 
+    if (appState->pTexturesPool != NULL) 
     {
         for (int i = 0; sotTexture != NULL; i++) 
         {

@@ -30,9 +30,9 @@ typedef struct sot_actor_t {
     vec2 position;
     vec2 velocity;
     SDL_FRect renderRect;
-    sot_sprite_t **sprites;
-    sot_sprite_t *currentSprite;
-    Uint64 last_step;
+    sot_sprite_t **pSprites;
+    sot_sprite_t *pCurrentSprite;
+    Uint64 lastStep;
     Direction direction;
     sot_collider_t *collider;
 } sot_actor_t;

@@ -28,16 +28,17 @@ sot_tilemap_t *CreateTilemap(char *tilemapName, AppState *appState)
 
     //...fill the colliders list
     sot_collider_node_t *previousNode = NULL;
+    
     while (currentObject != NULL) {
         sot_collider_node_t *currentNode = malloc(sizeof(sot_collider_node_t));
         currentNode->collider = GetCollider(currentObject);
+        currentNode->next = NULL;
         if (previousNode == NULL) { sot_tilemap->colliders = currentNode; }
         else { previousNode->next = currentNode; }
         previousNode = currentNode;
 
         currentObject = currentObject->next;
     }
-
 
     return sot_tilemap;
 }
@@ -125,13 +126,19 @@ void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
                 .h = tileHeight
             };
 
-            SDL_RenderTexture(appState->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
+            SDL_RenderTexture(appState->pRenderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
+            
+            sot_collider_node_t * collider = current_tilemap->colliders;
+            while (collider) {
+                DrawCollidersDebugInfo(collider->collider, appState);
+                collider = collider->next;
+            }
         }
     }
 }
 
 void DestroyTilemap(sot_tilemap_t *current_tilemap) {
     cute_tiled_free_map(current_tilemap->tilemap);
-    
+    DestroyColliders(current_tilemap->colliders);
     free(current_tilemap);
 }
