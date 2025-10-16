@@ -40,6 +40,9 @@ sot_tilemap_t *CreateTilemap(char *tilemapName, AppState *appState)
         currentObject = currentObject->next;
     }
 
+    // Add the list of tilemap colliders to the linked list of world colliders
+    // AppendCollidersList(appState->pStaticColliders, sot_tilemap->colliders);
+
     return sot_tilemap;
 }
 

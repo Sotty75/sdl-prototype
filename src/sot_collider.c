@@ -1,9 +1,9 @@
 #define CUTE_C2_IMPLEMENTATION
 
-#include <stdlib.h>
 #include "sot_collider.h"
 
-void AddCollider(sot_collider_node_t* list, sot_collider_t *collider) {
+
+void AppendCollider(sot_collider_node_t* list, sot_collider_t *collider) {
     sot_collider_node_t *new_node = malloc(sizeof(sot_collider_node_t));
     new_node->collider = collider;
     new_node->next = NULL;
@@ -19,6 +19,32 @@ void AddCollider(sot_collider_node_t* list, sot_collider_t *collider) {
     }
 
     return;
+}
+
+void AppendCollidersList(sot_collider_node_t* destination, sot_collider_node_t* colliders) {
+    
+    // Get the first node of the target list
+    sot_collider_node_t *currentNode = destination;
+
+    if (currentNode == NULL)
+        currentNode = colliders;
+    else 
+        while (currentNode->next != NULL) currentNode = currentNode->next;
+        currentNode->next = colliders;
+
+    return;
+}
+
+// Returns the total number of colliders currently present in the list.
+int CollidersCount(sot_collider_node_t* colliders) {
+    int count = 0;
+
+    while (colliders != NULL) {
+        colliders++;
+        colliders = colliders->next;
+    }
+
+    return count;
 }
 
 void DrawCollidersDebugInfo(sot_collider_t* pCollider, AppState* appState) {
@@ -45,14 +71,16 @@ void DrawCollidersDebugInfo(sot_collider_t* pCollider, AppState* appState) {
                 float radius = pCollider->shape.circle.r;
 
                 // creates a "circ7le" centered in the collider position approximate, with 36 segments
-                SDL_FPoint circle[2];
-                for (int i = 0; i <= 1; i++) {
-                    double angle_radians = 10*i * M_PI / 180.0;
+                SDL_FPoint circle[45];
+                double radians[45];
+
+                for (int i = 0; i <= 44; i++) {
+                    double angle_radians = (8.0 / 180.0) * M_PI * i ;
                     circle[i].x = position.x + radius*cos(angle_radians);
                     circle[i].y = position.y + radius*sin(angle_radians);
                 }
                 SDL_RenderPoint(appState->pRenderer, position.x, position.y);
-                // SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&circle, 37);
+                SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&circle, 45);
             } break;
         default:
             break;

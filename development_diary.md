@@ -224,7 +224,7 @@ I can breakdown this work in three steps:
 I have completed the first two tasks, we will implement the collision detection tomorrow to test the logic.
 Have a good night.
 
-## October 15, 2025
+## October 16, 2025
 
 ### Todays' Menu
 I am doing some small changes to adopt some naming convention in order to identify pointers from normal variables more easily. Nothing fancy. Before to proceed with the testing of the colliders, i decided to add a small function to render the collider shape on the screen, this will be helpful in troubleshooting the colliders implementation.

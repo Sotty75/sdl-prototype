@@ -51,7 +51,7 @@ Scene *CreateScene(AppState *appState) {
         currentObject = currentObject->next;
     }
     
-    sot_actor_t *player = CreateActor("Player", startPosition, animations, C2_TYPE_CIRCLE);
+    sot_actor_t *player = CreateActor("Player", startPosition, animations, C2_TYPE_CIRCLE, appState);
     currentScene->player = player;
 
     return currentScene;

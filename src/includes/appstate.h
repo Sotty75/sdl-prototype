@@ -5,8 +5,9 @@
 
 // Forward-declare the SOT_Texture struct
 // This tells the compiler that "struct SOT_Texture" is a valid type
-struct sot_texture_t;
 struct sot_actor_t;
+struct sot_texture_t;
+struct sot_collider_node_t;
 
 typedef struct
 {
@@ -15,6 +16,8 @@ typedef struct
     Uint64 last_step;
     bool full_screen_enabled;
     struct sot_texture_t *pTexturesPool;
+    struct sot_collider_node_t *pDynamicColliders;
+    struct sot_collider_node_t *pStaticColliders;
 } AppState;
 
  #endif

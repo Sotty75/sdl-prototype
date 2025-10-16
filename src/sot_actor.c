@@ -4,7 +4,7 @@
 
 
 
-sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType) 
+sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType, AppState *appState) 
 {
     sot_actor_t *actor = malloc(sizeof(sot_actor_t));
     if (actor == NULL) return NULL;
@@ -17,11 +17,14 @@ sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE col
     actor->position[1]=pos[1];
     actor->velocity[0]=10;
     actor->velocity[1]=0;
-
+    
+    // Sprite Initialization
     actor->pSprites = anims;
     actor->lastStep = SDL_GetTicks();
     actor->pCurrentSprite = actor->pSprites[0];
-
+    SetRenderPosition(actor);
+    
+    // Collider Initialization
     sot_collider_t *collider = malloc(sizeof(sot_collider_t));
 
     switch (colliderType) {
@@ -45,9 +48,10 @@ sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE col
         collider->type = C2_TYPE_NONE;
             break;
     }
-
+    
     actor->collider = collider;
-    SetRenderPosition(actor);
+    AppendCollider(appState->pDynamicColliders, collider);
+
 
     return actor;
 }
@@ -71,6 +75,36 @@ void SetCollider(sot_actor_t *actor, sot_collider_t *collider) {
 
     actor->collider = collider;
     return;
+}
+
+/*
+ *   Updates the collider poition / geometry to follow the sprite
+ *   current position while moving on the screen.
+ */
+void UpdateCollider(sot_actor_t *actor) {
+    sot_collider_t *collider = actor->collider;
+
+    switch (collider->type) {
+        case C2_TYPE_CIRCLE:
+            collider->shape.circle.p.x = actor->position[0];
+            collider->shape.circle.p.y = actor->position[1];
+            collider->shape.circle.r = actor->pSprites[0]->width/2;
+            break;
+        case C2_TYPE_AABB:
+            collider->type = C2_TYPE_AABB;
+            collider->shape.AABB.min.x = -actor->pSprites[0]->width/2;
+            collider->shape.AABB.max.x = actor->pSprites[0]->width/2;
+            collider->shape.AABB.min.y = -actor->pSprites[0]->height/2;
+            collider->shape.AABB.max.y = actor->pSprites[0]->height/2;
+            break;
+        case C2_TYPE_NONE:
+        case C2_TYPE_CAPSULE:
+        case C2_TYPE_POLY:
+        default:
+        collider->type = C2_TYPE_NONE;
+            break;
+    }
+
 }
 
 
@@ -167,6 +201,11 @@ void UpdateActor(sot_actor_t *actor, float deltaTime) {
         default:
             break;
     }
+
+    // Update the position of the attached collider.
+    UpdateCollider(actor);
+
+    return;
 }
 
 void DestroyActor(sot_actor_t *actor) { 
