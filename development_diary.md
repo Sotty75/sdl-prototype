@@ -246,3 +246,5 @@ I am doing some small changes to adopt some naming convention in order to identi
   - Eventually, it will have a reference to some Sprite Descriptor file where we can identify in a text format the sprite properties, animations and so forth.
 - The texture pool is cleaned once when a scene is destroyed, maybe we can fine tune it to destory individual textures when needed, 
   to make better use of the memory. To do that, we may need to use another type of data structure so we can remove a texture from the list whatever is its position.
+- rather than a linked list, for some data structures like arrays of colliders and in general for ECS approach it should be better to  
+  use arrays of a given lenght.
