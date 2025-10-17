@@ -67,6 +67,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     as->pTexturesPool = NULL;
     as->full_screen_enabled = false;
     as->last_step = SDL_GetTicks();
+    as->debugInfo.displayColliders = false;
     *appstate = as;
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
@@ -88,14 +89,17 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             MoveActor(currentScene->player, event);
             break;
         case SDL_EVENT_KEY_DOWN:
-            if (event->key.scancode == SDL_SCANCODE_0 && as->full_screen_enabled) {
-                as->full_screen_enabled = false;
-                SDL_SetWindowFullscreen(as->pWindow, false);
-            }
-            else if (event->key.scancode == SDL_SCANCODE_0) {
-                as->full_screen_enabled = true;    
-                SDL_SetWindowFullscreen(as->pWindow, SDL_WINDOW_FULLSCREEN);
-            }
+            switch (event->key.scancode) {
+                case SDL_SCANCODE_0:
+                    as->full_screen_enabled = !as->full_screen_enabled;
+                    SDL_SetWindowFullscreen(as->pWindow, as->full_screen_enabled);
+                    break;
+                case SDL_SCANCODE_1:
+                    as->debugInfo.displayColliders = !as->debugInfo.displayColliders;
+                    break;
+                default:
+                    break;
+                }
             break;
         default:
             break;

@@ -9,15 +9,22 @@ struct sot_actor_t;
 struct sot_texture_t;
 struct sot_collider_node_t;
 
+typedef struct {
+    bool displayColliders;
+} sot_debug_info_t;
+
 typedef struct
 {
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
     Uint64 last_step;
     bool full_screen_enabled;
+    sot_debug_info_t debugInfo;
     struct sot_texture_t *pTexturesPool;
     struct sot_collider_node_t *pDynamicColliders;
     struct sot_collider_node_t *pStaticColliders;
 } AppState;
+
+
 
  #endif

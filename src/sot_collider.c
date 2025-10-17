@@ -48,6 +48,8 @@ int CollidersCount(sot_collider_node_t* colliders) {
 }
 
 void DrawCollidersDebugInfo(sot_collider_t* pCollider, AppState* appState) {
+    if (!appState->debugInfo.displayColliders)
+        return;
 
     // Debug info is rendered in red color
     SDL_SetRenderDrawColor(appState->pRenderer, 255, 0, 0, SDL_ALPHA_OPAQUE);

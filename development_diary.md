@@ -232,6 +232,16 @@ I am doing some small changes to adopt some naming convention in order to identi
 - Implement a draw function that can take a collider in input and render it in some color on the screen, as a set of lines.
 - Enable the possibility to display or hide the debug info pressing a key on the keyboard.
 
+## October 17, 2025
+
+### Todays' Menu
+I have only spent 20 minutes on the project as tonight I was pretty tired.
+The debug drawing logic was completed by adding a switch to display/hide the debug info rendering.
+I added this switch in a dedicatged struct inside of the appstate entity which is more or less available in any call.
+
+Tomorrow I may continue testing the collision logic itself, implementing some kind of gravity and testing the collision against wall.
+I may then spend some additional time in working out the building blocks of a test layer (template tileset and on the sprites), maybe working on the jujmp logic.
+
 
 ## Later
 
