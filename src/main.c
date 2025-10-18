@@ -122,7 +122,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     SDL_RenderClear(as->pRenderer);
 
     // Start a new rendering pass
-    UpdateScene(currentScene, deltaTime);
+    UpdateScene(as, currentScene, deltaTime);
     RenderScene(as, currentScene);
 
     /* put the newly-cleared rendering on the screen. */

@@ -5,7 +5,7 @@
 
 
 
-Scene *CreateScene(AppState *appState) {
+Scene *CreateScene(AppState *as) {
     // Create all the actors
     // Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
     // player, later we will use a file as an input (JSON, XML....)
@@ -18,7 +18,7 @@ Scene *CreateScene(AppState *appState) {
 
     // ...create the tilemap and include it into the scene
     char *assetName = "level.json";
-    currentScene->sot_tilemap = CreateTilemap(assetName, appState);
+    currentScene->sot_tilemap = CreateTilemap(assetName, as);
     if (currentScene->sot_tilemap == NULL) return NULL;
 
     //... load the spritesheet inside of the texture
@@ -26,9 +26,9 @@ Scene *CreateScene(AppState *appState) {
     sot_sprite_t *walkRight = NULL;
     sot_sprite_t *walkLeft = NULL;
     sot_sprite_t *idle = NULL;
-    walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, appState);
-    walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, appState);
-    idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, appState);
+    walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as);
+    walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, as);
+    idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, as);
 
     //...pack the animations in a NULL terminated array
     sot_sprite_t **animations = malloc(sizeof(sot_sprite_t*) * 4);
@@ -51,32 +51,32 @@ Scene *CreateScene(AppState *appState) {
         currentObject = currentObject->next;
     }
     
-    sot_actor_t *player = CreateActor("Player", startPosition, animations, C2_TYPE_CIRCLE, appState);
+    sot_actor_t *player = CreateActor(as, "Player", startPosition, animations, C2_TYPE_CIRCLE);
     currentScene->player = player;
 
     return currentScene;
 }
 
 
-void UpdateScene(Scene * scene, float deltaTime) {
+void UpdateScene(AppState *as, Scene * scene, float deltaTime) {
 
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
     // update game status
 
     // update camera
-    UpdateActor(scene->player, deltaTime);
+    UpdateActor(as, scene->player, deltaTime);
     return;
 }
 
 
-void RenderScene(AppState *appState, Scene * scene) {
+void RenderScene(AppState *as, Scene * scene) {
 
     // render the map
-    RenderTilemap(scene->sot_tilemap, appState);
+    RenderTilemap(scene->sot_tilemap, as);
 
     // for each actor in the scene, render it on the screen.
-    RenderActor(scene->player, appState);    
+    RenderActor(as, scene->player);    
 }
 
 void DestroyScene(Scene * scene) {

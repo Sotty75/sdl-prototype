@@ -21,16 +21,15 @@ void AppendCollider(sot_collider_node_t* list, sot_collider_t *collider) {
     return;
 }
 
-void AppendCollidersList(sot_collider_node_t* destination, sot_collider_node_t* colliders) {
+void AppendCollidersList(sot_collider_node_t** destination, sot_collider_node_t* colliders) {
     
-    // Get the first node of the target list
-    sot_collider_node_t *currentNode = destination;
-
-    if (currentNode == NULL)
-        currentNode = colliders;
-    else 
-        while (currentNode->next != NULL) currentNode = currentNode->next;
-        currentNode->next = colliders;
+    if (*destination == NULL)
+        *destination = colliders;
+    else {
+        while ((*destination)->next != NULL) 
+            (*destination) = (*destination)->next;
+        (*destination)->next = colliders;
+    } 
 
     return;
 }
@@ -47,7 +46,7 @@ int CollidersCount(sot_collider_node_t* colliders) {
     return count;
 }
 
-void DrawCollidersDebugInfo(sot_collider_t* pCollider, AppState* appState) {
+void DrawCollidersDebugInfo(sot_collider_t* pCollider, const AppState* appState) {
     if (!appState->debugInfo.displayColliders)
         return;
 

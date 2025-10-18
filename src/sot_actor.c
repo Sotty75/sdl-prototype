@@ -4,7 +4,7 @@
 
 
 
-sot_actor_t *CreateActor(char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType, AppState *appState) 
+sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType) 
 {
     sot_actor_t *actor = malloc(sizeof(sot_actor_t));
     if (actor == NULL) return NULL;
@@ -124,7 +124,7 @@ void SetRenderPosition(sot_actor_t *actor)
     };
 }
 
-void RenderActor(sot_actor_t *actor, AppState *appState) {
+void RenderActor(const AppState *appState, sot_actor_t *actor) {
 
     sot_sprite_t *animation = actor->pCurrentSprite;
 
@@ -175,14 +175,96 @@ void MoveActor(sot_actor_t *actor, SDL_Event *event)
     return; 
 }
 
-void UpdateActor(sot_actor_t *actor, float deltaTime) {
+void Hit(const AppState *as, sot_actor_t *actor) {
+    
+    memset(actor->collisionInfo, 0, sizeof(actor->collisionInfo));
+    int hit = false;
+    
+    C2_TYPE actorType;
+    void *actorShape;
+
+    // rectrieve actorShape;
+    switch (actor->collider->type) {
+        case C2_TYPE_CIRCLE:
+            actorType = C2_TYPE_CIRCLE;
+            actorShape = &(actor->collider->shape.circle);
+            break;
+        case C2_TYPE_AABB:
+            actorType = C2_TYPE_AABB;
+            actorShape = &(actor->collider->shape.AABB);
+            break;
+        case C2_TYPE_NONE:
+        case C2_TYPE_CAPSULE:
+        case C2_TYPE_POLY:
+        default:
+            actorType = C2_TYPE_NONE;
+            actorShape = NULL;
+            break;
+    }
+
+    if (actorShape == NULL) return;
+
+    int hitsCount = 0;
+    sot_collider_node_t *staticCollider = as->pStaticColliders;
+    // for each static collider check the collision between the actor and the collider
+    while (staticCollider != NULL) {
+        // get static collider info
+
+        C2_TYPE colliderType;
+        void *colliderShape;
+
+        // rectrieve actorShape;
+        switch (staticCollider->collider->type) {
+            case C2_TYPE_CIRCLE:
+                colliderType = C2_TYPE_CIRCLE;
+                colliderShape = &(staticCollider->collider->shape.circle);
+                break;
+            case C2_TYPE_AABB:
+                colliderType = C2_TYPE_AABB;
+                colliderShape = &(staticCollider->collider->shape.AABB);
+                break;
+            case C2_TYPE_NONE:
+            case C2_TYPE_CAPSULE:
+            case C2_TYPE_POLY:
+            default:
+                colliderType = C2_TYPE_NONE;
+                colliderShape = NULL;
+                break;
+        }
+
+        // get collision info
+        c2Manifold  collisionInfo = {0};  
+        c2Collide(actorShape, NULL, actorType, colliderShape, NULL, colliderType, &collisionInfo);
+        if (collisionInfo.count > 0) {
+            actor->collisionInfo[hitsCount] = collisionInfo;
+            hitsCount++;
+        }
+        
+        staticCollider = staticCollider->next;
+    }
+
+    return;
+}
+
+void UpdateActor(const AppState *as, sot_actor_t *actor, float deltaTime) {
 
     if (actor == NULL)
         return;
 
-   // if (actor->applyGravity)
-   //     actor->direction = FALL;
+    if (actor->applyGravity)
+        actor->direction = FALL;
     
+    // to evaluate the collision when we move we need to understand if in the direction of the movement we can move or not
+    // so we need to be aware of any collision that is in place. Basically, if in the previous frame there was a collision and we identified it as
+    // a collision stopping any movement in a given direction, we need to take it in account when evaluating the new position of the 
+    // actor. 
+    // The logic can be then implemented by evaluationg a collision, storing the outcome in some structure linked to the actor wher
+    // maybe we can store the constraint, maybe as enums (COOLLISION_RIGHT, COLLISION_LEFT...). THen we can use it in the 
+    // switch updating the position to decide if we want or not to apply the collision. 
+    // Thinking about it, maybe rather than an enum we may have an actual vector that describes the constraint force applied to the movement of the player.
+    // Based on the strenght of this force (or maybe just the velocity) we cna adjust the new position in different directions.
+    // That means that even when moving left or right, in case of a slope, we will adjust the vertical position.
+
     switch (actor->direction)
     {
         case MOVE_RIGHT:
@@ -194,7 +276,7 @@ void UpdateActor(sot_actor_t *actor, float deltaTime) {
             actor->position[0] -= actor->velocity[0] * deltaTime;
             break;
         case FALL:
-            actor->position[1] += 80 * deltaTime;
+            actor->position[1] += 2 * deltaTime;
             break;
         case IDLE:
             if (actor->pCurrentSprite != actor->pSprites[0]) actor->pCurrentSprite = actor->pSprites[0];
@@ -204,6 +286,7 @@ void UpdateActor(sot_actor_t *actor, float deltaTime) {
 
     // Update the position of the attached collider.
     UpdateCollider(actor);
+    Hit(as, actor);
 
     return;
 }

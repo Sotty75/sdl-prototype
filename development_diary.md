@@ -239,8 +239,16 @@ I have only spent 20 minutes on the project as tonight I was pretty tired.
 The debug drawing logic was completed by adding a switch to display/hide the debug info rendering.
 I added this switch in a dedicatged struct inside of the appstate entity which is more or less available in any call.
 
-Tomorrow I may continue testing the collision logic itself, implementing some kind of gravity and testing the collision against wall.
-I may then spend some additional time in working out the building blocks of a test layer (template tileset and on the sprites), maybe working on the jujmp logic.
+So far, today, I completed the implementation of a basic collision logic between the actor and the tileset colliders, it looks to work as I expect for the moment.
+
+Next step will be handling the reaction force from the obstacle in the evaluation of the next position (to stand on a platform, or for example to swim in a fluid or to float on a baloon...). This will be handled with a force.
+
+Also I may think of porting this to use Box2D, but that is a possible task for next week.
+
+
+## October 17, 2025
+
+### Todays' Menu
 
 
 ## Later

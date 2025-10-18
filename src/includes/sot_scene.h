@@ -17,7 +17,7 @@ typedef struct Scene {
 } Scene;
 
 
-Scene* CreateScene(AppState *appState);
+Scene* CreateScene(AppState *as);
 
 
 /*****************************************************
@@ -26,14 +26,14 @@ Scene* CreateScene(AppState *appState);
  *   the current game state / player input
  * 
  *****************************************************/
-void UpdateScene(Scene * scene, float deltaTime);
+void UpdateScene(AppState *as, Scene * scene, float deltaTime);
 
 /*****************************************************
  * 
  *   Renders the scene on the screen
  *    
  *****************************************************/
-void RenderScene(AppState *appState, Scene * scene);
+void RenderScene(AppState *as, Scene * scene);
 void DestroyScene(Scene * scene);
 
 #endif
