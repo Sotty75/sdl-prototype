@@ -98,7 +98,6 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
                     float max_x = glm_max(poly[i+1].x, poly[i].x);
                     float min_y = glm_min(poly[i+1].y, poly[i].y);
                     float max_y = glm_max(poly[i+1].y, poly[i].y);
-                    SDL_SetRenderDrawColor(appState->pRenderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
                     
                     SDL_FPoint nPos = {
                         .x = min_x + (max_x - min_x) / 2,
@@ -112,7 +111,6 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
                     SDL_RenderLine(appState->pRenderer, nPos.x, nPos.y, nVector.x, nVector.y);
                 }
 
-                SDL_SetRenderDrawColor(appState->pRenderer, 255, 0,  0, SDL_ALPHA_OPAQUE);
                 // render edges
                 SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&poly, size + 1);
 
