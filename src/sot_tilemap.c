@@ -61,12 +61,27 @@ sot_collider_t *GetCollider(cute_tiled_object_t *tiledObject) {
 
     // create collider and return
     sot_collider_t *collider = malloc(sizeof(sot_collider_t));
+    memset(collider, 0, sizeof(collider));
+    
     if (strcmp(colliderType, "AABB") == 0) {
         collider->type = C2_TYPE_AABB; 
         collider->shape.AABB.min.x = tiledObject->x;
         collider->shape.AABB.min.y = tiledObject->y;
         collider->shape.AABB.max.x = tiledObject->x + tiledObject->width;
         collider->shape.AABB.max.y = tiledObject->y + tiledObject->height;
+    }
+    else if (strcmp(colliderType, "POLY") == 0) {
+        
+        collider->type = C2_TYPE_POLY;
+        collider->shape.poly.count = tiledObject->vert_count;
+        
+        for (int i = 0; i < tiledObject->vert_count; i++) {
+            collider->shape.poly.verts[i].x = tiledObject->x + tiledObject->vertices[2*i];
+            collider->shape.poly.verts[i].y = tiledObject->y + tiledObject->vertices[2*i+1];
+        }
+
+        // Generates the normals information.
+        c2MakePoly(&(collider->shape.poly));
     }
     
     return collider;
@@ -133,7 +148,7 @@ void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
             
             sot_collider_node_t * collider = current_tilemap->colliders;
             while (collider) {
-                DrawCollidersDebugInfo(collider->collider, appState);
+                DrawCollidersDebugInfo(*(collider->collider), appState);
                 collider = collider->next;
             }
         }

@@ -25,32 +25,32 @@ sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t 
     SetRenderPosition(actor);
     
     // Collider Initialization
-    sot_collider_t *collider = malloc(sizeof(sot_collider_t));
+    sot_collider_t collider = {0};
 
     switch (colliderType) {
         case C2_TYPE_CIRCLE:
-            collider->type = C2_TYPE_CIRCLE;
-            collider->shape.circle.p.x = actor->position[0];
-            collider->shape.circle.p.y = actor->position[1];
-            collider->shape.circle.r = actor->pSprites[0]->width/2;
+            collider.type = C2_TYPE_CIRCLE;
+            collider.shape.circle.p.x = actor->position[0];
+            collider.shape.circle.p.y = actor->position[1];
+            collider.shape.circle.r = actor->pSprites[0]->width/2;
             break;
         case C2_TYPE_AABB:
-            collider->type = C2_TYPE_AABB;
-            collider->shape.AABB.min.x = -actor->pSprites[0]->width/2;
-            collider->shape.AABB.max.x = actor->pSprites[0]->width/2;
-            collider->shape.AABB.min.y = -actor->pSprites[0]->height/2;
-            collider->shape.AABB.max.y = actor->pSprites[0]->height/2;
+            collider.type = C2_TYPE_AABB;
+            collider.shape.AABB.min.x = -actor->pSprites[0]->width/2;
+            collider.shape.AABB.max.x = actor->pSprites[0]->width/2;
+            collider.shape.AABB.min.y = -actor->pSprites[0]->height/2;
+            collider.shape.AABB.max.y = actor->pSprites[0]->height/2;
             break;
         case C2_TYPE_NONE:
         case C2_TYPE_CAPSULE:
         case C2_TYPE_POLY:
         default:
-        collider->type = C2_TYPE_NONE;
+        collider.type = C2_TYPE_NONE;
             break;
     }
     
     actor->collider = collider;
-    AppendCollider(appState->pDynamicColliders, collider);
+    AppendCollider(appState->pDynamicColliders, &(actor->collider));
 
 
     return actor;
@@ -67,12 +67,7 @@ void SetVelocity(sot_actor_t *actor, vec2 pos) {
     return; 
 }
 
-void SetCollider(sot_actor_t *actor, sot_collider_t *collider) {
-    
-    // release the memory taken by the previous collider
-    if (actor->collider != NULL)
-        free(actor->collider);
-
+void SetCollider(sot_actor_t *actor, sot_collider_t collider) {
     actor->collider = collider;
     return;
 }
@@ -82,7 +77,7 @@ void SetCollider(sot_actor_t *actor, sot_collider_t *collider) {
  *   current position while moving on the screen.
  */
 void UpdateCollider(sot_actor_t *actor) {
-    sot_collider_t *collider = actor->collider;
+    sot_collider_t *collider = &(actor->collider);
 
     switch (collider->type) {
         case C2_TYPE_CIRCLE:
@@ -101,7 +96,7 @@ void UpdateCollider(sot_actor_t *actor) {
         case C2_TYPE_CAPSULE:
         case C2_TYPE_POLY:
         default:
-        collider->type = C2_TYPE_NONE;
+            collider->type = C2_TYPE_NONE;
             break;
     }
 
@@ -184,14 +179,14 @@ void Hit(const AppState *as, sot_actor_t *actor) {
     void *actorShape;
 
     // rectrieve actorShape;
-    switch (actor->collider->type) {
+    switch (actor->collider.type) {
         case C2_TYPE_CIRCLE:
             actorType = C2_TYPE_CIRCLE;
-            actorShape = &(actor->collider->shape.circle);
+            actorShape = &(actor->collider.shape.circle);
             break;
         case C2_TYPE_AABB:
             actorType = C2_TYPE_AABB;
-            actorShape = &(actor->collider->shape.AABB);
+            actorShape = &(actor->collider.shape.AABB);
             break;
         case C2_TYPE_NONE:
         case C2_TYPE_CAPSULE:

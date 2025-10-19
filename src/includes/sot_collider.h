@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include "cglm.h"
 #include "appstate.h"
 #include "cute_c2.h"
 
@@ -29,6 +30,6 @@ void AppendCollider(sot_collider_node_t* , sot_collider_t *);
 void AppendCollidersList(sot_collider_node_t** , sot_collider_node_t*);
 void DestroyColliders(sot_collider_node_t* );
 int CollidersCount(sot_collider_node_t* );
-void DrawCollidersDebugInfo(sot_collider_t* , const AppState* state);
+void DrawCollidersDebugInfo(sot_collider_t , const AppState* state);
 
 #endif

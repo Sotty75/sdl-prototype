@@ -17,7 +17,7 @@ Scene *CreateScene(AppState *as) {
     currentScene->id = 1;
 
     // ...create the tilemap and include it into the scene
-    char *assetName = "level.json";
+    char *assetName = "level_00.json";
     currentScene->sot_tilemap = CreateTilemap(assetName, as);
     if (currentScene->sot_tilemap == NULL) return NULL;
 

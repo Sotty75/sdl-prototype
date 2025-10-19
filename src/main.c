@@ -20,14 +20,9 @@
 #include "box2d.h"
 #include "sot_engine.h"
 
-
-
 AppState *as = NULL;
 static Scene *currentScene = NULL;    
 SDL_Gamepad *gamepad = NULL;
-
-
-
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -43,10 +38,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         return SDL_APP_FAILURE;
     }
 
+    // Initialize the window and renderer entities.
     if (!SDL_CreateWindowAndRenderer("Test Creazione Finestra", 1024, 768, 0, &as->pWindow, &as->pRenderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+
+    SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     //...gamepad initialization logic
     int gamepadsCount = 0;
@@ -54,7 +52,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     if (gamepads != NULL && gamepadsCount > 0) { gamepad = SDL_OpenGamepad(gamepads[0]); }
 
 
-    SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     
     // Initialize our main scene
