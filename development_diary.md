@@ -246,10 +246,11 @@ Next step will be handling the reaction force from the obstacle in the evaluatio
 Also I may think of porting this to use Box2D, but that is a possible task for next week.
 
 
-## October 17, 2025
+## October 19, 2025
 
 ### Todays' Menu
 
+I have reworked the test tiled map to use a better tiles resolution (now they are 16x16 pixels) and implemented the logic to handle polygonal colliders in the map, required to work with slopes.
 
 ## Later
 
