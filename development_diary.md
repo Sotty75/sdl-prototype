@@ -252,6 +252,10 @@ Also I may think of porting this to use Box2D, but that is a possible task for n
 
 I have reworked the test tiled map to use a better tiles resolution (now they are 16x16 pixels) and implemented the logic to handle polygonal colliders in the map, required to work with slopes.
 
+## October 20, 2025
+
+Started to work on a different branch to migrate my rendering logic to SDL_GPU as it looks like the way to go.
+
 ## Later
 
 - Implementation of a precise delta time logic which does not depend on the system framerate.

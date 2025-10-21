@@ -22,6 +22,7 @@ find_package(SDL3_image REQUIRED CONFIG)
 # When you add a new file to your project, add it to this list.
 set(SOURCE_FILES
     src/main.c
+    src/common.c
     src/sot_scene.c
     src/sot_actor.c
     src/sot_sprite.c   
