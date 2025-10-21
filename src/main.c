@@ -10,8 +10,6 @@
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 
-
-
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -51,13 +49,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     SDL_JoystickID * gamepads =  SDL_GetGamepads(&gamepadsCount);
     if (gamepads != NULL && gamepadsCount > 0) { gamepad = SDL_OpenGamepad(gamepads[0]); }
 
-
-
-    
     // Initialize our main scene
     currentScene = CreateScene(as);
     if (currentScene == NULL) return SDL_APP_FAILURE;
-
 
     //...store initialized application state so it will be shared in other
     // functions.
