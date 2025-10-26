@@ -1,7 +1,7 @@
 #include "common.h"
 
 static const char* BasePath = NULL;
-void InitializeAssetLoader()
+void InitializeAssetsLoader()
 {
 	BasePath = SDL_GetBasePath();
 }
@@ -36,15 +36,15 @@ SDL_GPUShader* LoadShader(
 	const char *entrypoint;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
 		entrypoint = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 		entrypoint = "main";
 	} else {
@@ -94,15 +94,15 @@ SDL_GPUComputePipeline* CreateComputePipelineFromShader(
 	const char *entrypoint;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
 		entrypoint = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 		entrypoint = "main";
 	} else {

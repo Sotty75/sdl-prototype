@@ -17,6 +17,9 @@ typedef struct
 {
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
+    SDL_GPUDevice *gpuDevice;
+    SDL_GPUGraphicsPipeline *renderingPipeline;
+    SDL_GPUBuffer *vertexBuffer;
     Uint64 last_step;
     bool full_screen_enabled;
     sot_debug_info_t debugInfo;

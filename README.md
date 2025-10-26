@@ -22,6 +22,16 @@ You need also the libraries themselves (header files) available in your include 
 - SDL3
 - SDL_Image
 
+## Shaders compilation
+
+```
+PS F:\Coding\sdl-prototype\assets\shaders\source> glslc f:\coding\sdl-prototype\assets\shaders\source\shader.frag -o shader.frag.spv
+```
+
+```
+PS F:\Coding\sdl-prototype\assets\shaders\source> glslc f:\coding\sdl-prototype\assets\shaders\source\shader.frag -o shader.frag.spv
+```
+
 ## SDL Reference Links
 
 [SDL3](https://wiki.libsdl.org/SDL3/FrontPage)

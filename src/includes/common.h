@@ -3,6 +3,14 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+#include "cglm.h"
+
+void InitializeAssetsLoader();
+
+typedef struct {
+	vec3 position;
+	vec3 color;
+} vertex;
 
 SDL_GPUShader* LoadShader(
 	SDL_GPUDevice* device,
