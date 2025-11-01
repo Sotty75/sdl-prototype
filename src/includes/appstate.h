@@ -20,6 +20,8 @@ typedef struct
     SDL_GPUDevice *gpuDevice;
     SDL_GPUGraphicsPipeline *renderingPipeline;
     SDL_GPUBuffer *vertexBuffer;
+    SDL_GPUTexture *texture;
+    SDL_GPUSampler *textureSampler;
     Uint64 last_step;
     bool full_screen_enabled;
     sot_debug_info_t debugInfo;

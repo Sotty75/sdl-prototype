@@ -7,18 +7,18 @@
 */
 SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
 {
-    char *spritesheetPath = NULL;
+    char *assetPath = NULL;
 
     //... load the spritesheet inside of the texture
-    SDL_asprintf(&spritesheetPath, "%sassets\\%s", SDL_GetBasePath(), assetName);  /* allocate a string of the full file path */
-    *surface = IMG_Load(spritesheetPath);
+    SDL_asprintf(&assetPath, "%sassets\\%s", SDL_GetBasePath(), assetName);  /* allocate a string of the full file path */
+    *surface = IMG_Load(assetPath);
 
     if (!(*surface)) {
         SDL_Log("Couldn't load spritesheet: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    free(spritesheetPath);
+    free(assetPath);
 
     return SDL_APP_CONTINUE;
 }

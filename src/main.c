@@ -63,23 +63,37 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     InitializeAssetsLoader();
 
     // Create the shaders
-	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shader.vert", 0, 0, 0, 0);
+	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shaderTexture.vert", 0, 0, 0, 0);
 	if (vertexShader == NULL)
 	{
 		SDL_Log("Failed to create vertex shader!");
 		return SDL_APP_FAILURE;
 	}
 
-	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shader.frag", 0, 0, 0, 0);
+	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shaderTexture.frag", 1, 0, 0, 0);
 	if (fragmentShader == NULL)
 	{
 		SDL_Log("Failed to create fragment shader!");
 		return SDL_APP_FAILURE;
 	}
 
-    
+    //... load the texture file
+    // SDL_Surface *wallSurface = NULL;
+    // GetSurfaceFromImage(&wallSurface, "textures\\wall.jpg");
+    // SDL_PixelFormat format = SDL_PIXELFORMAT_ABGR8888;
+    // if (wallSurface->format != format)
+	// {
+	// 	SDL_Surface *next = SDL_ConvertSurface(wallSurface, format);
+	// 	SDL_DestroySurface(wallSurface);
+	// 	wallSurface = next;
+	// }
 
-  
+    SDL_Surface *wallSurface = LoadImage("textures\\ravioli.bmp", 4);
+    if (wallSurface->pitch != wallSurface->w * 4)
+    {
+        SDL_Log("ATTENZIONE: Il pitch della Surface NON corrisponde a w*4! Eseguire la copia riga per riga.");
+    }
+
     SDL_GPUVertexBufferDescription buffersDesc[] = {
         {
             .slot = 0,
@@ -90,17 +104,26 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     };
     
     SDL_GPUVertexAttribute attributesDesc[] = {
+        //...position attribute
         {
             .buffer_slot = 0,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
             .location = 0,
             .offset = 0
         },
+        //...color attribute
         {
             .buffer_slot = 0,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
             .location = 1,
             .offset = sizeof(vec3)
+        },
+        //...texture attribute
+        {
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .location = 2,
+            .offset = sizeof(vec3) + sizeof(vec3)
         }
     };
 
@@ -108,7 +131,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         .vertex_buffer_descriptions = buffersDesc,
         .num_vertex_buffers = 1,
         .vertex_attributes = attributesDesc,
-        .num_vertex_attributes = 2,
+        .num_vertex_attributes = 3,
     };
     
     // Create the pipelines
@@ -117,16 +140,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		.fragment_shader = fragmentShader,
         .vertex_input_state = vis,
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL,
+        .rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE,
         .target_info = {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(as->gpuDevice, as->pWindow)
 			}},
 		},
-		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 	};
 
-	pipelineCreateInfo.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
 	as->renderingPipeline = SDL_CreateGPUGraphicsPipeline(as->gpuDevice, &pipelineCreateInfo);
 	if (as->renderingPipeline == NULL)
 	{
@@ -142,15 +165,18 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     vertex vertices[] = { 
         {
             .position = {1,-1,0},
-            .color = {0,1,0}
+            .color = {0,1,0},
+            .texCoords = {1,0}
         },
         {
             .position = {0,1,0},
-            .color = {0,0,1}
+            .color = {0,0,1},
+            .texCoords = {0.5, 1.0}
         },
         {
             .position = {-1,-1,0},
-            .color = {1,0,0}
+            .color = {1,0,0},
+            .texCoords = {0,0}
         } 
     };
 
@@ -168,7 +194,27 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		return SDL_APP_FAILURE;
 	}
 
+    as->textureSampler = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
+		.min_filter = SDL_GPU_FILTER_NEAREST,
+		.mag_filter = SDL_GPU_FILTER_NEAREST,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+	});
 
+    as->texture = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
+		.type = SDL_GPU_TEXTURETYPE_2D,
+		.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+		.width = wallSurface->w,
+		.height = wallSurface->h,
+		.layer_count_or_depth = 1,
+		.num_levels = 1,
+		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+	});
+
+    
+    // Vertext Buffer Transfer - START 
     SDL_GPUTransferBufferCreateInfo transferBufferInfo = 
     {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -182,14 +228,55 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		return -SDL_APP_FAILURE;
 	}
 
-    vec3* transferData = SDL_MapGPUTransferBuffer(as->gpuDevice,transferBuffer,	false);
+    vertex* transferData = SDL_MapGPUTransferBuffer(as->gpuDevice,transferBuffer,	false);
     SDL_memcpy(transferData , vertices, sizeof(vertices));
     SDL_UnmapGPUTransferBuffer(as->gpuDevice, transferBuffer);
+    // Vertex Buffer Transfer - END
 
+    
+    // Texture Transfer Buffer - START
+    SDL_GPUTransferBufferCreateInfo textureTransferBufferInfo = {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = wallSurface->w * wallSurface->h * 4
+	};
+    
+    SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(as->gpuDevice, &textureTransferBufferInfo);
+    if (textureTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create texture transfer buffer!");
+		return -SDL_APP_FAILURE;
+	}
+
+    
+	Uint8* textureData = SDL_MapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer,	false);
+// After loading the surface
+SDL_Log("Surface info: w=%d, h=%d, pitch=%d, format=%s", 
+    wallSurface->w, 
+    wallSurface->h, 
+    wallSurface->pitch,
+    SDL_GetPixelFormatName(wallSurface->format));
+
+// Print first 16 pixels (64 bytes for RGBA)
+Uint8* pixels = (Uint8*)wallSurface->pixels;
+SDL_Log("First 16 pixels of surface:");
+for (int i = 0; i < 16; i++) {
+    int offset = i * 4;
+    SDL_Log("  Pixel %d: R=%3d G=%3d B=%3d A=%3d", 
+        i, 
+        pixels[offset + 0], 
+        pixels[offset + 1], 
+        pixels[offset + 2], 
+        pixels[offset + 3]);
+}    SDL_Log("First pixel RGBA: %d %d %d %d", textureData[0], textureData[1], textureData[2], textureData[3]);
+	SDL_memcpy(textureData, wallSurface->pixels, wallSurface->w * wallSurface->h * 4);
+    SDL_Log("First pixel RGBA: %d %d %d %d", textureData[0], textureData[1], textureData[2], textureData[3]);
+	SDL_UnmapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
+
+    // Texture Transfer Buffer - END
 
 	// Upload the transfer data to the vertex buffer
 	SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
-     if (uploadCmdBuf == NULL)
+    if (uploadCmdBuf == NULL)
 	{
 		SDL_Log("Failed to acquire command buffer!");
 		return SDL_APP_FAILURE;
@@ -211,9 +298,31 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		false
 	);
 
+    SDL_UploadToGPUTexture(
+		copyPass,
+		&(SDL_GPUTextureTransferInfo) {
+			.transfer_buffer = textureTransferBuffer,
+			.offset = 0, /* Zeros out the rest */
+		},
+		&(SDL_GPUTextureRegion){
+			.texture = as->texture,
+			.w = wallSurface->w,
+			.h = wallSurface->h,
+			.d = 1
+		},
+		false
+	);
+
+    
+
 	SDL_EndGPUCopyPass(copyPass);
 	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
+    SDL_WaitForGPUIdle(as->gpuDevice);
 	SDL_ReleaseGPUTransferBuffer(as->gpuDevice, transferBuffer);
+    SDL_ReleaseGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
+    
+    SDL_Log("First pixel RGBA: %d %d %d %d", textureData[0], textureData[1], textureData[2], textureData[3]);
+    SDL_Log("Texture size: %d bytes for %dx%d texture", wallSurface->w * wallSurface->h * 4, wallSurface->w, wallSurface->h);
 
     /** Commented while implementing the SDL_GPU Logic
        
@@ -309,36 +418,42 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 		);
 
 		SDL_BindGPUGraphicsPipeline(renderPass, as->renderingPipeline);
-		SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){ .buffer = as->vertexBuffer, .offset = 0 }, 1);
-		SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+		SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0 }, 1);
 
+        SDL_GPUTextureSamplerBinding samplerBindings[] = {
+            {
+                .texture = as->texture,
+                .sampler = as->textureSampler
+            }
+        };
+
+        SDL_BindGPUFragmentSamplers(renderPass, 0, samplerBindings, 1);
+        SDL_Log("SDL_BindGPUFragmentSamplers  failed: %s", SDL_GetError());
+		SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
 		SDL_EndGPURenderPass(renderPass);
 	}
 
 	SDL_SubmitGPUCommandBuffer(cmdbuf);
 
     /*
-    AppState *as = (AppState *)appstate;
+        AppState *as = (AppState *)appstate;
+        const Uint64 now = SDL_GetTicks();
+        const float deltaTime = (now - as->last_step) / 1000.0f; // Delta time in seconds
+        as->last_step = now;
+        SDL_RenderClear(as->pRenderer);
+        // Start a new rendering pass
+        UpdateScene(as, currentScene, deltaTime);
+        RenderScene(as, currentScene);
+        SDL_RenderPresent(as->pRenderer);
+    */
 
-    const Uint64 now = SDL_GetTicks();
-    const float deltaTime = (now - as->last_step) / 1000.0f; // Delta time in seconds
-    as->last_step = now;
-
-    SDL_RenderClear(as->pRenderer);
-
-    // Start a new rendering pass
-    UpdateScene(as, currentScene, deltaTime);
-    RenderScene(as, currentScene);
-
-    SDL_RenderPresent(as->pRenderer);
-*/
     return SDL_APP_CONTINUE;  
-    
 }
 
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+    return;
     /*
         DestroyTexturePool(as);
         SDL_DestroyRenderer(as->pRenderer);
