@@ -39,7 +39,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     }
 
     // Initialize the window and renderer entities.
-    as->pWindow =  SDL_CreateWindow("Test Creazione Finestra", 1024, 768, 0);
+    as->pWindow =  SDL_CreateWindow("Test Creazione Finestra", 512, 512, 0);
     if (as->pWindow == NULL) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
@@ -76,8 +76,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	}
 
 	//... load the texture file
-    // SDL_Surface *wallSurface = NULL;
-    // GetSurfaceFromImage(&wallSurface, "textures\\wall.jpg");
+    SDL_Surface *wallSurface = NULL;
+    GetSurfaceFromImage(&wallSurface, "textures\\wall.png");
     // SDL_PixelFormat format = SDL_PIXELFORMAT_ABGR8888;
     // if (wallSurface->format != format)
 	// {
@@ -86,11 +86,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	// 	wallSurface = next;
 	// }
 	
-	SDL_Surface *wallSurface = LoadImage("textures\\ravioli.bmp", 4);
-	if (wallSurface->pitch != wallSurface->w * 4)
-    {
-        SDL_Log("ATTENZIONE: Il pitch della Surface NON corrisponde a w*4! Eseguire la copia riga per riga.");
-    }
+	// SDL_Surface *wallSurface = LoadImage("textures\\ravioli.bmp", 4);
+	// if (wallSurface->pitch != wallSurface->w * 4)
+    // {
+    //     SDL_Log("ATTENZIONE: Il pitch della Surface NON corrisponde a w*4! Eseguire la copia riga per riga.");
+    // }
 
 	 SDL_GPUVertexBufferDescription buffersDesc[] = {
         {
@@ -98,7 +98,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
             .pitch = sizeof(vertex),
             .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
             .instance_step_rate = 0
-        }
+        }, 
     };
     
     SDL_GPUVertexAttribute attributesDesc[] = {
@@ -159,38 +159,68 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	SDL_ReleaseGPUShader(as->gpuDevice, vertexShader);
 	SDL_ReleaseGPUShader(as->gpuDevice, fragmentShader);
     
-    // Initialize demo vertices
-    vertex vertices[] = { 
-        {
-            .position = {1,-1,0},
+    //...quad vertices
+    vertex quad_V[] ={
+        {                               
+            .position = {-0.5,-0.5,0},
             .color = {0,1,0},
-            .texCoords = {1,0}
-        },
+            .texCoords = {0,1}
+        }, // Bottom Left
         {
-            .position = {0,1,0},
+            .position = {0.5,-0.5,0},
             .color = {0,0,1},
-            .texCoords = {0.5, 1.0}
-        },
+            .texCoords = {1, 1.0}
+        }, // Bottom Right
         {
-            .position = {-1,-1,0},
+            .position = {0.5,0.5,0},
+            .color = {1,0,0},
+            .texCoords = {1,0}
+        }, // Top Right
+        {
+            .position = {-0.5,0.5,0},
             .color = {1,0,0},
             .texCoords = {0,0}
-        } 
+        }, // Top Left
     };
 
-	// Creates the Vertex buffer
-    SDL_GPUBufferCreateInfo vertexBufferInfo = {
-        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = sizeof(vertices),
-        .props = 0
-    };
+    uint16_t quad_I[] = { 0, 1, 2, 0, 2, 3 };
 
-    as->vertexBuffer = SDL_CreateGPUBuffer(as->gpuDevice, &vertexBufferInfo);
-    if (as->vertexBuffer == NULL)
-	{
-		SDL_Log("Failed to create vertex buffer!");
-		return SDL_APP_FAILURE;
-	}
+    // Initialize demo vertices
+    // vertex vertices[] = { 
+    //     {
+    //         .position = {-0.5,-0.5,0},
+    //         .color = {0,1,0},
+    //         .texCoords = {0,1}
+    //     },
+    //     {
+    //         .position = {0.5,-0.5,0},
+    //         .color = {0,0,1},
+    //         .texCoords = {1, 1.0}
+    //     },
+    //     {
+    //         .position = {0.5,0.5,0},
+    //         .color = {1,0,0},
+    //         .texCoords = {1,0}
+    //     },
+
+    //     {
+    //         .position = {-0.5,-0.5,0},
+    //         .color = {0,1,0},
+    //         .texCoords = {0,1}
+    //     },
+    //        {
+    //         .position = {0.5,0.5,0},
+    //         .color = {1,0,0},
+    //         .texCoords = {1,0}
+    //     }, 
+    //     {
+    //         .position = {-0.5,0.5,0},
+    //         .color = {0,0,1},
+    //         .texCoords = {0, 0}
+    //     },
+    // };
+
+	
 	
     as->textureSampler = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
 		.min_filter = SDL_GPU_FILTER_NEAREST,
@@ -212,11 +242,25 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	});
 
     
-    // Vertext Buffer Transfer - START 
+    // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
+
+    SDL_GPUBufferCreateInfo vertexBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = sizeof(quad_V),
+        .props = 0
+    };
+
+    as->vertexBuffer = SDL_CreateGPUBuffer(as->gpuDevice, &vertexBufferInfo);
+    if (as->vertexBuffer == NULL)
+	{
+		SDL_Log("Failed to create vertex buffer!");
+		return SDL_APP_FAILURE;
+	}
+
     SDL_GPUTransferBufferCreateInfo transferBufferInfo = 
     {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = sizeof(vertices),
+        .size = sizeof(quad_V),
         .props = 0
     };
     SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(as->gpuDevice, &transferBufferInfo);
@@ -227,12 +271,45 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	}
 
     vertex* transferData = SDL_MapGPUTransferBuffer(as->gpuDevice,transferBuffer,	false);
-    SDL_memcpy(transferData , vertices, sizeof(vertices));
+    SDL_memcpy(transferData , quad_V, sizeof(quad_V));
     SDL_UnmapGPUTransferBuffer(as->gpuDevice, transferBuffer);
-    // Vertex Buffer Transfer - END
+    
+    // ------------------------------ Index Data Buffer - START ------------------------------------------//
+    
+    SDL_GPUBufferCreateInfo indexBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+        .size = sizeof(quad_I),
+        .props = 0
+    };
+
+    as->indexBuffer = SDL_CreateGPUBuffer(as->gpuDevice, &indexBufferInfo);
+    if (as->indexBuffer == NULL)
+	{
+		SDL_Log("Failed to create index buffer!");
+		return SDL_APP_FAILURE;
+	}
 
 
-	// Texture Transfer Buffer - START
+    SDL_GPUTransferBuffer *indexTransferBuffer = SDL_CreateGPUTransferBuffer
+    (as->gpuDevice, 
+        &(SDL_GPUTransferBufferCreateInfo) {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = sizeof(quad_I),
+        .props = 0
+    });
+    
+    if (indexTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create transfer buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+    uint16_t* transferIndexData = SDL_MapGPUTransferBuffer(as->gpuDevice, indexTransferBuffer, false);
+    SDL_memcpy(transferIndexData , quad_I, sizeof(quad_I));
+    SDL_UnmapGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
+
+    // ------------------------------ Texture Data Buffer ------------------------------------------//
+	
     SDL_GPUTransferBufferCreateInfo textureTransferBufferInfo = {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 			.size = wallSurface->w * wallSurface->h * 4
@@ -244,13 +321,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		SDL_Log("Failed to create texture transfer buffer!");
 		return -SDL_APP_FAILURE;
 	}
-
     
 	Uint8* textureData = SDL_MapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer,	false);
 	SDL_memcpy(textureData, wallSurface->pixels, wallSurface->w * wallSurface->h * 4);
 	SDL_UnmapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
 
-    // Texture Transfer Buffer - END
+    //---------------------------------------- Upload Vertex/Index/Textures Buffers to the GPU ------------------------------//
 
 	// Upload the transfer data to the vertex buffer
 	SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
@@ -271,7 +347,21 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		&(SDL_GPUBufferRegion) {
 			.buffer = as->vertexBuffer,
 			.offset = 0,
-			.size = sizeof(vertices)
+			.size = sizeof(quad_V)
+		},
+		false
+	);
+
+    SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = indexTransferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = as->indexBuffer,
+			.offset = 0,
+			.size = sizeof(quad_I)
 		},
 		false
 	);
@@ -297,11 +387,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
     SDL_WaitForGPUIdle(as->gpuDevice);
 	SDL_ReleaseGPUTransferBuffer(as->gpuDevice, transferBuffer);
+    SDL_ReleaseGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
     SDL_ReleaseGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
     
-    SDL_Log("First pixel RGBA: %d %d %d %d", textureData[0], textureData[1], textureData[2], textureData[3]);
-    SDL_Log("Texture size: %d bytes for %dx%d texture", wallSurface->w * wallSurface->h * 4, wallSurface->w, wallSurface->h);
-	
 	/** Commented while implementing the SDL_GPU Logic
        
         // SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
@@ -396,17 +484,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 		);
 
 		SDL_BindGPUGraphicsPipeline(renderPass, as->renderingPipeline);
-		SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0 }, 1);
-
-        SDL_GPUTextureSamplerBinding samplerBindings[] = {
-            {
-                .texture = as->texture,
-                .sampler = as->textureSampler
-            }
-        };
-
-        SDL_BindGPUFragmentSamplers(renderPass, 0, samplerBindings, 1);
-		SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+		SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0}, 1);
+        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = as->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_BindGPUFragmentSamplers(renderPass, 0, &(SDL_GPUTextureSamplerBinding) {.texture = as->texture, .sampler = as->textureSampler}, 1);
+		SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
 		SDL_EndGPURenderPass(renderPass);
 	}
 

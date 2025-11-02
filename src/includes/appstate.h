@@ -20,6 +20,7 @@ typedef struct
     SDL_GPUDevice *gpuDevice;
     SDL_GPUGraphicsPipeline *renderingPipeline;
     SDL_GPUBuffer *vertexBuffer;
+    SDL_GPUBuffer *indexBuffer;
     SDL_GPUTexture *texture;
     SDL_GPUSampler *textureSampler;
     Uint64 last_step;
