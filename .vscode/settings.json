@@ -16,7 +16,8 @@
         "text_encoding": "c",
         "typeinfo": "c",
         "sdl_gpu.h": "c",
-        "cute_c2.h": "c"
+        "cute_c2.h": "c",
+        "sot_sprite.h": "c"
     },
     "editor.suggestOnTriggerCharacters": true,
     "editor.parameterHints.enabled": true,

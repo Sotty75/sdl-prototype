@@ -21,8 +21,10 @@ typedef struct
     SDL_GPUGraphicsPipeline *renderingPipeline;
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
-    SDL_GPUTexture *texture;
-    SDL_GPUSampler *textureSampler;
+    SDL_GPUTexture *texture_1;
+    SDL_GPUTexture *texture_2;
+    SDL_GPUSampler *textureSampler_1;
+    SDL_GPUSampler *textureSampler_2;
     Uint64 last_step;
     bool full_screen_enabled;
     sot_debug_info_t debugInfo;

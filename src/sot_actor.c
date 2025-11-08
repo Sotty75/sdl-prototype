@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "sot_actor.h"
 #include "appstate.h"
+#include "sot_math_interop.h"
 
 
 
@@ -30,8 +31,7 @@ sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t 
     switch (colliderType) {
         case C2_TYPE_CIRCLE:
             collider.type = C2_TYPE_CIRCLE;
-            collider.shape.circle.p.x = actor->position[0];
-            collider.shape.circle.p.y = actor->position[1];
+            collider.shape.circle.p = *vec2_to_c2v(&actor->position);
             collider.shape.circle.r = actor->pSprites[0]->width/2;
             break;
         case C2_TYPE_AABB:
@@ -81,8 +81,7 @@ void UpdateCollider(sot_actor_t *actor) {
 
     switch (collider->type) {
         case C2_TYPE_CIRCLE:
-            collider->shape.circle.p.x = actor->position[0];
-            collider->shape.circle.p.y = actor->position[1];
+            collider->shape.circle.p = *vec2_to_c2v(&actor->position);
             collider->shape.circle.r = actor->pSprites[0]->width/2;
             break;
         case C2_TYPE_AABB:

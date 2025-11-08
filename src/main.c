@@ -68,30 +68,18 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		return SDL_APP_FAILURE;
 	}
 
-	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shaderTexture.frag", 1, 0, 0, 0);
-	if (fragmentShader == NULL)
-	{
+	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shaderTexture.frag", 2, 0, 0, 0);
+	if (fragmentShader == NULL)	{
 		SDL_Log("Failed to create fragment shader!");
 		return SDL_APP_FAILURE;
 	}
 
 	//... load the texture file
     SDL_Surface *wallSurface = NULL;
+    SDL_Surface *snowSurface = NULL;
     GetSurfaceFromImage(&wallSurface, "textures\\wall.png");
-    // SDL_PixelFormat format = SDL_PIXELFORMAT_ABGR8888;
-    // if (wallSurface->format != format)
-	// {
-	// 	SDL_Surface *next = SDL_ConvertSurface(wallSurface, format);
-	// 	SDL_DestroySurface(wallSurface);
-	// 	wallSurface = next;
-	// }
-	
-	// SDL_Surface *wallSurface = LoadImage("textures\\ravioli.bmp", 4);
-	// if (wallSurface->pitch != wallSurface->w * 4)
-    // {
-    //     SDL_Log("ATTENZIONE: Il pitch della Surface NON corrisponde a w*4! Eseguire la copia riga per riga.");
-    // }
-
+    GetSurfaceFromImage(&snowSurface, "textures\\snow.png");
+    
 	 SDL_GPUVertexBufferDescription buffersDesc[] = {
         {
             .slot = 0,
@@ -222,7 +210,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
 	
 	
-    as->textureSampler = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
+    as->textureSampler_1 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
 		.min_filter = SDL_GPU_FILTER_NEAREST,
 		.mag_filter = SDL_GPU_FILTER_NEAREST,
 		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
@@ -231,7 +219,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 	});
 
- 	as->texture = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
+ 	as->texture_1 = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
 		.type = SDL_GPU_TEXTURETYPE_2D,
 		.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
 		.width = wallSurface->w,
@@ -240,8 +228,27 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		.num_levels = 1,
 		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
 	});
-
     
+    as->textureSampler_2 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
+		.min_filter = SDL_GPU_FILTER_NEAREST,
+		.mag_filter = SDL_GPU_FILTER_NEAREST,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+	});
+
+ 	as->texture_2 = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
+		.type = SDL_GPU_TEXTURETYPE_2D,
+		.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+		.width = snowSurface->w,
+		.height = snowSurface->h,
+		.layer_count_or_depth = 1,
+		.num_levels = 1,
+		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+	});
+
+
     // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
 
     SDL_GPUBufferCreateInfo vertexBufferInfo = {
@@ -312,7 +319,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	
     SDL_GPUTransferBufferCreateInfo textureTransferBufferInfo = {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = wallSurface->w * wallSurface->h * 4
+			.size = (wallSurface->w * wallSurface->h * 4) + (snowSurface->w * snowSurface->h * 4)
 	};
     
     SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(as->gpuDevice, &textureTransferBufferInfo);
@@ -324,6 +331,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     
 	Uint8* textureData = SDL_MapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer,	false);
 	SDL_memcpy(textureData, wallSurface->pixels, wallSurface->w * wallSurface->h * 4);
+    Uint8* textureData_2 = textureData + (wallSurface->w * wallSurface->h * 4);
+    SDL_memcpy(textureData_2, snowSurface->pixels, snowSurface->w * snowSurface->h * 4);
 	SDL_UnmapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
 
     //---------------------------------------- Upload Vertex/Index/Textures Buffers to the GPU ------------------------------//
@@ -373,9 +382,24 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 			.offset = 0, /* Zeros out the rest */
 		},
 		&(SDL_GPUTextureRegion){
-			.texture = as->texture,
+			.texture = as->texture_1,
 			.w = wallSurface->w,
 			.h = wallSurface->h,
+			.d = 1
+		},
+		false
+	);
+
+      SDL_UploadToGPUTexture(
+		copyPass,
+		&(SDL_GPUTextureTransferInfo) {
+			.transfer_buffer = textureTransferBuffer,
+			.offset = wallSurface->w * wallSurface->h * 4, /* Zeros out the rest */
+		},
+		&(SDL_GPUTextureRegion){
+			.texture = as->texture_2,
+			.w = snowSurface->w,
+			.h = snowSurface->h,
 			.d = 1
 		},
 		false
@@ -483,10 +507,21 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 			NULL
 		);
 
+        SDL_GPUTextureSamplerBinding textureBindings[] = {
+            {
+                .texture = as->texture_1, 
+                .sampler = as->textureSampler_1
+            },
+            {
+                .texture = as->texture_2, 
+                .sampler = as->textureSampler_2
+            },
+        };
+
 		SDL_BindGPUGraphicsPipeline(renderPass, as->renderingPipeline);
 		SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0}, 1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = as->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_BindGPUFragmentSamplers(renderPass, 0, &(SDL_GPUTextureSamplerBinding) {.texture = as->texture, .sampler = as->textureSampler}, 1);
+        SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
 		SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
 		SDL_EndGPURenderPass(renderPass);
 	}

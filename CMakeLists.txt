@@ -47,7 +47,6 @@ target_include_directories(sdl-prototype PRIVATE
     "${PROJECT_SOURCE_DIR}/src/includes"
     "${PROJECT_SOURCE_DIR}/include/cglm"
     "${PROJECT_SOURCE_DIR}/include/box2d"
-    
 )
 
 # This will STILL print the path to "my_project/"
