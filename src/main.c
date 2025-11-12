@@ -19,10 +19,25 @@
 #include "box2d.h"
 #include "sot_engine.h"
 #include "common.h"
+#include "cglm.h"
 
 AppState *as = NULL;
 static Scene *currentScene = NULL;    
 SDL_Gamepad *gamepad = NULL;
+
+
+/* GLM Library Functions Test */
+void sot_glm_transform(mat4 transform)
+{
+    // I want a matrix that scales and rotates a vector.
+    vec3 scale = {0.5, 0.5, 0.5};
+    vec3 axis = {0,0,1};
+    glm_mat4_identity(transform);
+    // Create a translation matrix
+    glm_scale(transform, scale);
+    glm_rotate(transform, GLM_PI_4f, axis);
+ }
+
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -61,7 +76,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     InitializeAssetsLoader();
 
     // Create the shaders
-	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shaderTexture.vert", 0, 0, 0, 0);
+	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shaderTexture.vert", 0, 1, 0, 0);
 	if (vertexShader == NULL)
 	{
 		SDL_Log("Failed to create vertex shader!");
@@ -74,7 +89,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		return SDL_APP_FAILURE;
 	}
 
-	//... load the texture file
+    //... load the texture file
     SDL_Surface *wallSurface = NULL;
     SDL_Surface *snowSurface = NULL;
     GetSurfaceFromImage(&wallSurface, "textures\\wall.png");
@@ -172,6 +187,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     };
 
     uint16_t quad_I[] = { 0, 1, 2, 0, 2, 3 };
+
+    
 
     // Initialize demo vertices
     // vertex vertices[] = { 
@@ -479,12 +496,17 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    mat4 matrix;
+    glm_mat4_identity(matrix);
+    sot_glm_transform(matrix);
+
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
     if (cmdbuf == NULL)
     {
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+    SDL_PushGPUVertexUniformData(cmdbuf, 0, matrix, sizeof(matrix));
 
     SDL_GPUTexture* swapchainTexture;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, as->pWindow, &swapchainTexture, NULL, NULL)) {

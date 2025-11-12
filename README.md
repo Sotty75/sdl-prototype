@@ -25,7 +25,7 @@ You need also the libraries themselves (header files) available in your include 
 ## Shaders compilation
 
 ```
-PS F:\Coding\sdl-prototype\assets\shaders\source> glslc f:\coding\sdl-prototype\assets\shaders\source\shader.frag -o shader.frag.spv
+PS F:\Coding\sdl-prototype\assets\shaders\source> glslc f:\coding\sdl-prototype\assets\shaders\source\shader.vert -o shader.vert.spv
 ```
 
 ```

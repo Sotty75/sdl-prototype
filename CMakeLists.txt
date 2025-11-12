@@ -49,6 +49,13 @@ target_include_directories(sdl-prototype PRIVATE
     "${PROJECT_SOURCE_DIR}/include/box2d"
 )
 
+# Set project-wide preprocessor definitions for cglm configuration
+# This ensures all source files are compiled with the same coordinate system settings
+target_compile_definitions(sdl-prototype PRIVATE
+    CGLM_FORCE_LEFT_HANDED
+    CGLM_FORCE_DEPTH_ZERO_TO_ONE
+)
+
 # This will STILL print the path to "my_project/"
 message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")
 

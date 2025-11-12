@@ -21,6 +21,7 @@ typedef struct
     SDL_GPUGraphicsPipeline *renderingPipeline;
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
+    SDL_GPUBuffer *uniformBuffer;
     SDL_GPUTexture *texture_1;
     SDL_GPUTexture *texture_2;
     SDL_GPUSampler *textureSampler_1;
