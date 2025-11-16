@@ -20,16 +20,10 @@ find_package(SDL3_image REQUIRED CONFIG)
 # List all your project's source files here.
 # This is the recommended and most reliable way to manage sources.
 # When you add a new file to your project, add it to this list.
-set(SOURCE_FILES
-    src/main.c
-    src/common.c
-    src/sot_quad.c
-    src/sot_scene.c
-    src/sot_actor.c
-    src/sot_sprite.c   
-    src/sot_texture.c
-    src/sot_tilemap.c
-    src/sot_collider.c
+# Find all .c files recursively in the src directory
+file(GLOB_RECURSE SOURCE_FILES
+    CONFIGURE_DEPENDS 
+    "src/*.c"
 )
 
 # Create the executable from the source files

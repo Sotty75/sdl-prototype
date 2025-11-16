@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+
+
+
 typedef struct sot_quad {
     vertex verts[4];
     uint16_t indexes[6];
@@ -12,13 +15,14 @@ typedef struct sot_quad {
     float scale;
 } sot_quad;
 
-sot_quad *sot_create_quad_default();
-
+sot_quad *sot_quad_create();
+void sot_quad_copy(sot_quad *source, sot_quad *dest);
 void sot_quad_get_transform_RT(mat4 transform, sot_quad* q);
 void sot_quad_get_transform_TR(mat4 transform, sot_quad* q);
 void sot_quad_position(sot_quad* q, vec3 position);
 void sot_quad_rotation(sot_quad* q, float rotation);
 void sot_quad_scale(sot_quad* q, float scale);
+
 
 
 #endif

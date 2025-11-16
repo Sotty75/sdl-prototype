@@ -9,5 +9,6 @@
 #include "appstate.h"
 #include "sot_texture.h"
 #include "sot_quad.h"
+#include "sot_gpu_pipeline.h"
 
 #endif
