@@ -23,6 +23,7 @@ find_package(SDL3_image REQUIRED CONFIG)
 set(SOURCE_FILES
     src/main.c
     src/common.c
+    src/sot_quad.c
     src/sot_scene.c
     src/sot_actor.c
     src/sot_sprite.c   
