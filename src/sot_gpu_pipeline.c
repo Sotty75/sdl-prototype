@@ -1,6 +1,31 @@
 
 #include "sot_engine.h"
 
+SDL_AppResult SOT_InitializeWindow(AppState *as) {
+    SDL_SetAppMetadata("Example Renderer Clear", "1.0", "com.example.renderer-clear");
+
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO|SDL_INIT_GAMEPAD)) {
+        SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    // Initialize the window and renderer entities.
+    as->pWindow =  SDL_CreateWindow("Test Creazione Finestra", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+    if (as->pWindow == NULL) {
+        SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    as->gpuDevice = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, 0, NULL);
+    if (as->gpuDevice == NULL) {
+        SDL_Log("Couldn't create GPU Device: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    if (!SDL_ClaimWindowForGPUDevice(as->gpuDevice, as->pWindow)) {
+        SDL_Log("Couldn't bind GPU Device to SDL Window: %s", SDL_GetError());
+    }
+}
 
 SDL_AppResult SOT_InitializePipeline(AppState *as) {
 
@@ -8,14 +33,14 @@ SDL_AppResult SOT_InitializePipeline(AppState *as) {
     InitializeAssetsLoader();
 
     // Create the shaders
-	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shaderTexture.vert", 0, 1, 0, 0);
+	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shaderTexture_MVP.vert", 0, 2, 0, 0);
 	if (vertexShader == NULL)
 	{
 		SDL_Log("Failed to create vertex shader!");
 		return SDL_APP_FAILURE;
 	}
 
-	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shaderTexture.frag", 2, 0, 0, 0);
+	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shaderTexture_MVP.frag", 2, 0, 0, 0);
 	if (fragmentShader == NULL)	{
 		SDL_Log("Failed to create fragment shader!");
 		return SDL_APP_FAILURE;
@@ -93,5 +118,23 @@ SDL_AppResult SOT_InitializePipeline(AppState *as) {
     // Clean up shader resources
 	SDL_ReleaseGPUShader(as->gpuDevice, vertexShader);
 	SDL_ReleaseGPUShader(as->gpuDevice, fragmentShader);
+
+    as->textureSampler_1 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
+		.min_filter = SDL_GPU_FILTER_NEAREST,
+		.mag_filter = SDL_GPU_FILTER_NEAREST,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+	});
+
+    as->textureSampler_2 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
+		.min_filter = SDL_GPU_FILTER_NEAREST,
+		.mag_filter = SDL_GPU_FILTER_NEAREST,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+	});
     
 }

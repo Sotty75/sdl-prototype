@@ -19,14 +19,23 @@ SOT_Camera* CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo pr
 
 /* Free heap memory allocated to the transform and 
  * Nullifies the original pointer.  */
-void FreeTransforms(SOT_Camera ** t) {
+void FreeCamera(SOT_Camera ** t) {
     free(*t);
     *t = NULL;
 }
 
+void MoveCamera(SOT_Camera *t, vec3 direction, float deltaTime, float velocity) 
+{
+    glm_vec3_normalize(direction);
+    glm_vec3_scale(direction, velocity * deltaTime, direction);
+    glm_vec3_add(t->cameraInfo.eye, direction, t->cameraInfo.eye);
+    glm_lookat(t->cameraInfo.eye, t->cameraInfo.center, t->cameraInfo.up, t->view);
+}
+
 /* Update the View matrix stored in the transofrm entity. */
 void SetCamera(SOT_Camera *t, SOT_CameraInfo cameraInfo) {
-    glm_lookat(cameraInfo.eye, cameraInfo.center, cameraInfo.up, t->view);
+    t->cameraInfo = cameraInfo;
+    glm_lookat(t->cameraInfo.eye, t->cameraInfo.center, t->cameraInfo.up, t->view);
 }
 
 /* Update the Projection matrix stored in the transofrm entity. */

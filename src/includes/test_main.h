@@ -3,8 +3,13 @@
 
 #include "sot_quad.h"
 
-extern sot_quad sot_world[255];
+typedef struct sot_world {
+    sot_quad *quadsArray;
+    int size;
+    int vertexBufferSize;
+    int indexBufferSize;
+} sot_world;
 
-void TEST_CreateWorld();
+sot_world* TEST_CreateWorld(int size);
 
 #endif

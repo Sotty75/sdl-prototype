@@ -10,6 +10,8 @@
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 
+
+
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -25,7 +27,8 @@
 AppState *as = NULL;
 static Scene *currentScene = NULL;    
 SDL_Gamepad *gamepad = NULL;
-sot_quad *quad;
+sot_world *world = NULL;
+SOT_Camera *camera = NULL;
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -34,49 +37,20 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     as = (AppState *)SDL_calloc(1, sizeof(AppState));
     if (!as) { return SDL_APP_FAILURE; }
     
-    SDL_SetAppMetadata("Example Renderer Clear", "1.0", "com.example.renderer-clear");
-
-    if (!SDL_InitSubSystem(SDL_INIT_VIDEO|SDL_INIT_GAMEPAD)) {
-        SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    // Initialize the window and renderer entities.
-    as->pWindow =  SDL_CreateWindow("Test Creazione Finestra", 512, 512, 0);
-    if (as->pWindow == NULL) {
-        SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    as->gpuDevice = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, 0, NULL);
-    if (as->gpuDevice == NULL) {
-        SDL_Log("Couldn't create GPU Device: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    if (!SDL_ClaimWindowForGPUDevice(as->gpuDevice, as->pWindow)) {
-        SDL_Log("Couldn't bind GPU Device to SDL Window: %s", SDL_GetError());
-    }
-
+    // Initialize the graphics system
+    SOT_InitializeWindow(as);
+    SOT_InitializePipeline(as);
     
+
+
     //... load the texture file
     SDL_Surface *wallSurface = NULL;
     SDL_Surface *snowSurface = NULL;
     GetSurfaceFromImage(&wallSurface, "textures\\wall.png");
     GetSurfaceFromImage(&snowSurface, "textures\\snow.png");
     
-	SOT_InitializePipeline(as);
-    TEST_CreateWorld();
-    quad = sot_quad_create();
-    
-    as->textureSampler_1 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
-		.min_filter = SDL_GPU_FILTER_NEAREST,
-		.mag_filter = SDL_GPU_FILTER_NEAREST,
-		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-	});
+    // Createt the test world
+    world = TEST_CreateWorld(9);
 
  	as->texture_1 = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
 		.type = SDL_GPU_TEXTURETYPE_2D,
@@ -88,15 +62,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
 	});
     
-    as->textureSampler_2 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
-		.min_filter = SDL_GPU_FILTER_NEAREST,
-		.mag_filter = SDL_GPU_FILTER_NEAREST,
-		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-	});
-
  	as->texture_2 = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
 		.type = SDL_GPU_TEXTURETYPE_2D,
 		.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
@@ -107,12 +72,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
 	});
 
-
     // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
-
     SDL_GPUBufferCreateInfo vertexBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = sizeof(quad->verts),
+        .size = world->vertexBufferSize,
         .props = 0
     };
 
@@ -126,7 +89,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     SDL_GPUTransferBufferCreateInfo transferBufferInfo = 
     {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = sizeof(quad->verts),
+        .size =  world->vertexBufferSize,
         .props = 0
     };
     SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(as->gpuDevice, &transferBufferInfo);
@@ -137,14 +100,19 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	}
 
     vertex* transferData = SDL_MapGPUTransferBuffer(as->gpuDevice,transferBuffer,	false);
-    SDL_memcpy(transferData , quad->verts, sizeof(quad->verts));
+    for (int i = 0; i < world->size; ++i) {
+        SDL_memcpy(transferData,  world->quadsArray[i].verts, sizeof(world->quadsArray[i].verts));
+        transferData = transferData + 4;
+    }
+      
+
     SDL_UnmapGPUTransferBuffer(as->gpuDevice, transferBuffer);
     
     // ------------------------------ Index Data Buffer - START ------------------------------------------//
     
     SDL_GPUBufferCreateInfo indexBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-        .size = sizeof(quad->indexes),
+        .size = world->indexBufferSize,
         .props = 0
     };
 
@@ -160,7 +128,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     (as->gpuDevice, 
         &(SDL_GPUTransferBufferCreateInfo) {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = sizeof(quad->indexes),
+        .size = world->indexBufferSize,
         .props = 0
     });
     
@@ -171,7 +139,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 	}
 
     uint16_t* transferIndexData = SDL_MapGPUTransferBuffer(as->gpuDevice, indexTransferBuffer, false);
-    SDL_memcpy(transferIndexData , quad->indexes, sizeof(quad->indexes));
+    for (int i = 0; i < world->size; ++i) {
+        SDL_memcpy(transferIndexData ,  world->quadsArray[i].indexes, sizeof(world->quadsArray[i].indexes));
+        transferIndexData = transferIndexData + 6;
+    }
+    
     SDL_UnmapGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
 
     // ------------------------------ Texture Data Buffer ------------------------------------------//
@@ -215,7 +187,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		&(SDL_GPUBufferRegion) {
 			.buffer = as->vertexBuffer,
 			.offset = 0,
-			.size = sizeof(quad->verts)
+			.size =  world->vertexBufferSize
 		},
 		false
 	);
@@ -229,7 +201,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 		&(SDL_GPUBufferRegion) {
 			.buffer = as->indexBuffer,
 			.offset = 0,
-			.size = sizeof(quad->indexes)
+			.size =  world->indexBufferSize
 		},
 		false
 	);
@@ -273,7 +245,22 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     SDL_ReleaseGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
     SDL_ReleaseGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
     
-	/** Commented while implementing the SDL_GPU Logic
+    /* Create the camera entity */
+    SOT_CameraInfo cameraInfo = {
+        .center = {0, 0, 0},
+        .eye = {0,0,0},
+        .up = {0,1,0}
+    };
+    SOT_ProjectionInfo projectionInfo = {
+        .aspect = SCREEN_WIDTH / SCREEN_HEIGHT,
+        .far = 100,
+        .fov = 45,
+        .near = 5,
+        .mode = SOT_PERSPECTIVE,
+    };
+    camera = CreateCameraWitInfo(cameraInfo, projectionInfo);
+    
+    /** Commented while implementing the SDL_GPU Logic
        
         // SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
         
@@ -285,9 +272,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         // Initialize our main scene
         currentScene = CreateScene(as);
         if (currentScene == NULL) return SDL_APP_FAILURE;
+    **/   
 
-        
-      */   
     //...store initialized application state so it will be shared in other
     // functions.
     as->pTexturesPool = NULL;
@@ -296,9 +282,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     as->debugInfo.displayColliders = false;
     *appstate = as;
    
-    // initialize quad position
-    sot_quad_position(quad, (vec3) {1,0,0});
-
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
@@ -347,6 +330,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     const float deltaTime = (now - as->last_step) / 1000.0f; // Delta time in seconds
     as->last_step = now;
 
+    MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 0.01);
+
+    
+    
+
     /*
         SDL_RenderClear(as->pRenderer);
         // Start a new rendering pass
@@ -354,13 +342,14 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         RenderScene(as, currentScene);
         SDL_RenderPresent(as->pRenderer);
     */
-    float rad_msec = GLM_PI_4f;
-    mat4 transform;
-    
-    sot_quad_rotation(quad, rad_msec * deltaTime);
-    sot_quad_get_transform_RT(transform, quad);
 
-    
+    float rad_msec = GLM_PI_4f;
+    mat4 model;
+    mat4 projection_view;
+
+    sot_quad_rotation(world->quadsArray, rad_msec * deltaTime);
+    sot_quad_get_transform_RT(model,  world->quadsArray);
+    glm_mat4_mul(camera->projection, camera->view, projection_view);
 
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
     if (cmdbuf == NULL)
@@ -368,7 +357,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    SDL_PushGPUVertexUniformData(cmdbuf, 0, transform, sizeof(transform));
+    SDL_PushGPUVertexUniformData(cmdbuf, 0, model, sizeof(model));
+    SDL_PushGPUVertexUniformData(cmdbuf, 1, projection_view, sizeof(projection_view));
 
     SDL_GPUTexture* swapchainTexture;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, as->pWindow, &swapchainTexture, NULL, NULL)) {

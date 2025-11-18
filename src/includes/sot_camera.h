@@ -31,6 +31,7 @@ typedef struct SOT_ProjectionInfo {
 } SOT_ProjectionInfo;
 
 typedef struct SOT_Camera {
+    SOT_CameraInfo cameraInfo;
     mat4 view;
     mat4 projection;
 } SOT_Camera;
@@ -39,6 +40,7 @@ SOT_Camera* CreateCamera();
 SOT_Camera* CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo);
 void SetCamera(SOT_Camera *t, SOT_CameraInfo cameraInfo);
 void SetProjection(SOT_Camera *t, SOT_ProjectionInfo projectionInfo);
-void FreeTransforms(SOT_Camera **);
+void MoveCamera(SOT_Camera *t, vec3 direction, float deltaTime, float velocity);
+void FreeCamera(SOT_Camera **);
 
 #endif
