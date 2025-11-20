@@ -14,13 +14,13 @@ sot_world *TEST_CreateWorld(int size)
     // we place four quads in four distant corners (index 0 stays in the world origin)
     glm_vec3_copy((vec3) {1,1,0}, world->quadsArray[1].position);
     glm_vec3_copy((vec3) {1,-1,0}, world->quadsArray[2].position);
-    glm_vec3_copy((vec3) {-1,13,0}, world->quadsArray[3].position);
+    glm_vec3_copy((vec3) {-1,1,0}, world->quadsArray[3].position);
     glm_vec3_copy((vec3) {-1,-1,0}, world->quadsArray[4].position);
 
     // we place four quads in four distant corners (index 0 stays in the world origin)
     glm_vec3_copy((vec3) {5,3,0}, world->quadsArray[5].position);
     glm_vec3_copy((vec3) {5,-3,0}, world->quadsArray[6].position);
-    glm_vec3_copy((vec3) {-5,-3,0}, world->quadsArray[7].position);
+    glm_vec3_copy((vec3) {-5,3,0}, world->quadsArray[7].position);
     glm_vec3_copy((vec3) {-5,-3,0}, world->quadsArray[8].position);
 
     world->vertexBufferSize = size * sizeof(world->quadsArray[0].verts);

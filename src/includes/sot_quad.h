@@ -23,6 +23,4 @@ void sot_quad_position(sot_quad* q, vec3 position);
 void sot_quad_rotation(sot_quad* q, float rotation);
 void sot_quad_scale(sot_quad* q, float scale);
 
-
-
 #endif

@@ -240,7 +240,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
 	SDL_EndGPUCopyPass(copyPass);
 	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
-    SDL_WaitForGPUIdle(as->gpuDevice);
 	SDL_ReleaseGPUTransferBuffer(as->gpuDevice, transferBuffer);
     SDL_ReleaseGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
     SDL_ReleaseGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
@@ -330,11 +329,6 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     const float deltaTime = (now - as->last_step) / 1000.0f; // Delta time in seconds
     as->last_step = now;
 
-    MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 0.01);
-
-    
-    
-
     /*
         SDL_RenderClear(as->pRenderer);
         // Start a new rendering pass
@@ -344,12 +338,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     */
 
     float rad_msec = GLM_PI_4f;
-    mat4 model;
-    mat4 projection_view;
-
-    sot_quad_rotation(world->quadsArray, rad_msec * deltaTime);
-    sot_quad_get_transform_RT(model,  world->quadsArray);
-    glm_mat4_mul(camera->projection, camera->view, projection_view);
+    
 
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
     if (cmdbuf == NULL)
@@ -357,22 +346,36 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    SDL_PushGPUVertexUniformData(cmdbuf, 0, model, sizeof(model));
-    SDL_PushGPUVertexUniformData(cmdbuf, 1, projection_view, sizeof(projection_view));
-
+    
     SDL_GPUTexture* swapchainTexture;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, as->pWindow, &swapchainTexture, NULL, NULL)) {
         SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-	if (swapchainTexture != NULL)
-	{
-		SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
+    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
 		colorTargetInfo.texture = swapchainTexture;
 		colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };
 		colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
 		colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPUTextureSamplerBinding textureBindings[] = {
+        {
+            .texture = as->texture_1, 
+            .sampler = as->textureSampler_1
+        },
+        {
+            .texture = as->texture_2, 
+            .sampler = as->textureSampler_2
+        },
+    };
+
+	if (swapchainTexture != NULL)
+	{
+        mat4 projection_view;
+        MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
+        glm_mat4_mul(camera->projection, camera->view, projection_view);
+        SDL_PushGPUVertexUniformData(cmdbuf, 1, projection_view, sizeof(projection_view));
 
 		SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(
 			cmdbuf,
@@ -381,22 +384,19 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 			NULL
 		);
 
-        SDL_GPUTextureSamplerBinding textureBindings[] = {
-            {
-                .texture = as->texture_1, 
-                .sampler = as->textureSampler_1
-            },
-            {
-                .texture = as->texture_2, 
-                .sampler = as->textureSampler_2
-            },
-        };
+        SDL_BindGPUGraphicsPipeline(renderPass, as->renderingPipeline);
+		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
 
-		SDL_BindGPUGraphicsPipeline(renderPass, as->renderingPipeline);
-		SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0}, 1);
+        mat4 model[9];
+        for (int i = 0; i < 9; ++i) {
+            // sot_quad_rotation(&(world->quadsArray[i]), rad_msec * deltaTime);
+            sot_quad_get_transform_RT(model[i],  &(world->quadsArray[i]));
+        }
+            
+	    SDL_PushGPUVertexUniformData(cmdbuf, 0, model, sizeof(model));
+        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0}, 1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = as->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
-		SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 3, 0, 0, 0);
 		SDL_EndGPURenderPass(renderPass);
 	}
 
