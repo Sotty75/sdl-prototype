@@ -138,7 +138,7 @@ void RenderActor(const AppState *appState, sot_actor_t *actor) {
     }
 
     SetRenderPosition(actor);
-    SDL_RenderTexture(appState->pRenderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
+    SDL_RenderTexture(appState->gpu->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
     DrawCollidersDebugInfo(actor->collider, appState);
 
     return;

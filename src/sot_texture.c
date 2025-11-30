@@ -31,7 +31,7 @@ If not, it will be created using this function, added to the pool, and returned 
 sot_texture_t *CreateTexture(char *name, AppState* appState) {
     SDL_Surface *spritesheetSurface = NULL;
     GetSurfaceFromImage(&spritesheetSurface, name);
-    SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->pRenderer, spritesheetSurface);
+    SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->gpu->renderer, spritesheetSurface);
     if (txt == NULL) {
             SDL_Log("Couldn't create texture from surface: %s", SDL_GetError());
             return NULL;

@@ -18,7 +18,8 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
-#include "box2d.h"
+#include <box2d/box2d.h>
+
 #include "sot_engine.h"
 #include "common.h"
 #include "cglm.h"
@@ -39,9 +40,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     
     // Initialize the graphics system
     SOT_InitializeWindow(as);
-    SOT_InitializePipeline(as);
-    
-
+    SOT_InitializePipelineWithInfo(as, &(SOT_GPU_PipelineInfo) {
+        .pipeline_ID = SOT_RP_TILEMAP,
+        .vertexShaderName = "shaderTexture_MVP.vert",
+        .fragmentShaderName = "shaderTexture_MVP.frag"
+    });
 
     //... load the texture file
     SDL_Surface *wallSurface = NULL;
@@ -51,198 +54,34 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     
     // Createt the test world
     world = TEST_CreateWorld(9);
-
- 	as->texture_1 = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
-		.type = SDL_GPU_TEXTURETYPE_2D,
-		.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-		.width = wallSurface->w,
-		.height = wallSurface->h,
-		.layer_count_or_depth = 1,
-		.num_levels = 1,
-		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-	});
-    
- 	as->texture_2 = SDL_CreateGPUTexture(as->gpuDevice, &(SDL_GPUTextureCreateInfo) {
-		.type = SDL_GPU_TEXTURETYPE_2D,
-		.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-		.width = snowSurface->w,
-		.height = snowSurface->h,
-		.layer_count_or_depth = 1,
-		.num_levels = 1,
-		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-	});
-
+ 	
     // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
-    SDL_GPUBufferCreateInfo vertexBufferInfo = {
-        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = world->vertexBufferSize,
-        .props = 0
-    };
 
-    as->vertexBuffer = SDL_CreateGPUBuffer(as->gpuDevice, &vertexBufferInfo);
-    if (as->vertexBuffer == NULL)
-	{
-		SDL_Log("Failed to create vertex buffer!");
-		return SDL_APP_FAILURE;
-	}
-
-    SDL_GPUTransferBufferCreateInfo transferBufferInfo = 
-    {
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size =  world->vertexBufferSize,
-        .props = 0
-    };
-    SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(as->gpuDevice, &transferBufferInfo);
-    if (transferBuffer == NULL)
-	{
-		SDL_Log("Failed to create transfer buffer!");
-		return -SDL_APP_FAILURE;
-	}
-
-    vertex* transferData = SDL_MapGPUTransferBuffer(as->gpuDevice,transferBuffer,	false);
-    for (int i = 0; i < world->size; ++i) {
-        SDL_memcpy(transferData,  world->quadsArray[i].verts, sizeof(world->quadsArray[i].verts));
-        transferData = transferData + 4;
+    SOT_GPU_Data gpuData;
+    gpuData.vertexDataSize = world->vertexDataSize;
+    gpuData.vertexData = (vertex *) malloc(world->vertexDataSize);
+    for (int i = 0; i < world->size; i = i + 4) {
+        memcpy(&(gpuData.vertexData[i]), &(world->quadsArray[i].verts), 4 * sizeof(vertex));
     }
-      
 
-    SDL_UnmapGPUTransferBuffer(as->gpuDevice, transferBuffer);
-    
-    // ------------------------------ Index Data Buffer - START ------------------------------------------//
-    
-    SDL_GPUBufferCreateInfo indexBufferInfo = {
-        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-        .size = world->indexBufferSize,
-        .props = 0
-    };
-
-    as->indexBuffer = SDL_CreateGPUBuffer(as->gpuDevice, &indexBufferInfo);
-    if (as->indexBuffer == NULL)
-	{
-		SDL_Log("Failed to create index buffer!");
-		return SDL_APP_FAILURE;
-	}
-
-
-    SDL_GPUTransferBuffer *indexTransferBuffer = SDL_CreateGPUTransferBuffer
-    (as->gpuDevice, 
-        &(SDL_GPUTransferBufferCreateInfo) {
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = world->indexBufferSize,
-        .props = 0
-    });
-    
-    if (indexTransferBuffer == NULL)
-	{
-		SDL_Log("Failed to create transfer buffer!");
-		return SDL_APP_FAILURE;
-	}
-
-    uint16_t* transferIndexData = SDL_MapGPUTransferBuffer(as->gpuDevice, indexTransferBuffer, false);
-    for (int i = 0; i < world->size; ++i) {
-        SDL_memcpy(transferIndexData ,  world->quadsArray[i].indexes, sizeof(world->quadsArray[i].indexes));
-        transferIndexData = transferIndexData + 6;
+    gpuData.indexDataSize = world->indexDataSize;
+    gpuData.indexData = (uint16_t *) malloc(world->indexDataSize);
+    for (int i = 0; i < world->size; i = i + 6) {
+        memcpy(&(gpuData.indexData[i]), &(world->quadsArray[i].indexes), 6 * sizeof(uint16_t));
     }
+
+    gpuData.surfaces[0] = wallSurface;
+    gpuData.surfaces[1] = snowSurface;
+    gpuData.surfaceCount = 2;
     
-    SDL_UnmapGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
-
-    // ------------------------------ Texture Data Buffer ------------------------------------------//
-	
-    SDL_GPUTransferBufferCreateInfo textureTransferBufferInfo = {
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = (wallSurface->w * wallSurface->h * 4) + (snowSurface->w * snowSurface->h * 4)
-	};
+    SOT_UploadBufferData(as->gpu, &gpuData);
     
-    SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(as->gpuDevice, &textureTransferBufferInfo);
-    if (textureTransferBuffer == NULL)
-	{
-		SDL_Log("Failed to create texture transfer buffer!");
-		return -SDL_APP_FAILURE;
-	}
     
-	Uint8* textureData = SDL_MapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer,	false);
-	SDL_memcpy(textureData, wallSurface->pixels, wallSurface->w * wallSurface->h * 4);
-    Uint8* textureData_2 = textureData + (wallSurface->w * wallSurface->h * 4);
-    SDL_memcpy(textureData_2, snowSurface->pixels, snowSurface->w * snowSurface->h * 4);
-	SDL_UnmapGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
+    
 
-    //---------------------------------------- Upload Vertex/Index/Textures Buffers to the GPU ------------------------------//
+   
 
-	// Upload the transfer data to the vertex buffer
-	SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
-    if (uploadCmdBuf == NULL)
-	{
-		SDL_Log("Failed to acquire command buffer!");
-		return SDL_APP_FAILURE;
-	}
-
-	SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
-
-	SDL_UploadToGPUBuffer(
-		copyPass,
-		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = transferBuffer,
-			.offset = 0
-		},
-		&(SDL_GPUBufferRegion) {
-			.buffer = as->vertexBuffer,
-			.offset = 0,
-			.size =  world->vertexBufferSize
-		},
-		false
-	);
-
-    SDL_UploadToGPUBuffer(
-		copyPass,
-		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = indexTransferBuffer,
-			.offset = 0
-		},
-		&(SDL_GPUBufferRegion) {
-			.buffer = as->indexBuffer,
-			.offset = 0,
-			.size =  world->indexBufferSize
-		},
-		false
-	);
-
-    SDL_UploadToGPUTexture(
-		copyPass,
-		&(SDL_GPUTextureTransferInfo) {
-			.transfer_buffer = textureTransferBuffer,
-			.offset = 0, /* Zeros out the rest */
-		},
-		&(SDL_GPUTextureRegion){
-			.texture = as->texture_1,
-			.w = wallSurface->w,
-			.h = wallSurface->h,
-			.d = 1
-		},
-		false
-	);
-
-      SDL_UploadToGPUTexture(
-		copyPass,
-		&(SDL_GPUTextureTransferInfo) {
-			.transfer_buffer = textureTransferBuffer,
-			.offset = wallSurface->w * wallSurface->h * 4, /* Zeros out the rest */
-		},
-		&(SDL_GPUTextureRegion){
-			.texture = as->texture_2,
-			.w = snowSurface->w,
-			.h = snowSurface->h,
-			.d = 1
-		},
-		false
-	);
-
-
-
-	SDL_EndGPUCopyPass(copyPass);
-	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
-	SDL_ReleaseGPUTransferBuffer(as->gpuDevice, transferBuffer);
-    SDL_ReleaseGPUTransferBuffer(as->gpuDevice, indexTransferBuffer);
-    SDL_ReleaseGPUTransferBuffer(as->gpuDevice, textureTransferBuffer);
+    
     
     /* Create the camera entity */
     SOT_CameraInfo cameraInfo = {
@@ -339,8 +178,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     float rad_msec = GLM_PI_4f;
     
-
-    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(as->gpuDevice);
+    SOT_GPU_State *gpu = as->gpu;
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
     if (cmdbuf == NULL)
     {
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
@@ -354,21 +193,19 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     }
 
     SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-		colorTargetInfo.texture = swapchainTexture;
-		colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };
-		colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-		colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+	colorTargetInfo.texture = swapchainTexture;
+	colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };
+	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-    SDL_GPUTextureSamplerBinding textureBindings[] = {
-        {
-            .texture = as->texture_1, 
-            .sampler = as->textureSampler_1
-        },
-        {
-            .texture = as->texture_2, 
-            .sampler = as->textureSampler_2
-        },
-    };
+    SDL_GPUTextureSamplerBinding textureBindings[gpu->texturesCount];
+
+    for (int i = 0; i < gpu->texturesCount; i++ ) {
+        textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
+            .texture = gpu->textures[i], 
+            .sampler = gpu->nearestSampler
+        };
+    }
 
 	if (swapchainTexture != NULL)
 	{
@@ -384,7 +221,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 			NULL
 		);
 
-        SDL_BindGPUGraphicsPipeline(renderPass, as->renderingPipeline);
+        SDL_BindGPUGraphicsPipeline(renderPass, gpu->pipeline[SOT_RP_TILEMAP]);
 		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
 
         mat4 model[9];
@@ -394,8 +231,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         }
             
 	    SDL_PushGPUVertexUniformData(cmdbuf, 0, model, sizeof(model));
-        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = as->vertexBuffer, .offset = 0}, 1);
-        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = as->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->vertexBuffer, .offset = 0}, 1);
+        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = gpu->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 3, 0, 0, 0);
 		SDL_EndGPURenderPass(renderPass);
 	}

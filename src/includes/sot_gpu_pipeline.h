@@ -3,14 +3,55 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
-#include "sot_gpu_pipeline.h"
+#include "common.h"
 
-SDL_AppResult SOT_InitializeWindow(AppState *as);
-SDL_AppResult SOT_InitializePipeline(AppState *as);
+// Forward-declare AppState to break circular dependency
+struct AppState;
 
+
+typedef enum SOT_Pipeline_ID {
+    SOT_RP_TILEMAP,
+    SOT_RP_SPRITE
+} SOT_Pipeline_ID;
+
+typedef struct SOT_GPU_Data {
+    vertex *vertexData;
+    uint16_t* indexData;
+    SDL_Surface *surfaces[16];
+    int vertexDataSize;
+    int indexDataSize;
+    int surfaceCount;
+} SOT_GPU_Data;
+
+typedef struct SOT_GPU_PipelineInfo {
+    SOT_Pipeline_ID pipeline_ID;
+    char *vertexShaderName;
+    char *fragmentShaderName;
+} SOT_GPU_PipelineInfo;
+
+typedef struct SOT_GPU_State {
+    SDL_Renderer *renderer;
+    SDL_GPUDevice *device;
+    SDL_GPUSampler *nearestSampler;
+    SDL_GPUBuffer *vertexBuffer;
+    SDL_GPUBuffer *indexBuffer;
+    SDL_GPUTexture *textures[16];
+    int texturesCount;
+
+    // pipelines fields
+    int pipelinesCount;
+    char *pipelinesNames[16];
+    SDL_GPUGraphicsPipeline *pipeline[16];
+
+} SOT_GPU_State;
+
+SDL_AppResult SOT_InitializeWindow(struct AppState *as);
+SDL_AppResult SOT_InitializePipelineWithInfo(struct AppState *as, SOT_GPU_PipelineInfo *pipelineInfo);
+SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
 #endif
 
-/** Extract from SDL documentation on shader setss.
+/*
+ * Extract from SDL documentation on shader setss.
  * Creates a shader to be used when creating a graphics pipeline.
  *
  * Shader resource bindings must be authored to follow a particular order
@@ -66,4 +107,4 @@ SDL_AppResult SOT_InitializePipeline(AppState *as);
  * prefix to something other than TEXCOORD you can use
  * SDL_PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING with
  * SDL_CreateGPUDeviceWithProperties().
- * */
+ */

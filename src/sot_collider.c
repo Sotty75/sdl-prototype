@@ -51,7 +51,7 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
         return;
 
     // Debug info is rendered in red color
-    SDL_SetRenderDrawColor(appState->pRenderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(appState->gpu->renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 
     switch (pCollider.type) {
         case C2_TYPE_AABB:
@@ -64,7 +64,7 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
                     .h = pCollider.shape.AABB.max.y - pCollider.shape.AABB.min.y
                 };
 
-                SDL_RenderRect(appState->pRenderer, &rect);
+                SDL_RenderRect(appState->gpu->renderer, &rect);
             } break;
         case C2_TYPE_CIRCLE:
             {
@@ -78,8 +78,8 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
                     circle[i].x = position.x + radius*cos(angle_radians);
                     circle[i].y = position.y + radius*sin(angle_radians);
                 }
-                SDL_RenderPoint(appState->pRenderer, position.x, position.y);
-                SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&circle, 45);
+                SDL_RenderPoint(appState->gpu->renderer, position.x, position.y);
+                SDL_RenderLines(appState->gpu->renderer, (const SDL_FPoint *)&circle, 45);
             } break;
         case C2_TYPE_POLY:
             {
@@ -108,11 +108,11 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
                         .y = nPos.y + 10 * pCollider.shape.poly.norms[i].y
                     };
 
-                    SDL_RenderLine(appState->pRenderer, nPos.x, nPos.y, nVector.x, nVector.y);
+                    SDL_RenderLine(appState->gpu->renderer, nPos.x, nPos.y, nVector.x, nVector.y);
                 }
 
                 // render edges
-                SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&poly, size + 1);
+                SDL_RenderLines(appState->gpu->renderer, (const SDL_FPoint *)&poly, size + 1);
 
             } break;
         default:

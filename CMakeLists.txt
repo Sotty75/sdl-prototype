@@ -9,13 +9,31 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # SDL3 library path
-set(SDL3_DIR "F:\\Coding\\libraries\\SDL3\\cmake")
+set(SDL3_DIR "E:\\Coding\\libraries\\SDL3\\cmake")
 find_package(SDL3 REQUIRED CONFIG)
 
 # SDL3 library path
-set(SDL3_image_DIR "F:\\Coding\\Libraries\\SDL_image\\build")
+set(SDL3_image_DIR "E:\\Coding\\Libraries\\SDL_image\\build")
 find_package(SDL3_image REQUIRED CONFIG)
 
+# ==========================================
+# 2. SETUP BOX2D (MODIFICATO - FetchContent)
+# ==========================================
+# Questo blocco scarica i sorgenti e li compila con MinGW
+# risolvendo l'errore del file .lib incompatibile.
+include(FetchContent)
+message(STATUS "Downloading and compiling Box2D v3.1.1...")
+FetchContent_Declare(
+    box2d
+    GIT_REPOSITORY https://github.com/erincatto/box2d.git
+    GIT_TAG        v3.1.1
+)
+
+FetchContent_GetProperties(box2d)
+if(NOT box2d_POPULATED)
+    FetchContent_Populate(box2d)
+    add_subdirectory(${box2d_SOURCE_DIR} ${box2d_BINARY_DIR})
+endif()
 
 # List all your project's source files here.
 # This is the recommended and most reliable way to manage sources.
@@ -33,7 +51,7 @@ add_executable(sdl-prototype ${SOURCE_FILES})
 target_link_libraries(sdl-prototype PRIVATE
     SDL3::SDL3
     SDL3_image::SDL3_image
-    "${PROJECT_SOURCE_DIR}/lib/box2d/box2dd.lib"
+    box2d
 )
 
 # Include header libraries
@@ -41,7 +59,7 @@ target_include_directories(sdl-prototype PRIVATE
     "${PROJECT_SOURCE_DIR}/include/cute_headers"    
     "${PROJECT_SOURCE_DIR}/src/includes"
     "${PROJECT_SOURCE_DIR}/include/cglm"
-    "${PROJECT_SOURCE_DIR}/include/box2d"
+    "${box2d_SOURCE_DIR}/include"
 )
 
 # Set project-wide preprocessor definitions for cglm configuration

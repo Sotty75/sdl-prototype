@@ -144,7 +144,7 @@ void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
                 .h = tileHeight
             };
 
-            SDL_RenderTexture(appState->pRenderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
+            SDL_RenderTexture(appState->gpu->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
         }
 
         sot_collider_node_t * collider = current_tilemap->colliders;

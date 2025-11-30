@@ -16,31 +16,47 @@ SDL_AppResult SOT_InitializeWindow(AppState *as) {
         return SDL_APP_FAILURE;
     }
 
-    as->gpuDevice = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, 0, NULL);
-    if (as->gpuDevice == NULL) {
+    SOT_GPU_State *gpu = malloc(sizeof(SOT_GPU_State));
+
+    gpu->device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, 0, NULL);
+    if (gpu->device == NULL) {
         SDL_Log("Couldn't create GPU Device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_ClaimWindowForGPUDevice(as->gpuDevice, as->pWindow)) {
+    if (!SDL_ClaimWindowForGPUDevice(gpu->device, as->pWindow)) {
         SDL_Log("Couldn't bind GPU Device to SDL Window: %s", SDL_GetError());
     }
+
+    // Initialize the GPU Device Samplers
+    gpu->nearestSampler = SDL_CreateGPUSampler(gpu->device, &(SDL_GPUSamplerCreateInfo) {
+		.min_filter = SDL_GPU_FILTER_NEAREST,
+		.mag_filter = SDL_GPU_FILTER_NEAREST,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+	});
+
+    as->gpu = gpu;
 }
 
-SDL_AppResult SOT_InitializePipeline(AppState *as) {
+SDL_AppResult SOT_InitializePipelineWithInfo(AppState *as, SOT_GPU_PipelineInfo *info) {
+
+   SOT_GPU_State *gpu = as->gpu;
 
     // Initialize base path used to load assets
     InitializeAssetsLoader();
 
     // Create the shaders
-	SDL_GPUShader* vertexShader = LoadShader(as->gpuDevice, "shaderTexture_MVP.vert", 0, 2, 0, 0);
+	SDL_GPUShader *vertexShader = LoadShader(gpu->device, info->vertexShaderName, 0, 2, 0, 0);
 	if (vertexShader == NULL)
 	{
 		SDL_Log("Failed to create vertex shader!");
 		return SDL_APP_FAILURE;
 	}
 
-	SDL_GPUShader* fragmentShader = LoadShader(as->gpuDevice, "shaderTexture_MVP.frag", 2, 0, 0, 0);
+	SDL_GPUShader *fragmentShader = LoadShader(gpu->device, info->fragmentShaderName, 1, 0, 0, 0);
 	if (fragmentShader == NULL)	{
 		SDL_Log("Failed to create fragment shader!");
 		return SDL_APP_FAILURE;
@@ -103,38 +119,196 @@ SDL_AppResult SOT_InitializePipeline(AppState *as) {
         .target_info = {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-				.format = SDL_GetGPUSwapchainTextureFormat(as->gpuDevice, as->pWindow)
+				.format = SDL_GetGPUSwapchainTextureFormat(gpu->device, as->pWindow)
 			}},
 		},
 	};
 
-    as->renderingPipeline = SDL_CreateGPUGraphicsPipeline(as->gpuDevice, &pipelineCreateInfo);
-	if (as->renderingPipeline == NULL)
+    SDL_GPUGraphicsPipeline *renderingPipeline = SDL_CreateGPUGraphicsPipeline(gpu->device, &pipelineCreateInfo);
+	if (renderingPipeline == NULL)
 	{
 		SDL_Log("Failed to create fill pipeline!");
 		return SDL_APP_FAILURE;
 	}
 
+    gpu->pipeline[info->pipeline_ID] = renderingPipeline;
+
     // Clean up shader resources
-	SDL_ReleaseGPUShader(as->gpuDevice, vertexShader);
-	SDL_ReleaseGPUShader(as->gpuDevice, fragmentShader);
-
-    as->textureSampler_1 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
-		.min_filter = SDL_GPU_FILTER_NEAREST,
-		.mag_filter = SDL_GPU_FILTER_NEAREST,
-		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-	});
-
-    as->textureSampler_2 = SDL_CreateGPUSampler(as->gpuDevice, &(SDL_GPUSamplerCreateInfo) {
-		.min_filter = SDL_GPU_FILTER_NEAREST,
-		.mag_filter = SDL_GPU_FILTER_NEAREST,
-		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-	});
-    
+	SDL_ReleaseGPUShader(gpu->device, vertexShader);
+	SDL_ReleaseGPUShader(gpu->device, fragmentShader);
 }
+
+SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
+
+    // Vertex Buffer Data Upload
+
+    SDL_GPUBufferCreateInfo vertexBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = data->vertexDataSize,
+        .props = 0
+    };
+
+    gpu->vertexBuffer = SDL_CreateGPUBuffer(gpu->device, &vertexBufferInfo);
+    if (gpu->vertexBuffer == NULL)
+	{
+		SDL_Log("Failed to create vertex buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+    SDL_GPUTransferBufferCreateInfo transferBufferInfo = 
+    {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size =  data->vertexDataSize,
+        .props = 0
+    };
+    SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(gpu->device, &transferBufferInfo);
+    if (transferBuffer == NULL)
+	{
+		SDL_Log("Failed to create transfer buffer!");
+		return -SDL_APP_FAILURE;
+	}
+
+    vertex* transferData = SDL_MapGPUTransferBuffer(gpu->device, transferBuffer, false);
+    SDL_memcpy(transferData,  data->vertexData, data->vertexDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, transferBuffer);
+
+    // ------------------------------ Index Data Buffer - START ------------------------------------------//
+    
+    SDL_GPUBufferCreateInfo indexBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+        .size = data->indexDataSize,
+        .props = 0
+    };
+
+    gpu->indexBuffer = SDL_CreateGPUBuffer(gpu->device, &indexBufferInfo);
+    if (gpu->indexBuffer == NULL)
+	{
+		SDL_Log("Failed to create index buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+
+    SDL_GPUTransferBuffer *indexTransferBuffer = SDL_CreateGPUTransferBuffer
+    (gpu->device, 
+        &(SDL_GPUTransferBufferCreateInfo) {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = data->indexDataSize,
+        .props = 0
+    });
+    
+    if (indexTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create transfer buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+    uint16_t* transferIndexData = SDL_MapGPUTransferBuffer(gpu->device, indexTransferBuffer, false);
+    SDL_memcpy(transferIndexData, data->indexData, data->indexDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, indexTransferBuffer);
+
+     // ------------------------------ Texture Data Buffer ------------------------------------------//
+	
+    int textSize = 0;
+    for (int i = 0; i < data->surfaceCount; ++i)
+        textSize += (data->surfaces[i]->w * data->surfaces[i]->h * 4);
+
+    SDL_GPUTransferBufferCreateInfo textureTransferBufferInfo = {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = textSize
+	};
+    
+    SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->device, &textureTransferBufferInfo);
+    if (textureTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create texture transfer buffer!");
+		return -SDL_APP_FAILURE;
+	}
+    
+    Uint8* textureData = SDL_MapGPUTransferBuffer(gpu->device, textureTransferBuffer,	false);
+    Uint8* textureDataTemp = textureData;
+    for (int i = 0; i < data->surfaceCount; ++i) {
+	    SDL_memcpy(textureDataTemp, data->surfaces[i]->pixels, data->surfaces[i]->w * data->surfaces[i]->h * 4);
+        textureDataTemp +=  data->surfaces[i]->w * data->surfaces[i]->h * 4;
+    }
+	SDL_UnmapGPUTransferBuffer(gpu->device, textureTransferBuffer);
+
+    //---------------------------------------- Upload Vertex/Index/Textures Buffers to the GPU ------------------------------//
+
+	// Upload the transfer data to the vertex buffer
+	SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(gpu->device);
+    if (uploadCmdBuf == NULL)
+	{
+		SDL_Log("Failed to acquire command buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+	SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
+
+	SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = gpu->vertexBuffer,
+			.offset = 0,
+			.size =  data->vertexDataSize
+		},
+		false
+	);
+
+    SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = indexTransferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = gpu->indexBuffer,
+			.offset = 0,
+			.size =  data->indexDataSize
+		},
+		false
+	);
+
+    for (int i = 0; i < data->surfaceCount; ++i) {
+
+        int offset = 0;
+        for (int j = 0; j < i; j++) {
+            offset += data->surfaces[j-1]->w * data->surfaces[j-1]->h * 4;
+        }
+    
+        gpu->textures[i] = SDL_CreateGPUTexture(gpu->device, &(SDL_GPUTextureCreateInfo) {
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+            .width = data->surfaces[i]->w,
+            .height = data->surfaces[i]->h,
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+    	});
+        gpu->texturesCount++;
+
+
+        SDL_UploadToGPUTexture(
+		copyPass,
+		&(SDL_GPUTextureTransferInfo) {
+			.transfer_buffer = textureTransferBuffer,
+			.offset = offset /* Zeros out the rest */
+		},
+		&(SDL_GPUTextureRegion){
+			.texture = gpu->textures[i],
+			.w = data->surfaces[i]->w,
+			.h = data->surfaces[i]->h,
+			.d = 1
+		},
+		false
+	);
+
+	SDL_EndGPUCopyPass(copyPass);
+	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
+	SDL_ReleaseGPUTransferBuffer(gpu->device, transferBuffer);
+    SDL_ReleaseGPUTransferBuffer(gpu->device, indexTransferBuffer);
+    SDL_ReleaseGPUTransferBuffer(gpu->device, textureTransferBuffer);
+}}

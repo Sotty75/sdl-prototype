@@ -6,8 +6,8 @@
 typedef struct sot_world {
     sot_quad *quadsArray;
     int size;
-    int vertexBufferSize;
-    int indexBufferSize;
+    int vertexDataSize;
+    int indexDataSize;
 } sot_world;
 
 sot_world* TEST_CreateWorld(int size);

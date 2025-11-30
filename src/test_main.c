@@ -23,6 +23,6 @@ sot_world *TEST_CreateWorld(int size)
     glm_vec3_copy((vec3) {-5,3,0}, world->quadsArray[7].position);
     glm_vec3_copy((vec3) {-5,-3,0}, world->quadsArray[8].position);
 
-    world->vertexBufferSize = size * sizeof(world->quadsArray[0].verts);
-    world->indexBufferSize = size * sizeof(world->quadsArray[0].indexes);
+    world->vertexDataSize = size * sizeof(world->quadsArray[0].verts);
+    world->indexDataSize = size * sizeof(world->quadsArray[0].indexes);
 }
