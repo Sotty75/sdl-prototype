@@ -15,7 +15,7 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
-#include "box2d.h"
+#include "box2d/box2d.h"
 #include "sot_engine.h"
 
 AppState *as = NULL;

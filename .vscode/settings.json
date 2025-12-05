@@ -14,7 +14,11 @@
         "cglm.h": "c",
         "chrono": "c",
         "text_encoding": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "sdl_gpu.h": "c",
+        "cute_c2.h": "c",
+        "sot_sprite.h": "c",
+        "test_main.h": "c"
     },
     "editor.suggestOnTriggerCharacters": true,
     "editor.parameterHints.enabled": true,

@@ -18,7 +18,7 @@ SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
         return SDL_APP_FAILURE;
     }
 
-    free(spritesheetPath);
+    SDL_free(spritesheetPath);
 
     return SDL_APP_CONTINUE;
 }
