@@ -16,7 +16,14 @@ SDL_AppResult SOT_InitializeWindow(AppState *as) {
         return SDL_APP_FAILURE;
     }
 
-    SOT_GPU_State *gpu = malloc(sizeof(SOT_GPU_State));
+    SOT_GPU_State *gpu = SDL_malloc(sizeof(SOT_GPU_State));
+    if (gpu == NULL) {
+        SDL_Log("Unable to allocate memory for the SOT_GPU_State object.");
+        return SDL_APP_FAILURE;
+    }
+       
+    // Set the GPU State fields all to zero.
+    SDL_memset(gpu, 0, sizeof(SOT_GPU_State));
 
     gpu->device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, 0, NULL);
     if (gpu->device == NULL) {
@@ -39,6 +46,8 @@ SDL_AppResult SOT_InitializeWindow(AppState *as) {
 	});
 
     as->gpu = gpu;
+
+    return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SOT_InitializePipelineWithInfo(AppState *as, SOT_GPU_PipelineInfo *info) {
@@ -132,10 +141,12 @@ SDL_AppResult SOT_InitializePipelineWithInfo(AppState *as, SOT_GPU_PipelineInfo 
 	}
 
     gpu->pipeline[info->pipeline_ID] = renderingPipeline;
-
+    
     // Clean up shader resources
 	SDL_ReleaseGPUShader(gpu->device, vertexShader);
 	SDL_ReleaseGPUShader(gpu->device, fragmentShader);
+
+    return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
@@ -276,7 +287,8 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 
         int offset = 0;
         for (int j = 0; j < i; j++) {
-            offset += data->surfaces[j-1]->w * data->surfaces[j-1]->h * 4;
+            if (j == 0) continue;
+            offset += data->surfaces[j]->w * data->surfaces[j]->h * 4;
         }
     
         gpu->textures[i] = SDL_CreateGPUTexture(gpu->device, &(SDL_GPUTextureCreateInfo) {
@@ -292,23 +304,26 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 
 
         SDL_UploadToGPUTexture(
-		copyPass,
-		&(SDL_GPUTextureTransferInfo) {
-			.transfer_buffer = textureTransferBuffer,
-			.offset = offset /* Zeros out the rest */
-		},
-		&(SDL_GPUTextureRegion){
-			.texture = gpu->textures[i],
-			.w = data->surfaces[i]->w,
-			.h = data->surfaces[i]->h,
-			.d = 1
-		},
-		false
-	);
-
-	SDL_EndGPUCopyPass(copyPass);
-	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
+            copyPass,
+            &(SDL_GPUTextureTransferInfo) {
+                .transfer_buffer = textureTransferBuffer,
+                .offset = offset /* Zeros out the rest */
+            },
+            &(SDL_GPUTextureRegion){
+                .texture = gpu->textures[i],
+                .w = data->surfaces[i]->w,
+                .h = data->surfaces[i]->h,
+                .d = 1
+            },
+            false
+	    );
+    }
+    
+    SDL_EndGPUCopyPass(copyPass);
+    SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
 	SDL_ReleaseGPUTransferBuffer(gpu->device, transferBuffer);
     SDL_ReleaseGPUTransferBuffer(gpu->device, indexTransferBuffer);
     SDL_ReleaseGPUTransferBuffer(gpu->device, textureTransferBuffer);
-}}
+
+    return SDL_APP_CONTINUE;
+}

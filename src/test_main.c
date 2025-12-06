@@ -11,18 +11,20 @@ sot_world *TEST_CreateWorld(int size)
     // fill the world array
     for (int i = 0; i < size; i++) { sot_quad_copy(template, &(world->quadsArray[i])); }
 
-    // we place four quads in four distant corners (index 0 stays in the world origin)
-    glm_vec3_copy((vec3) {1,1,0}, world->quadsArray[1].position);
-    glm_vec3_copy((vec3) {1,-1,0}, world->quadsArray[2].position);
-    glm_vec3_copy((vec3) {-1,1,0}, world->quadsArray[3].position);
-    glm_vec3_copy((vec3) {-1,-1,0}, world->quadsArray[4].position);
+    if (size == 9) {
+        // we place four quads in four distant corners (index 0 stays in the world origin)
+        glm_vec3_copy((vec3) {1,1,0}, world->quadsArray[1].position);
+        glm_vec3_copy((vec3) {1,-1,0}, world->quadsArray[2].position);
+        glm_vec3_copy((vec3) {-1,1,0}, world->quadsArray[3].position);
+        glm_vec3_copy((vec3) {-1,-1,0}, world->quadsArray[4].position);
 
-    // we place four quads in four distant corners (index 0 stays in the world origin)
-    glm_vec3_copy((vec3) {5,3,0}, world->quadsArray[5].position);
-    glm_vec3_copy((vec3) {5,-3,0}, world->quadsArray[6].position);
-    glm_vec3_copy((vec3) {-5,3,0}, world->quadsArray[7].position);
-    glm_vec3_copy((vec3) {-5,-3,0}, world->quadsArray[8].position);
-
-    world->vertexDataSize = size * sizeof(world->quadsArray[0].verts);
-    world->indexDataSize = size * sizeof(world->quadsArray[0].indexes);
+        // we place four quads in four distant corners (index 0 stays in the world origin)
+        glm_vec3_copy((vec3) {5,3,0}, world->quadsArray[5].position);
+        glm_vec3_copy((vec3) {5,-3,0}, world->quadsArray[6].position);
+        glm_vec3_copy((vec3) {-5,3,0}, world->quadsArray[7].position);
+        glm_vec3_copy((vec3) {-5,-3,0}, world->quadsArray[8].position);
+    }
+    
+    world->vertexDataSize = size * sizeof(template->verts);
+    world->indexDataSize = size * sizeof(template->indexes);
 }

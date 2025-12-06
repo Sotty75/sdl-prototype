@@ -19,7 +19,6 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
 #include <box2d/box2d.h>
-
 #include "sot_engine.h"
 #include "common.h"
 #include "cglm.h"
@@ -57,7 +56,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
  	
     // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
 
-    SOT_GPU_Data gpuData;
+    SOT_GPU_Data gpuData = {0};
     gpuData.vertexDataSize = world->vertexDataSize;
     gpuData.vertexData = (vertex *) malloc(world->vertexDataSize);
     for (int i = 0; i < world->size; i = i + 4) {
@@ -75,12 +74,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     gpuData.surfaceCount = 2;
     
     SOT_UploadBufferData(as->gpu, &gpuData);
-    
-    
-    
-
-   
-
     
     
     /* Create the camera entity */
@@ -198,7 +191,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
 	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-    SDL_GPUTextureSamplerBinding textureBindings[gpu->texturesCount];
+    SDL_GPUTextureSamplerBinding *textureBindings = (SDL_GPUTextureSamplerBinding *)SDL_malloc((gpu->texturesCount * (sizeof(SDL_GPUTextureSamplerBinding))));
 
     for (int i = 0; i < gpu->texturesCount; i++ ) {
         textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
@@ -224,8 +217,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_BindGPUGraphicsPipeline(renderPass, gpu->pipeline[SOT_RP_TILEMAP]);
 		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
 
-        mat4 model[9];
-        for (int i = 0; i < 9; ++i) {
+        mat4 model[world->size];
+        for (int i = 0; i < world->size; ++i) {
             // sot_quad_rotation(&(world->quadsArray[i]), rad_msec * deltaTime);
             sot_quad_get_transform_RT(model[i],  &(world->quadsArray[i]));
         }
@@ -233,13 +226,12 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 	    SDL_PushGPUVertexUniformData(cmdbuf, 0, model, sizeof(model));
         SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->vertexBuffer, .offset = 0}, 1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = gpu->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 3, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 9, 0, 0, 0);
 		SDL_EndGPURenderPass(renderPass);
 	}
 
 	SDL_SubmitGPUCommandBuffer(cmdbuf);
-    
-	
+    SDL_free(textureBindings);
 
     return SDL_APP_CONTINUE;  
 }

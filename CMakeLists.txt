@@ -8,20 +8,14 @@ project(sdl-prototype LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# SDL3 library path
-set(SDL3_DIR "E:\\Coding\\libraries\\SDL3\\cmake")
-find_package(SDL3 REQUIRED CONFIG)
-
-# SDL3 library path
-set(SDL3_image_DIR "E:\\Coding\\Libraries\\SDL_image\\build")
-find_package(SDL3_image REQUIRED CONFIG)
 
 # ==========================================
-# 2. SETUP BOX2D (MODIFICATO - FetchContent)
+# 2. SETUP BOX2D (FetchContent)
 # ==========================================
 # Questo blocco scarica i sorgenti e li compila con MinGW
 # risolvendo l'errore del file .lib incompatibile.
 include(FetchContent)
+
 message(STATUS "Downloading and compiling Box2D v3.1.1...")
 FetchContent_Declare(
     box2d
@@ -29,11 +23,29 @@ FetchContent_Declare(
     GIT_TAG        v3.1.1
 )
 
-FetchContent_GetProperties(box2d)
-if(NOT box2d_POPULATED)
-    FetchContent_Populate(box2d)
-    add_subdirectory(${box2d_SOURCE_DIR} ${box2d_BINARY_DIR})
-endif()
+# ==========================================
+# 3. SETUP SDL3 and SDL3_image (FetchContent)
+# ==========================================
+# This downloads and builds SDL3 and its image library from source.
+message(STATUS "Downloading and compiling SDL3...")
+FetchContent_Declare(
+    sdl3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG        release-3.2.28
+)
+
+message(STATUS "Downloading and compiling SDL3_image...")
+FetchContent_Declare(
+    sdl3_image
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+    GIT_TAG        release-3.2.4
+)
+
+# Make the content available to the project.
+# This will download, configure, and add the targets (e.g., SDL3::SDL3)
+FetchContent_MakeAvailable(box2d)
+FetchContent_MakeAvailable(sdl3)
+FetchContent_MakeAvailable(sdl3_image)
 
 # List all your project's source files here.
 # This is the recommended and most reliable way to manage sources.
@@ -82,4 +94,21 @@ add_custom_command(
             "${CMAKE_SOURCE_DIR}/assets"
             "$<TARGET_FILE_DIR:sdl-prototype>/assets"
     COMMENT "Copying assets folder to output directory"
+)
+
+# --- Automatic DLL Copying for Runtime ---
+# This command will copy the required SDL and dependency DLLs to the executable's
+# directory after it's built. This is crucial for running the application on Windows.
+add_custom_command(
+    TARGET sdl-prototype POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:SDL3::SDL3>"
+            "$<TARGET_FILE_DIR:sdl-prototype>"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:SDL3_image::SDL3_image>"
+            "$<TARGET_FILE_DIR:sdl-prototype>"
+    COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_RUNTIME_DLLS:SDL3_image::SDL3_image>"
+            "$<TARGET_FILE_DIR:sdl-prototype>"
+    COMMENT "Copying runtime DLLs to output directory"
 )

@@ -39,8 +39,6 @@ typedef struct SOT_GPU_State {
     int texturesCount;
 
     // pipelines fields
-    int pipelinesCount;
-    char *pipelinesNames[16];
     SDL_GPUGraphicsPipeline *pipeline[16];
 
 } SOT_GPU_State;
