@@ -170,68 +170,17 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     */
 
     float rad_msec = GLM_PI_4f;
-    
-    SOT_GPU_State *gpu = as->gpu;
-    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
-    if (cmdbuf == NULL)
-    {
-        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-    
-    SDL_GPUTexture* swapchainTexture;
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, as->pWindow, &swapchainTexture, NULL, NULL)) {
-        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
+    mat4 model[world->size];
+    for (int i = 0; i < world->size; ++i) {
+        // sot_quad_rotation(&(world->quadsArray[i]), rad_msec * deltaTime);
+        sot_quad_get_transform_RT(model[i],  &(world->quadsArray[i]));
     }
 
-    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-	colorTargetInfo.texture = swapchainTexture;
-	colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };
-	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    mat4 projection_view;
+    MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
+    glm_mat4_mul(camera->projection, camera->view, projection_view);
 
-    SDL_GPUTextureSamplerBinding *textureBindings = (SDL_GPUTextureSamplerBinding *)SDL_malloc((gpu->texturesCount * (sizeof(SDL_GPUTextureSamplerBinding))));
-
-    for (int i = 0; i < gpu->texturesCount; i++ ) {
-        textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
-            .texture = gpu->textures[i], 
-            .sampler = gpu->nearestSampler
-        };
-    }
-
-	if (swapchainTexture != NULL)
-	{
-        mat4 projection_view;
-        MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
-        glm_mat4_mul(camera->projection, camera->view, projection_view);
-        SDL_PushGPUVertexUniformData(cmdbuf, 1, projection_view, sizeof(projection_view));
-
-		SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(
-			cmdbuf,
-			&colorTargetInfo,
-			1,
-			NULL
-		);
-
-        SDL_BindGPUGraphicsPipeline(renderPass, gpu->pipeline[SOT_RP_TILEMAP]);
-		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
-
-        mat4 model[world->size];
-        for (int i = 0; i < world->size; ++i) {
-            // sot_quad_rotation(&(world->quadsArray[i]), rad_msec * deltaTime);
-            sot_quad_get_transform_RT(model[i],  &(world->quadsArray[i]));
-        }
-            
-	    SDL_PushGPUVertexUniformData(cmdbuf, 0, model, sizeof(model));
-        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->vertexBuffer, .offset = 0}, 1);
-        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = gpu->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 9, 0, 0, 0);
-		SDL_EndGPURenderPass(renderPass);
-	}
-
-	SDL_SubmitGPUCommandBuffer(cmdbuf);
-    SDL_free(textureBindings);
+    SOT_RenderScene(as, model, world->size, projection_view);
 
     return SDL_APP_CONTINUE;  
 }

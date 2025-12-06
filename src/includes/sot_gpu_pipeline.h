@@ -46,6 +46,7 @@ typedef struct SOT_GPU_State {
 SDL_AppResult SOT_InitializeWindow(struct AppState *as);
 SDL_AppResult SOT_InitializePipelineWithInfo(struct AppState *as, SOT_GPU_PipelineInfo *pipelineInfo);
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
+SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 transforms[], int count, mat4 projection_view);
 #endif
 
 /*

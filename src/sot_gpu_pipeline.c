@@ -327,3 +327,57 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 
     return SDL_APP_CONTINUE;
 }
+
+SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 transforms[], int count, mat4 projection_view) {
+    SOT_GPU_State *gpu = as->gpu;
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
+    if (cmdbuf == NULL)
+    {
+        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+    
+    SDL_GPUTexture* swapchainTexture;
+    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, as->pWindow, &swapchainTexture, NULL, NULL)) {
+        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
+	colorTargetInfo.texture = swapchainTexture;
+	colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };
+	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPUTextureSamplerBinding textureBindings[gpu->texturesCount];
+
+    for (int i = 0; i < gpu->texturesCount; i++ ) {
+        textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
+            .texture = gpu->textures[i], 
+            .sampler = gpu->nearestSampler
+        };
+    }
+
+	if (swapchainTexture != NULL)
+	{
+
+		SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(
+			cmdbuf,
+			&colorTargetInfo,
+			1,
+			NULL
+		);
+
+        SDL_BindGPUGraphicsPipeline(renderPass, gpu->pipeline[SOT_RP_TILEMAP]);
+		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
+	    SDL_PushGPUVertexUniformData(cmdbuf, 0, transforms, count * sizeof(mat4));
+        SDL_PushGPUVertexUniformData(cmdbuf, 1, projection_view, sizeof(mat4));
+        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->vertexBuffer, .offset = 0}, 1);
+        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = gpu->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 9, 0, 0, 0);
+		SDL_EndGPURenderPass(renderPass);
+	}
+
+	SDL_SubmitGPUCommandBuffer(cmdbuf);
+    return SDL_APP_CONTINUE;  
+}
