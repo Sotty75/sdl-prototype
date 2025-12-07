@@ -256,7 +256,7 @@ I have reworked the test tiled map to use a better tiles resolution (now they ar
 ## December 6, 2025
 
 Back to the developer diary. I was not away, but instead I have been working on a separate branch where I have beens tudying how to migrate the project to use SDL_GPU as it opens up to better control of the entire engine. 
-I reached the point where i can "comfrotably" work with Quads, which is the first step in order to replicate the same rendering loginc i have in main using standard SDL functions.
+I reached the point where i can "comfortably" work with Quads, which is the first step in order to replicate the same rendering loginc i have in main using standard SDL functions.
 
 Now it is time to move to the next step, which is, again, rendering our tile set.
 I will have to rething how to pass the tilemap information to the render cycle, but the challenge is taken. 
