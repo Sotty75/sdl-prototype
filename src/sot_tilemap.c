@@ -16,7 +16,7 @@ sot_tilemap_t *CreateTilemap(char *tilemapName, AppState *appState)
 
     //...load the atlas in the textures pool.
     char *tilesetImage = (char *)map->tilesets->image.ptr;
-    SDL_Texture *tileset = GetTexture(tilesetImage, appState);
+    SDL_Texture *tileset = GetTexture(appState, tilesetImage);
     sot_tilemap_t *sot_tilemap = malloc(sizeof(sot_tilemap_t));
     sot_tilemap->tilemap = map;
     sot_tilemap->tilesetTexture = tileset;

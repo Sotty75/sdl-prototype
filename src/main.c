@@ -39,17 +39,21 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     
     // Initialize the graphics system
     SOT_InitializeWindow(as);
+
+    // Tilemap Pipeline
     SOT_InitializePipelineWithInfo(as, &(SOT_GPU_PipelineInfo) {
         .pipeline_ID = SOT_RP_TILEMAP,
-        .vertexShaderName = "shaderTexture_MVP_SSB.vert",
-        .fragmentShaderName = "shaderTexture_MVP_SSB.frag"
+        .vertexShaderName = "shaderTilemap.vert",
+        .fragmentShaderName = "shaderTilemap.frag"
     });
+
+    // Sprites Pipeline [TODO]
 
     //... load the texture file
     SDL_Surface *wallSurface = NULL;
     SDL_Surface *snowSurface = NULL;
-    GetSurfaceFromImage(&wallSurface, "textures\\wall.png");
-    GetSurfaceFromImage(&snowSurface, "textures\\snow.png");
+    GetSurfaceFromImage(&wallSurface, "textures", "wall.png");
+    GetSurfaceFromImage(&snowSurface, "textures", "snow.png");
     
     // Createt the test world
     world = TEST_CreateWorld(9);
@@ -75,13 +79,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     // Tilemap Data
     gpuData.tilemapData = (SOT_GPU_Tilemap *) malloc (sizeof(SOT_GPU_Tilemap));
+    gpuData.tilemapData->tilesetName = "x16-basic-tileset.png";
     gpuData.tilemapData->transformDataSize = world->count * sizeof(mat4);
     gpuData.tilemapData->transformData = (mat4 *) malloc(gpuData.tilemapData->transformDataSize);
     for (int i = 0; i < world->count; ++i) 
         sot_quad_get_transform_RT(gpuData.tilemapData->transformData[i],  &(world->quads[i]));
-    
-    SOT_UploadBufferData(as->gpu, &gpuData);
-    
+
+    // Upload Tilemap Data to the GPU
+    SOT_UploadTilemap(as->gpu, &gpuData);
     
     /* Create the camera entity */
     SOT_CameraInfo cameraInfo = {

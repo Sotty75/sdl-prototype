@@ -17,9 +17,9 @@ typedef struct sot_texture_t {
  - If present, returns the texture.
  - If not present, creates the texture and returns a pointer
 */
-SDL_Texture *GetTexture(char *name, AppState* appState);
-SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName);
-sot_texture_t *CreateTexture(char *name, AppState* appState);
+SDL_Texture *GetTexture(AppState* appState, char *name);
+SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *fodlerName, char *assetName);
+sot_texture_t *CreateTexture(AppState* appState, char *fileName);
 void DestroyTexturePool(AppState* appState);
 
 #endif 

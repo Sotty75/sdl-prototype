@@ -15,9 +15,9 @@ typedef enum SOT_Pipeline_ID {
 } SOT_Pipeline_ID;
 
 typedef struct SOT_GPU_Tilemap {
+    char *tilesetName;
     mat4 *transformData;
     int transformDataSize;
-
 } SOT_GPU_Tilemap;
 
 typedef struct SOT_GPU_Data {
@@ -37,6 +37,7 @@ typedef struct SOT_GPU_PipelineInfo {
 } SOT_GPU_PipelineInfo;
 
 typedef struct SOT_GPU_State {
+    SOT_Pipeline_ID pipeline_ID;
     SDL_Renderer *renderer;
     SDL_GPUDevice *device;
     SDL_GPUSampler *nearestSampler;
@@ -61,6 +62,7 @@ typedef struct SOT_RenderQueue {
 SDL_AppResult SOT_InitializeWindow(struct AppState *as);
 SDL_AppResult SOT_InitializePipelineWithInfo(struct AppState *as, SOT_GPU_PipelineInfo *pipelineInfo);
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
+SDL_AppResult SOT_UploadTilemap(SOT_GPU_State *gpu, SOT_GPU_Data *data);
 SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 transforms[], int count, mat4 projection_view);
 #endif
 

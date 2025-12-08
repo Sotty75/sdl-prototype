@@ -52,7 +52,8 @@ SDL_AppResult SOT_InitializeWindow(AppState *as) {
 
 SDL_AppResult SOT_InitializePipelineWithInfo(AppState *as, SOT_GPU_PipelineInfo *info) {
 
-   SOT_GPU_State *gpu = as->gpu;
+    SOT_GPU_State *gpu = as->gpu;
+    gpu->pipeline_ID = info->pipeline_ID;
 
     // Initialize base path used to load assets
     InitializeAssetsLoader();
@@ -227,10 +228,10 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 
     gpu->storageBuffer[0] = SDL_CreateGPUBuffer(gpu->device, &tilemapBufferInfo);
     if (gpu->storageBuffer[0] == NULL)
-	{
-		SDL_Log("Failed to create storage buffer!");
-		return SDL_APP_FAILURE;
-	}
+    {
+        SDL_Log("Failed to create storage buffer!");
+        return SDL_APP_FAILURE;
+    }
 
     SDL_GPUTransferBufferCreateInfo tilemapTransferBufferInfo = 
     {
@@ -240,17 +241,20 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
     };
     SDL_GPUTransferBuffer *tilemapTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->device, &tilemapTransferBufferInfo);
     if (tilemapTransferBuffer == NULL)
-	{
-		SDL_Log("Failed to create transfer buffer!");
-		return -SDL_APP_FAILURE;
-	}
+    {
+        SDL_Log("Failed to create transfer buffer!");
+        return SDL_APP_FAILURE;
+    }
 
     mat4* tilemapData = SDL_MapGPUTransferBuffer(gpu->device, tilemapTransferBuffer, false);
     SDL_memcpy(tilemapData,  data->tilemapData->transformData, data->tilemapData->transformDataSize);
     SDL_UnmapGPUTransferBuffer(gpu->device, tilemapTransferBuffer);
 
+    // Create texture buffer for the tileset
+    SDL_Surface *tilesetSurface = NULL;
+    GetSurfaceFromImage(&tilesetSurface, "textures", data->tilemapData->tilesetName);
 
-     // ------------------------------ Texture Data Buffer ------------------------------------------//
+    // ------------------------------ Texture Data Buffer ------------------------------------------//
 	
     int textSize = 0;
     for (int i = 0; i < data->surfaceCount; ++i)
@@ -365,6 +369,219 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
             false
 	    );
     }
+    
+    SDL_EndGPUCopyPass(copyPass);
+    SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
+	SDL_ReleaseGPUTransferBuffer(gpu->device, vertexTransferBuffer);
+    SDL_ReleaseGPUTransferBuffer(gpu->device, indexTransferBuffer);
+    SDL_ReleaseGPUTransferBuffer(gpu->device, tilemapTransferBuffer);
+    SDL_ReleaseGPUTransferBuffer(gpu->device, textureTransferBuffer);
+
+    return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SOT_UploadTilemap(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
+
+    // ------------------------------ Vertex Data Buffer - START ------------------------------------------//
+
+    SDL_GPUBufferCreateInfo vertexBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = data->vertexDataSize,
+        .props = 0
+    };
+
+    gpu->vertexBuffer = SDL_CreateGPUBuffer(gpu->device, &vertexBufferInfo);
+    if (gpu->vertexBuffer == NULL)
+	{
+		SDL_Log("Failed to create vertex buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+    SDL_GPUTransferBufferCreateInfo transferBufferInfo = 
+    {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size =  data->vertexDataSize,
+        .props = 0
+    };
+    SDL_GPUTransferBuffer *vertexTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->device, &transferBufferInfo);
+    if (vertexTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create transfer buffer!");
+		return -SDL_APP_FAILURE;
+	}
+
+    vertex* transferData = SDL_MapGPUTransferBuffer(gpu->device, vertexTransferBuffer, false);
+    SDL_memcpy(transferData,  data->vertexData, data->vertexDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, vertexTransferBuffer);
+
+    // ------------------------------ Index Data Buffer - START ------------------------------------------//
+    
+    SDL_GPUBufferCreateInfo indexBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+        .size = data->indexDataSize,
+        .props = 0
+    };
+
+    gpu->indexBuffer = SDL_CreateGPUBuffer(gpu->device, &indexBufferInfo);
+    if (gpu->indexBuffer == NULL)
+	{
+		SDL_Log("Failed to create index buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+
+    SDL_GPUTransferBuffer *indexTransferBuffer = SDL_CreateGPUTransferBuffer
+    (gpu->device, 
+        &(SDL_GPUTransferBufferCreateInfo) {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = data->indexDataSize,
+        .props = 0
+    });
+    
+    if (indexTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create transfer buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+    uint16_t* transferIndexData = SDL_MapGPUTransferBuffer(gpu->device, indexTransferBuffer, false);
+    SDL_memcpy(transferIndexData, data->indexData, data->indexDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, indexTransferBuffer);
+
+    // ------------------------------ Tilemap Storage Buffer Data ------------------------------------------//
+
+    SDL_GPUBufferCreateInfo tilemapBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+        .size = data->tilemapData->transformDataSize,
+        .props = 0
+    };
+
+    gpu->storageBuffer[0] = SDL_CreateGPUBuffer(gpu->device, &tilemapBufferInfo);
+    if (gpu->storageBuffer[0] == NULL)
+    {
+        SDL_Log("Failed to create storage buffer!");
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_GPUTransferBufferCreateInfo tilemapTransferBufferInfo = 
+    {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size =  data->tilemapData->transformDataSize,
+        .props = 0
+    };
+    SDL_GPUTransferBuffer *tilemapTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->device, &tilemapTransferBufferInfo);
+    if (tilemapTransferBuffer == NULL)
+    {
+        SDL_Log("Failed to create transfer buffer!");
+        return SDL_APP_FAILURE;
+    }
+
+    mat4* tilemapData = SDL_MapGPUTransferBuffer(gpu->device, tilemapTransferBuffer, false);
+    SDL_memcpy(tilemapData,  data->tilemapData->transformData, data->tilemapData->transformDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, tilemapTransferBuffer);
+
+    // Create texture buffer for the tileset
+    SDL_Surface *tilesetSurface = NULL;
+    GetSurfaceFromImage(&tilesetSurface, "textures", data->tilemapData->tilesetName);
+
+    // ------------------------------ Texture Data Buffer ------------------------------------------//
+	
+    int textureSize = tilesetSurface->w * tilesetSurface->h * 4;;
+    SDL_GPUTransferBufferCreateInfo textureTransferBufferInfo = {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = textureSize
+	};
+    
+    SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->device, &textureTransferBufferInfo);
+    if (textureTransferBuffer == NULL)
+	{
+		SDL_Log("Failed to create texture transfer buffer!");
+		return -SDL_APP_FAILURE;
+	}
+    
+    Uint8* textureData = SDL_MapGPUTransferBuffer(gpu->device, textureTransferBuffer,	false);
+    SDL_memcpy(textureData, tilesetSurface->pixels, textureSize);
+	SDL_UnmapGPUTransferBuffer(gpu->device, textureTransferBuffer);
+
+    //---------------------------------------- Upload Vertex/Index/Textures Buffers to the GPU ------------------------------//
+
+	// Upload the transfer data to the vertex buffer
+	SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(gpu->device);
+    if (uploadCmdBuf == NULL)
+	{
+		SDL_Log("Failed to acquire command buffer!");
+		return SDL_APP_FAILURE;
+	}
+
+	SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
+
+	SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = vertexTransferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = gpu->vertexBuffer,
+			.offset = 0,
+			.size =  data->vertexDataSize
+		},
+		false
+	);
+
+    SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = indexTransferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = gpu->indexBuffer,
+			.offset = 0,
+			.size =  data->indexDataSize
+		},
+		false
+	);
+
+    SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = tilemapTransferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = gpu->storageBuffer[0],
+			.offset = 0,
+			.size =  data->tilemapData->transformDataSize
+		},
+		false
+	);
+
+    gpu->textures[0] = SDL_CreateGPUTexture(gpu->device, &(SDL_GPUTextureCreateInfo) {
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+            .width = tilesetSurface->w,
+            .height = tilesetSurface->h,
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+    	});
+        
+    gpu->texturesCount = 1;
+    SDL_UploadToGPUTexture(
+        copyPass,
+        &(SDL_GPUTextureTransferInfo) {
+            .transfer_buffer = textureTransferBuffer,
+            .offset = 0
+        },
+        &(SDL_GPUTextureRegion){
+            .texture = gpu->textures[0],
+            .w = tilesetSurface->w,
+            .h = tilesetSurface->h,
+            .d = 1
+        },
+        false
+    );
     
     SDL_EndGPUCopyPass(copyPass);
     SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
