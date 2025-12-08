@@ -42,6 +42,14 @@ SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
 	return result;
 }
 
+/// @brief 
+/// @param device - a reference to the SDL_GPUDevice object
+/// @param shaderFilename - shaders name
+/// @param samplerCount - number of texture samplers to be bound to the shader
+/// @param uniformBufferCount - number of uniform buffers to be bound to the shader
+/// @param storageBufferCount - number of storage buffers to be bound to the shader
+/// @param storageTextureCount - number of storage textures to be bound to the shader
+/// @return 
 SDL_GPUShader* LoadShader(
 	SDL_GPUDevice* device,
 	const char* shaderFilename,

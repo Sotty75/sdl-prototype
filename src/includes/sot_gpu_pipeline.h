@@ -14,10 +14,17 @@ typedef enum SOT_Pipeline_ID {
     SOT_RP_SPRITE
 } SOT_Pipeline_ID;
 
+typedef struct SOT_GPU_Tilemap {
+    mat4 *transformData;
+    int transformDataSize;
+
+} SOT_GPU_Tilemap;
+
 typedef struct SOT_GPU_Data {
     vertex *vertexData;
     uint16_t* indexData;
     SDL_Surface *surfaces[16];
+    SOT_GPU_Tilemap *tilemapData;
     int vertexDataSize;
     int indexDataSize;
     int surfaceCount;
@@ -35,8 +42,10 @@ typedef struct SOT_GPU_State {
     SDL_GPUSampler *nearestSampler;
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
+    SDL_GPUBuffer *storageBuffer[8];
     SDL_GPUTexture *textures[16];
     int texturesCount;
+    int storageBuffersCount;
 
     // pipelines fields
     SDL_GPUGraphicsPipeline *pipeline[16];

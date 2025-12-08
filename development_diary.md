@@ -277,7 +277,7 @@ The current implementation has still some hardocoded logic. Instead I want the r
 
 In concrete steps:
 
-1. Modify the current shader to work on a single quad (simple vertex/index buffer)
+1. Modify the current shader to work on a single quad (simple vertex/index buffer) [DONE]
 2. Replace the uniform storing the models for each quad with a generic buffer.
 3. Pass the tileset texture instead of the test texture.
 4. Add a generic buffer to pass the shader not only the model transfor of each quad, but also the QUAD U,V coordinates.

@@ -41,8 +41,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     SOT_InitializeWindow(as);
     SOT_InitializePipelineWithInfo(as, &(SOT_GPU_PipelineInfo) {
         .pipeline_ID = SOT_RP_TILEMAP,
-        .vertexShaderName = "shaderTexture_MVP.vert",
-        .fragmentShaderName = "shaderTexture_MVP.frag"
+        .vertexShaderName = "shaderTexture_MVP_SSB.vert",
+        .fragmentShaderName = "shaderTexture_MVP_SSB.frag"
     });
 
     //... load the texture file
@@ -57,17 +57,28 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
 
     SOT_GPU_Data gpuData = {0};
+
+    // Vertext Buffer Data
     gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
     gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
     memcpy(gpuData.vertexData, world->quad->verts, gpuData.vertexDataSize);
 
+    // Index Buffer Data
     gpuData.indexDataSize = QUAD_INDEXES * sizeof(uint16_t);
     gpuData.indexData = (uint16_t *) malloc(gpuData.indexDataSize);
     memcpy(gpuData.indexData, world->quad->indexes, gpuData.indexDataSize);
 
+    // Textures Data
     gpuData.surfaces[0] = wallSurface;
     gpuData.surfaces[1] = snowSurface;
     gpuData.surfaceCount = 2;
+
+    // Tilemap Data
+    gpuData.tilemapData = (SOT_GPU_Tilemap *) malloc (sizeof(SOT_GPU_Tilemap));
+    gpuData.tilemapData->transformDataSize = world->count * sizeof(mat4);
+    gpuData.tilemapData->transformData = (mat4 *) malloc(gpuData.tilemapData->transformDataSize);
+    for (int i = 0; i < world->count; ++i) 
+        sot_quad_get_transform_RT(gpuData.tilemapData->transformData[i],  &(world->quads[i]));
     
     SOT_UploadBufferData(as->gpu, &gpuData);
     
@@ -165,10 +176,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     */
 
     float rad_msec = GLM_PI_4f;
-    for (int i = 0; i < world->count; ++i) {
-        // sot_quad_rotation(&(world->quadsArray[i]), rad_msec * deltaTime);
-        sot_quad_get_transform_RT(world->transforms[i],  &(world->quads[i]));
-    }
+    
 
     mat4 projection_view;
     MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
