@@ -18,33 +18,23 @@ sot_quad *sot_quad_create() {
     q->indexes[4] =  2;
     q->indexes[5] =  3;
 
-    // set the initial transform to the identity matrix
-    glm_vec3_copy((vec3) {0,0,1}, q->rotationAxis);
-    glm_vec3_zero(q->position);
-    q->rotation = 0;
-    q->scale = 1;
-
     // return the address to the quad stored on the heap
     return q;
 }
 
+void sot_quad_info_init(sot_quad_info *info) {
+
+    // set the initial transform to the identity matrix
+    glm_vec3_copy((vec3) {0,0,1}, info->rotationAxis);
+    glm_vec3_zero(info->position);
+    info->rotation = 0;
+    info->scale = 1;
+}
+
+
 /* Copy a quad structure to a destination entity. */
-void sot_quad_copy(sot_quad *source, sot_quad *dest) {
+void sot_quad_info_copy(sot_quad_info *source, sot_quad_info *dest) {
     
-     // Initialize destUAD vertices on the origin, sides size = 1
-    dest->verts[0] = source->verts[0];
-    dest->verts[1] = source->verts[1];
-    dest->verts[2] = source->verts[2];
-    dest->verts[3] = source->verts[3];
-
-    // Initialize Indexes for the endering of two triangles in the Index buffer
-    dest->indexes[0] =  source->indexes[0];
-    dest->indexes[1] =  source->indexes[1];
-    dest->indexes[2] =  source->indexes[2];
-    dest->indexes[3] =  source->indexes[3];
-    dest->indexes[4] =  source->indexes[4];
-    dest->indexes[5] =  source->indexes[5];
-
     // set the initial transform to the identity matrix
     glm_vec3_copy(source->rotationAxis, dest->rotationAxis);
     glm_vec3_copy(source->position, dest->position);
@@ -54,7 +44,7 @@ void sot_quad_copy(sot_quad *source, sot_quad *dest) {
 
 
 // Replace the model transform with a new one forced from the outside
-void sot_quad_get_transform_RT(mat4 transform, sot_quad* q) {
+void sot_quad_get_transform_RT(mat4 transform, sot_quad_info* q) {
     glm_mat4_identity(transform);
     glm_mat4_scale(transform, q->scale);
     glm_translate(transform, q->position);
@@ -63,7 +53,7 @@ void sot_quad_get_transform_RT(mat4 transform, sot_quad* q) {
     return;
 }
 
-void sot_quad_get_transform_TR(mat4 transform, sot_quad* q) {
+void sot_quad_get_transform_TR(mat4 transform, sot_quad_info* q) {
     glm_mat4_identity(transform);
     glm_mat4_scale(transform, q->scale);
     glm_rotate(transform, q->rotation, q->rotationAxis);
@@ -73,15 +63,15 @@ void sot_quad_get_transform_TR(mat4 transform, sot_quad* q) {
 }
 
 
-void sot_quad_position(sot_quad* q, vec3 position) {
+void sot_quad_position(sot_quad_info* q, vec3 position) {
     glm_vec3_add(position, q->position, q->position);
 }
 
-void sot_quad_rotation(sot_quad* q, float rotation) {
+void sot_quad_rotation(sot_quad_info* q, float rotation) {
     q->rotation += rotation;
 }
 
-void sot_quad_scale(sot_quad* q, float scale) {
+void sot_quad_scale(sot_quad_info* q, float scale) {
     q->scale += scale;
 }
 

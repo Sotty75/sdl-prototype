@@ -5,6 +5,9 @@
 #include <SDL3/SDL_gpu.h>
 #include "cglm.h"
 
+#define QUAD_VERTS 4
+#define QUAD_INDEXES 6
+
 void InitializeAssetsLoader();
 
 typedef struct {

@@ -57,17 +57,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
 
     SOT_GPU_Data gpuData = {0};
-    gpuData.vertexDataSize = world->vertexDataSize;
-    gpuData.vertexData = (vertex *) malloc(world->vertexDataSize);
-    for (int i = 0; i < world->size; i = i + 4) {
-        memcpy(&(gpuData.vertexData[i]), &(world->quadsArray[i].verts), 4 * sizeof(vertex));
-    }
+    gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
+    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
+    memcpy(gpuData.vertexData, world->quad->verts, gpuData.vertexDataSize);
 
-    gpuData.indexDataSize = world->indexDataSize;
-    gpuData.indexData = (uint16_t *) malloc(world->indexDataSize);
-    for (int i = 0; i < world->size; i = i + 6) {
-        memcpy(&(gpuData.indexData[i]), &(world->quadsArray[i].indexes), 6 * sizeof(uint16_t));
-    }
+    gpuData.indexDataSize = QUAD_INDEXES * sizeof(uint16_t);
+    gpuData.indexData = (uint16_t *) malloc(gpuData.indexDataSize);
+    memcpy(gpuData.indexData, world->quad->indexes, gpuData.indexDataSize);
 
     gpuData.surfaces[0] = wallSurface;
     gpuData.surfaces[1] = snowSurface;
@@ -162,25 +158,23 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     as->last_step = now;
 
     /*
-        SDL_RenderClear(as->pRenderer);
         // Start a new rendering pass
         UpdateScene(as, currentScene, deltaTime);
         RenderScene(as, currentScene);
-        SDL_RenderPresent(as->pRenderer);
+
     */
 
     float rad_msec = GLM_PI_4f;
-    mat4 model[world->size];
-    for (int i = 0; i < world->size; ++i) {
+    for (int i = 0; i < world->count; ++i) {
         // sot_quad_rotation(&(world->quadsArray[i]), rad_msec * deltaTime);
-        sot_quad_get_transform_RT(model[i],  &(world->quadsArray[i]));
+        sot_quad_get_transform_RT(world->transforms[i],  &(world->quads[i]));
     }
 
     mat4 projection_view;
     MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
     glm_mat4_mul(camera->projection, camera->view, projection_view);
 
-    SOT_RenderScene(as, model, world->size, projection_view);
+    SOT_RenderScene(as, world->transforms, world->count, projection_view);
 
     return SDL_APP_CONTINUE;  
 }

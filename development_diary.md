@@ -261,6 +261,28 @@ I reached the point where i can "comfortably" work with Quads, which is the firs
 Now it is time to move to the next step, which is, again, rendering our tile set.
 I will have to rething how to pass the tilemap information to the render cycle, but the challenge is taken. 
 
+## December 7, 2025
+
+I think that the plan needs to be as follows:
+
+- Implement a render queue.  
+The current implementation has still some hardocoded logic. Instead I want the render method to work on some kind of generic data structure holding the data used for rendering (a kind of render queue) which is filled ahead when updating the scene. 
+- This render queue will have:
+   - The vertices / indexes to be added into the vertex buffer (only if needed...we work with quads so probably we only need one quad to render everything.
+   - The textures to be bound to the pipeline.
+   The models for each instance of the quad to be rendered
+   - The MODEL transform to position each instance of the QUAD
+   - The UV coordinates for each instance of the QUAD (which means each tileset)
+- This will probably requirea new shader to consider the UV coordinates in the shader itself.
+
+In concrete steps:
+
+1. Modify the current shader to work on a single quad (simple vertex/index buffer)
+2. Replace the uniform storing the models for each quad with a generic buffer.
+3. Pass the tileset texture instead of the test texture.
+4. Add a generic buffer to pass the shader not only the model transfor of each quad, but also the QUAD U,V coordinates.
+5. Store this infotmation inside of a render queue data structure that we can use in the render phase to update the uniform data buffers.
+6. The renderer does only need to know the number of instances to render, the shader will read ther ight UV/Model on a per instance basis.
 
 ## Later
 

@@ -43,6 +43,12 @@ typedef struct SOT_GPU_State {
 
 } SOT_GPU_State;
 
+typedef struct SOT_RenderQueue {
+    mat4 *transforms;
+    uint16_t *textureIndex;
+    uint16_t size;
+} SOT_RenderQueue;
+
 SDL_AppResult SOT_InitializeWindow(struct AppState *as);
 SDL_AppResult SOT_InitializePipelineWithInfo(struct AppState *as, SOT_GPU_PipelineInfo *pipelineInfo);
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
