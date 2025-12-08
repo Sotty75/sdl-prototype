@@ -252,9 +252,15 @@ Also I may think of porting this to use Box2D, but that is a possible task for n
 
 I have reworked the test tiled map to use a better tiles resolution (now they are 16x16 pixels) and implemented the logic to handle polygonal colliders in the map, required to work with slopes.
 
-## October 20, 2025
 
-Started to work on a different branch to migrate my rendering logic to SDL_GPU as it looks like the way to go.
+## December 6, 2025
+
+Back to the developer diary. I was not away, but instead I have been working on a separate branch where I have beens tudying how to migrate the project to use SDL_GPU as it opens up to better control of the entire engine. 
+I reached the point where i can "comfortably" work with Quads, which is the first step in order to replicate the same rendering loginc i have in main using standard SDL functions.
+
+Now it is time to move to the next step, which is, again, rendering our tile set.
+I will have to rething how to pass the tilemap information to the render cycle, but the challenge is taken. 
+
 
 ## Later
 
@@ -271,3 +277,4 @@ Started to work on a different branch to migrate my rendering logic to SDL_GPU a
   to make better use of the memory. To do that, we may need to use another type of data structure so we can remove a texture from the list whatever is its position.
 - rather than a linked list, for some data structures like arrays of colliders and in general for ECS approach it should be better to  
   use arrays of a given lenght.
+
