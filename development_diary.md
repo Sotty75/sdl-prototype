@@ -280,9 +280,11 @@ In concrete steps:
 1. Modify the current shader to work on a single quad (simple vertex/index buffer). [DONE]
 2. Replace the uniform storing the models for each quad with a storage buffer. [DONE]
 3. Pass the tileset texture instead of the test texture. [DONE]
-4. Modify the storage buffer to pass the shader not only the model transfor of each quad, but also the U,V coordinates.
-5. Store this infotmation inside of a render queue data structure that we can use in the render phase to update the uniform data buffers.
-6. The renderer does only need to know the number of instances to render, the shader will read ther ight UV/Model on a per instance basis.
+4. Switch the create world logic to generate the tilemap
+5. Modify the storage buffer to pass the shader not only the model transfor of each quad, but also the U,V coordinates.
+6. Store this infotmation inside of a render queue data structure that we can use in the render phase to update the uniform data buffers.
+7. The renderer does only need to know the number of instances to render, the shader will read ther ight UV/Model on a per instance basis.
+8. Verify if we can simplify the tilemap struct by keeping just the tilesData and tilesCount members.
 
 ## Later
 

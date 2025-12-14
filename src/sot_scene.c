@@ -4,11 +4,10 @@
 
 
 
-
+// Create all the actors
+// Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
+// player, later we will use a file as an input (JSON, XML....)
 Scene *CreateScene(AppState *as) {
-    // Create all the actors
-    // Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
-    // player, later we will use a file as an input (JSON, XML....)
 
     Scene *currentScene = malloc(sizeof(Scene));
     if (currentScene == NULL) return NULL;
@@ -21,39 +20,42 @@ Scene *CreateScene(AppState *as) {
     currentScene->sot_tilemap = CreateTilemap(assetName, as);
     if (currentScene->sot_tilemap == NULL) return NULL;
 
-    //... load the spritesheet inside of the texture
-    SDL_Surface *monkeySpriteSheet = NULL;
-    sot_sprite_t *walkRight = NULL;
-    sot_sprite_t *walkLeft = NULL;
-    sot_sprite_t *idle = NULL;
-    walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as);
-    walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, as);
-    idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, as);
+    if (true == false) 
+    {
+        //... load the spritesheet inside of the texture
+        SDL_Surface *monkeySpriteSheet = NULL;
+        sot_sprite_t *walkRight = NULL;
+        sot_sprite_t *walkLeft = NULL;
+        sot_sprite_t *idle = NULL;
+        walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as);
+        walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, as);
+        idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, as);
 
-    //...pack the animations in a NULL terminated array
-    sot_sprite_t **animations = malloc(sizeof(sot_sprite_t*) * 4);
-    animations[0] = idle;
-    animations[1] = walkLeft;
-    animations[2] = walkRight;
-    animations[3] = NULL;
+        //...pack the animations in a NULL terminated array
+        sot_sprite_t **animations = malloc(sizeof(sot_sprite_t*) * 4);
+        animations[0] = idle;
+        animations[1] = walkLeft;
+        animations[2] = walkRight;
+        animations[3] = NULL;
 
-    // Create the player actor and add it to the scene.
-    // ...get the player start position from the marker in the tiled-map
-    cute_tiled_layer_t *mapLayer = &currentScene->sot_tilemap->tilemap->layers[0];
-    cute_tiled_object_t *currentObject = currentScene->sot_tilemap->tilemap->layers[1].objects;
-    char *playerStart = "player_start";
-    vec2 startPosition = {0,0};
-    while (currentObject != NULL) {
-        if (strcmp(currentObject->name.ptr, playerStart) == 0) {
-            vec2 currentPosition = { currentObject->x, currentObject->y };
-            glm_vec2_copy(currentPosition, startPosition);
+        // Create the player actor and add it to the scene.
+        // ...get the player start position from the marker in the tiled-map
+        cute_tiled_object_t *currentObject = currentScene->sot_tilemap->tilemap->layers[1].objects;
+        char *playerStart = "player_start";
+        vec2 startPosition = {0,0};
+        while (currentObject != NULL) {
+            if (strcmp(currentObject->name.ptr, playerStart) == 0) {
+                vec2 currentPosition = { currentObject->x, currentObject->y };
+                glm_vec2_copy(currentPosition, startPosition);
+            }
+            currentObject = currentObject->next;
         }
-        currentObject = currentObject->next;
+        
+        sot_actor_t *player = CreateActor(as, "Player", startPosition, animations, C2_TYPE_CIRCLE);
+        currentScene->player = player;
+
     }
     
-    sot_actor_t *player = CreateActor(as, "Player", startPosition, animations, C2_TYPE_CIRCLE);
-    currentScene->player = player;
-
     return currentScene;
 }
 

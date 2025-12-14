@@ -6,23 +6,28 @@
 #include "sot_texture.h"
 
 
-sot_tilemap_t *CreateTilemap(char *tilemapName, AppState *appState) 
+
+sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState) 
 {
-    char *tileMapPath = NULL;
-    SDL_asprintf(&tileMapPath, "%sassets\\%s", SDL_GetBasePath(), tilemapName);
-    cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
-    int width = map->width;
-    int height = map->height;
-
-    //...load the atlas in the textures pool.
-    char *tilesetImage = (char *)map->tilesets->image.ptr;
-    SDL_Texture *tileset = GetTexture(appState, tilesetImage);
+    // Allocate memory for the tilemap object
     sot_tilemap_t *sot_tilemap = malloc(sizeof(sot_tilemap_t));
-    sot_tilemap->tilemap = map;
-    sot_tilemap->tilesetTexture = tileset;
 
-    //...load the colliders in the colliders list
-    
+    // Load the tilemap from the file
+    char *tileMapPath = NULL;
+    SDL_asprintf(&tileMapPath, "%sassets\\%s", SDL_GetBasePath(), tilemapFilename);
+    cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
+
+    //...fill the tilemap object properties
+    sot_tilemap->tilesetFilename = (char *)map->tilesets->image.ptr;
+    sot_tilemap->tilemap = map;
+    sot_tilemap->tilesCount =  map->layers[0].data_count;
+    int dataSize = sot_tilemap->tilesCount * sizeof(int);
+    sot_tilemap->tiles = (int *)malloc(dataSize);
+    sot_tilemap->width = map->layers[0].width;
+    sot_tilemap->height = map->layers[0].height;
+    SDL_memcpy(sot_tilemap->tiles,  map->layers[0].data, dataSize);
+
+    //...load the colliders from the colliders layer
     cute_tiled_layer_t *collidersLayer = GetLayer(map, "Game-Collisions");
     cute_tiled_object_t *currentObject = collidersLayer->objects;
 
@@ -144,7 +149,7 @@ void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
                 .h = tileHeight
             };
 
-            SDL_RenderTexture(appState->gpu->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
+            // SDL_RenderTexture(appState->gpu->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
         }
 
         sot_collider_node_t * collider = current_tilemap->colliders;

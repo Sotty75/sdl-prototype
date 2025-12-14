@@ -7,7 +7,6 @@ sot_world *TEST_CreateWorld(int size)
     
     world->quad = sot_quad_create();
     world->quads = (sot_quad_info*) malloc((size) * sizeof(sot_quad_info));
-    world->transforms = (mat4 *) malloc((size) * sizeof(mat4));
     world->count = size;
 
     // fill the world array

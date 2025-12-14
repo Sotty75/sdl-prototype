@@ -6,7 +6,6 @@
 typedef struct sot_world {
     sot_quad *quad;
     sot_quad_info *quads;
-    mat4 *transforms;
     int count;
 } sot_world;
 

@@ -2,15 +2,19 @@
 #include "appstate.h"
 #include "cute_tiled.h"
 #include "sot_collider.h"
+#include "sot_quad.h"
 
 typedef struct sot_tilemap_t {
+    char *tilemapFilename;
+    char *tilesetFilename;
+    int *tiles;
+    int width, height, tilesCount;
     cute_tiled_map_t *tilemap;
     sot_collider_node_t *colliders;
-    SDL_Texture *tilesetTexture;
 } sot_tilemap_t;
 
 
-sot_tilemap_t *CreateTilemap(char *name, AppState *appState); 
+sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState); 
 void RenderTilemap(sot_tilemap_t *tilemap, AppState *appState);
 void DestroyTilemap(sot_tilemap_t *tilemap);
 sot_collider_t *GetCollider(cute_tiled_object_t *tiledObject) ;

@@ -429,7 +429,6 @@ SDL_AppResult SOT_UploadTilemap(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 		return SDL_APP_FAILURE;
 	}
 
-
     SDL_GPUTransferBuffer *indexTransferBuffer = SDL_CreateGPUTransferBuffer
     (gpu->device, 
         &(SDL_GPUTransferBufferCreateInfo) {
@@ -593,7 +592,8 @@ SDL_AppResult SOT_UploadTilemap(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 transforms[], int count, mat4 projection_view) {
+SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 projection_view) 
+{
     SOT_GPU_State *gpu = as->gpu;
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
     if (cmdbuf == NULL)

@@ -58,7 +58,17 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // Createt the test world
     world = TEST_CreateWorld(9);
  	
-    // ------------------------------ Vertext Data Buffer - START ------------------------------------------//
+    // ------------------------------ Initialize the Gamepad ------------------------------------------//
+    int gamepadsCount = 0;
+    SDL_JoystickID * gamepads =  SDL_GetGamepads(&gamepadsCount);
+    if (gamepads != NULL && gamepadsCount > 0) 
+         gamepad = SDL_OpenGamepad(gamepads[0]);
+
+    // Initialize our main scene
+    currentScene = CreateScene(as);
+    if (currentScene == NULL) 
+         return SDL_APP_FAILURE;
+
 
     SOT_GPU_Data gpuData = {0};
 
@@ -77,7 +87,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     gpuData.surfaces[1] = snowSurface;
     gpuData.surfaceCount = 2;
 
-    // Tilemap Data
+    // Load Tilemap Data
     gpuData.tilemapData = (SOT_GPU_Tilemap *) malloc (sizeof(SOT_GPU_Tilemap));
     gpuData.tilemapData->tilesetName = "x16-basic-tileset.png";
     gpuData.tilemapData->transformDataSize = world->count * sizeof(mat4);
@@ -107,14 +117,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
        
         // SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
         
-        //...gamepad initialization logic
-        int gamepadsCount = 0;
-        SDL_JoystickID * gamepads =  SDL_GetGamepads(&gamepadsCount);
-        if (gamepads != NULL && gamepadsCount > 0) { gamepad = SDL_OpenGamepad(gamepads[0]); }
-
-        // Initialize our main scene
-        currentScene = CreateScene(as);
-        if (currentScene == NULL) return SDL_APP_FAILURE;
+        
+        
     **/   
 
     //...store initialized application state so it will be shared in other
@@ -187,7 +191,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
     glm_mat4_mul(camera->projection, camera->view, projection_view);
 
-    SOT_RenderScene(as, world->transforms, world->count, projection_view);
+    SOT_RenderScene(as, projection_view);
 
     return SDL_APP_CONTINUE;  
 }
