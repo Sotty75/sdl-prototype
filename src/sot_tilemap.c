@@ -1,16 +1,17 @@
 #include <stdlib.h>
+
 #include <SDL3/SDL_render.h>
 #include <SDL3_image/SDL_image.h>
-#include "sot_tilemap.h"
 #include "appstate.h"
+#include "sot_gpu_pipeline.h"
+#include "sot_tilemap.h"
 #include "sot_texture.h"
-
 
 
 sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState) 
 {
     // Allocate memory for the tilemap object
-    sot_tilemap_t *sot_tilemap = malloc(sizeof(sot_tilemap_t));
+    sot_tilemap_t *tm = malloc(sizeof(sot_tilemap_t));
 
     // Load the tilemap from the file
     char *tileMapPath = NULL;
@@ -18,14 +19,18 @@ sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState)
     cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
 
     //...fill the tilemap object properties
-    sot_tilemap->tilesetFilename = (char *)map->tilesets->image.ptr;
-    sot_tilemap->tilemap = map;
-    sot_tilemap->tilesCount =  map->layers[0].data_count;
-    int dataSize = sot_tilemap->tilesCount * sizeof(int);
-    sot_tilemap->tiles = (int *)malloc(dataSize);
-    sot_tilemap->width = map->layers[0].width;
-    sot_tilemap->height = map->layers[0].height;
-    SDL_memcpy(sot_tilemap->tiles,  map->layers[0].data, dataSize);
+    tm->tilesetFilename = (char *)map->tilesets->image.ptr;
+    tm->tilemap = map;
+    tm->tilesCount =  map->layers[0].data_count;
+    int dataSize = tm->tilesCount * sizeof(int);
+    tm->tiles = (int *)malloc(dataSize);
+    SDL_memcpy(tm->tiles,  map->layers[0].data, dataSize);
+
+    //...fill the gpu tilemap info
+    tm->gpuTilemapInfo.COLUMNS = map->layers[0].height;
+    tm->gpuTilemapInfo.TILE_WIDTH = map->tilesets[0].tilewidth;
+    tm->gpuTilemapInfo.TILE_HEIGHT = map->tilesets[0].tileheight;
+    tm->gpuTilemapInfo.TILESET_WIDTH = map->tilesets[0].imagewidth;
 
     //...load the colliders from the colliders layer
     cute_tiled_layer_t *collidersLayer = GetLayer(map, "Game-Collisions");
@@ -38,7 +43,7 @@ sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState)
         sot_collider_node_t *currentNode = malloc(sizeof(sot_collider_node_t));
         currentNode->collider = GetCollider(currentObject);
         currentNode->next = NULL;
-        if (previousNode == NULL) { sot_tilemap->colliders = currentNode; }
+        if (previousNode == NULL) { tm->colliders = currentNode; }
         else { previousNode->next = currentNode; }
         previousNode = currentNode;
 
@@ -46,9 +51,9 @@ sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState)
     }
 
     // Add the list of tilemap colliders to the linked list of world colliders
-    AppendCollidersList(&(appState->pStaticColliders), sot_tilemap->colliders);
+    AppendCollidersList(&(appState->pStaticColliders), tm->colliders);
 
-    return sot_tilemap;
+    return tm;
 }
 
 sot_collider_t *GetCollider(cute_tiled_object_t *tiledObject) {
@@ -106,9 +111,8 @@ cute_tiled_layer_t *GetLayer(cute_tiled_map_t *map, char *layerName) {
 
 void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
 
-    //...render the map
     cute_tiled_map_t *map = current_tilemap->tilemap;
-
+    
     for (int y = 0; y < map->height; y++) {
         for (int x = 0; x < map->width; x++) {
             int currentTile = x + map->width * y;
@@ -130,7 +134,7 @@ void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
             int tilesetHeight = map->tilesets[0].imageheight;
 
             SDL_FRect sourceTile = 
-            {   
+            {    
                 .x = (currentTileIndex * tileWidth) % tilesetWidth,
                 .y = tileHeight * ((currentTileIndex * tileWidth) / tilesetWidth),
                 .w = tileWidth,

@@ -4,11 +4,14 @@
 #include "sot_collider.h"
 #include "sot_quad.h"
 
+// Data structure holding all the information required for the rendering of the 
+// tilemap
 typedef struct sot_tilemap_t {
     char *tilemapFilename;
     char *tilesetFilename;
     int *tiles;
-    int width, height, tilesCount;
+    int tilesCount;
+    SOT_GPU_TilemapInfo gpuTilemapInfo;
     cute_tiled_map_t *tilemap;
     sot_collider_node_t *colliders;
 } sot_tilemap_t;

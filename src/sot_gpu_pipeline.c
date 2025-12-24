@@ -59,14 +59,26 @@ SDL_AppResult SOT_InitializePipelineWithInfo(AppState *as, SOT_GPU_PipelineInfo 
     InitializeAssetsLoader();
 
     // Create the shaders
-	SDL_GPUShader *vertexShader = LoadShader(gpu->device, info->vertexShaderName, 0, 1, 1, 0);
+	SDL_GPUShader *vertexShader = LoadShader(gpu->device, 
+            info->vertexShader->name,
+            info->vertexShader->samplerCount, 
+            info->vertexShader->uniformCount, 
+            info->vertexShader->storageBufferCount, 
+            info->vertexShader->textureCount);
+
 	if (vertexShader == NULL)
 	{
 		SDL_Log("Failed to create vertex shader!");
 		return SDL_APP_FAILURE;
 	}
 
-	SDL_GPUShader *fragmentShader = LoadShader(gpu->device, info->fragmentShaderName, 1, 0, 0, 0);
+	SDL_GPUShader *fragmentShader = LoadShader(gpu->device, 
+        info->fragmentShader->name,
+        info->fragmentShader->samplerCount, 
+        info->fragmentShader->uniformCount, 
+        info->fragmentShader->storageBufferCount, 
+        info->fragmentShader->textureCount);
+
 	if (fragmentShader == NULL)	{
 		SDL_Log("Failed to create fragment shader!");
 		return SDL_APP_FAILURE;
@@ -592,7 +604,7 @@ SDL_AppResult SOT_UploadTilemap(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 projection_view) 
+SDL_AppResult SOT_Render(struct AppState *as, mat4 projection_view) 
 {
     SOT_GPU_State *gpu = as->gpu;
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
@@ -633,15 +645,26 @@ SDL_AppResult SOT_RenderScene(struct AppState *as, mat4 projection_view)
 			NULL
 		);
 
+        // Render the tilemap
+        // - Initialize the tilemapInfo struct to pass to the shader as a uniform
+        // - Push tilemapInfo struct as a unifotm
+        // - Push the projection view as a uniform
+        // - Bind Vertex and Index buffers for the basic tile QUAD
+        // - render the tiles as one instance x tile
+
+        SOT_GPU_PipelineInfo tilemapInfo = {
+
+        };
+
         SDL_BindGPUGraphicsPipeline(renderPass, gpu->pipeline[SOT_RP_TILEMAP]);
-		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, 2);
+		SDL_BindGPUFragmentSamplers(renderPass, 0, textureBindings, gpu->texturesCount);
         SDL_PushGPUVertexUniformData(cmdbuf, 0, projection_view, sizeof(mat4));
         SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->vertexBuffer, .offset = 0}, 1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding) {.buffer = gpu->indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
      	SDL_BindGPUVertexStorageBuffers(renderPass, 0, gpu->storageBuffer, 1);
-
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 9, 0, 0, 0);
-		SDL_EndGPURenderPass(renderPass);
+
+        SDL_EndGPURenderPass(renderPass);
 	}
 
 	SDL_SubmitGPUCommandBuffer(cmdbuf);

@@ -43,8 +43,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // Tilemap Pipeline
     SOT_InitializePipelineWithInfo(as, &(SOT_GPU_PipelineInfo) {
         .pipeline_ID = SOT_RP_TILEMAP,
-        .vertexShaderName = "shaderTilemap.vert",
-        .fragmentShaderName = "shaderTilemap.frag"
+        .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.vert", 0, 1, 1, 0},
+        .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.frag", 1, 0, 0, 0},
     });
 
     // Sprites Pipeline [TODO]
@@ -191,7 +191,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
     glm_mat4_mul(camera->projection, camera->view, projection_view);
 
-    SOT_RenderScene(as, projection_view);
+    SOT_Render(as, projection_view);
 
     return SDL_APP_CONTINUE;  
 }
