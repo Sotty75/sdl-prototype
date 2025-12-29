@@ -12,7 +12,6 @@
 #include "sot_gpu_pipeline.h"
 #include "sot_camera.h"
 
-#define SCREEN_WIDTH 640.0f
-#define SCREEN_HEIGHT 400.0f
+
 
 #endif

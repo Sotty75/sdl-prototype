@@ -22,13 +22,10 @@
 #include "sot_engine.h"
 #include "common.h"
 #include "cglm.h"
-#include "test_main.h"
 
-AppState *as = NULL;
-static Scene *currentScene = NULL;    
+static AppState *as = NULL;
+static SOT_Scene *currentScene = NULL; 
 SDL_Gamepad *gamepad = NULL;
-sot_world *world = NULL;
-SOT_Camera *camera = NULL;
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -37,27 +34,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     as = (AppState *)SDL_calloc(1, sizeof(AppState));
     if (!as) { return SDL_APP_FAILURE; }
     
-    // Initialize the graphics system
-    SOT_InitializeWindow(as);
+    // ----------------------------- Initialize the graphics system -----------------------------------//
+    SOT_GPU_InitRenderer(as, SOT_RPF_TILEMAP);
+    // SOT_GPU_InitRenderer(as, SOT_RPF_TEST);
 
-    // Tilemap Pipeline
-    SOT_InitializePipelineWithInfo(as, &(SOT_GPU_PipelineInfo) {
-        .pipeline_ID = SOT_RP_TILEMAP,
-        .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.vert", 0, 1, 1, 0},
-        .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.frag", 1, 0, 0, 0},
-    });
-
-    // Sprites Pipeline [TODO]
-
-    //... load the texture file
-    SDL_Surface *wallSurface = NULL;
-    SDL_Surface *snowSurface = NULL;
-    GetSurfaceFromImage(&wallSurface, "textures", "wall.png");
-    GetSurfaceFromImage(&snowSurface, "textures", "snow.png");
-    
-    // Createt the test world
-    world = TEST_CreateWorld(9);
- 	
     // ------------------------------ Initialize the Gamepad ------------------------------------------//
     int gamepadsCount = 0;
     SDL_JoystickID * gamepads =  SDL_GetGamepads(&gamepadsCount);
@@ -67,59 +47,18 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // Initialize our main scene
     currentScene = CreateScene(as);
     if (currentScene == NULL) 
-         return SDL_APP_FAILURE;
+        return SDL_APP_FAILURE;
 
-
-    SOT_GPU_Data gpuData = {0};
-
-    // Vertext Buffer Data
-    gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
-    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
-    memcpy(gpuData.vertexData, world->quad->verts, gpuData.vertexDataSize);
-
-    // Index Buffer Data
-    gpuData.indexDataSize = QUAD_INDEXES * sizeof(uint16_t);
-    gpuData.indexData = (uint16_t *) malloc(gpuData.indexDataSize);
-    memcpy(gpuData.indexData, world->quad->indexes, gpuData.indexDataSize);
-
-    // Textures Data
-    gpuData.surfaces[0] = wallSurface;
-    gpuData.surfaces[1] = snowSurface;
-    gpuData.surfaceCount = 2;
-
-    // Load Tilemap Data
-    gpuData.tilemapData = (SOT_GPU_Tilemap *) malloc (sizeof(SOT_GPU_Tilemap));
-    gpuData.tilemapData->tilesetName = "x16-basic-tileset.png";
-    gpuData.tilemapData->transformDataSize = world->count * sizeof(mat4);
-    gpuData.tilemapData->transformData = (mat4 *) malloc(gpuData.tilemapData->transformDataSize);
-    for (int i = 0; i < world->count; ++i) 
-        sot_quad_get_transform_RT(gpuData.tilemapData->transformData[i],  &(world->quads[i]));
-
-    // Upload Tilemap Data to the GPU
-    SOT_UploadTilemap(as->gpu, &gpuData);
+    // World Initialization
+    if (as->gpu->pipelineFlags & SOT_RPF_TEST)
+        SOT_GPU_InitializeTestData(as->gpu);
+    else {
+        SOT_GPU_InitializeTilemap(currentScene->sot_tilemap, as->gpu);
+    }
     
-    /* Create the camera entity */
-    SOT_CameraInfo cameraInfo = {
-        .center = {0, 0, 0},
-        .eye = {0,0,0},
-        .up = {0,1,0}
-    };
-    SOT_ProjectionInfo projectionInfo = {
-        .aspect = SCREEN_WIDTH / SCREEN_HEIGHT,
-        .far = 100,
-        .fov = 45,
-        .near = 5,
-        .mode = SOT_PERSPECTIVE,
-    };
-    camera = CreateCameraWitInfo(cameraInfo, projectionInfo);
-    
-    /** Commented while implementing the SDL_GPU Logic
-       
-        // SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
-        
-        
-        
-    **/   
+
+    // 
+    // SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     //...store initialized application state so it will be shared in other
     // functions.
@@ -177,22 +116,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     const float deltaTime = (now - as->last_step) / 1000.0f; // Delta time in seconds
     as->last_step = now;
 
-    /*
-        // Start a new rendering pass
-        UpdateScene(as, currentScene, deltaTime);
-        RenderScene(as, currentScene);
-
-    */
-
-    float rad_msec = GLM_PI_4f;
+    UpdateScene(as, currentScene, deltaTime);
+    SOT_GPU_Render(as->gpu, currentScene);
     
-
-    mat4 projection_view;
-    MoveCamera(camera, (vec3) {0,0,-1}, deltaTime, 1);
-    glm_mat4_mul(camera->projection, camera->view, projection_view);
-
-    SOT_Render(as, projection_view);
-
     return SDL_APP_CONTINUE;  
 }
 

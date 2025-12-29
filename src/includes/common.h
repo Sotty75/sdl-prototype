@@ -5,8 +5,8 @@
 #include <SDL3/SDL_gpu.h>
 #include "cglm.h"
 
-#define QUAD_VERTS 4
-#define QUAD_INDEXES 6
+#define SCREEN_WIDTH 640.0f
+#define SCREEN_HEIGHT 400.0f
 
 void InitializeAssetsLoader();
 

@@ -1,7 +1,4 @@
-#include <stdlib.h>
 #include "sot_actor.h"
-#include "appstate.h"
-#include "sot_math_interop.h"
 
 
 

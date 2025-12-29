@@ -10,9 +10,10 @@
 #include "appstate.h"
 #include "sot_sprite.h"
 #include "sot_collider.h"
+#include "sot_math_interop.h"
+
 
 #define GAMEPAD_DEADZONE 8000
-
 
 typedef enum {
     IDLE,

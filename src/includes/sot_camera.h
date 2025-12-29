@@ -9,6 +9,7 @@
 
 #include "cglm.h"
 
+
 typedef enum SOT_ProjectionMode {
     SOT_PERSPECTIVE,
     SOT_PERSPECTIVE_DEFAULT,
@@ -30,17 +31,17 @@ typedef struct SOT_ProjectionInfo {
     float left, right, bottom, top;
 } SOT_ProjectionInfo;
 
-typedef struct SOT_Camera {
+typedef struct sot_camera {
     SOT_CameraInfo cameraInfo;
     mat4 view;
     mat4 projection;
-} SOT_Camera;
+    mat4 pvMatrix;
+} sot_camera;
 
-SOT_Camera* CreateCamera();
-SOT_Camera* CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo);
-void SetCamera(SOT_Camera *t, SOT_CameraInfo cameraInfo);
-void SetProjection(SOT_Camera *t, SOT_ProjectionInfo projectionInfo);
-void MoveCamera(SOT_Camera *t, vec3 direction, float deltaTime, float velocity);
-void FreeCamera(SOT_Camera **);
+sot_camera CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo);
+void SetCameraView(sot_camera *t, SOT_CameraInfo cameraInfo);
+void SetCameraProjection(sot_camera *t, SOT_ProjectionInfo projectionInfo);
+void UpdateCamera(sot_camera *t, vec3 direction, float deltaTime, float velocity);
+void FreeCamera(sot_camera **);
 
 #endif

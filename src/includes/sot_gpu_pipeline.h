@@ -7,95 +7,136 @@
 
 // Forward-declare AppState to break circular dependency
 struct AppState;
-
-
-// ---------------------------------- Tilemap Render Pipeline Info -----------------------------//
-
-// Tilemap Information loaded as a uniform in the tilemap 
-// vertex shader
-// 
-// - COLUMNS: Tilemap columns
-// - TILE_WIDTH: width of a single tile in pixels.
-// - TILE_HEIGHT: height of a single tile in pixels.
-// - TILESET_WIDTH: width of the source tileset in pixels.
-typedef struct SOT_GPU_TilemapInfo {
-    int COLUMNS;
-    int TILE_WIDTH;
-    int TILE_HEIGHT;
-    int TILESET_WIDTH;
-} SOT_GPU_TilemapInfo;
-
-// TEMP: Data used as input for the tilemap rendering in 
-// the main render pass.
-typedef struct SOT_GPU_Tilemap {
-    char *tilesetName;
-    mat4 *transformData;
-    int transformDataSize;
-} SOT_GPU_Tilemap;
+struct SOT_Scene;
 
 // ---------------------------------- GPU Rendering Creation Data Structures --------------------//
 
 // Enum describing the currently supported pipelines we can use 
 // during the render pass.
-typedef enum SOT_Pipeline_ID {
+typedef enum SOT_PipelineID {
+    SOT_RP_TEST,
     SOT_RP_TILEMAP,
-    SOT_RP_SPRITE
-} SOT_Pipeline_ID;
+    SOT_RP_SPRITE,
+    SOT_RP_OVERLAY,
+} SOT_PipelineID;
+
+typedef enum {
+    SOT_RPF_NONE           = 0,
+    SOT_RPF_TEST           = 1 << 0,  // 1
+    SOT_RPF_SPRITES        = 1 << 1,  // 1
+    SOT_RPF_TILEMAP        = 1 << 2,  // 2
+    SOT_RPF_OVERLAY        = 1 << 3,   // 4
+} SOT_GPU_PIPELINE_FLAGS;
+
+// GPU Buffers Management data structures
+
+typedef enum {
+    SOT_BUFFER_NONE         = 0,
+    SOT_BUFFER_VERTEX       = 1 << 0,  // 1
+    SOT_BUFFER_INDEX        = 1 << 1,  // 2
+    SOT_BUFFER_TEXTURE      = 1 << 2,  // 4
+    SOT_BUFFER_TILEMAP      = 1 << 3,  // 8
+} SOT_GPU_BUFFER_FLAGS;
 
 
-// CPU bound structure holding the data
-// passed to the SOT_GPU_Upload functions to load
-// buffers and textures to the GPU VRAM.
-typedef struct SOT_GPU_Data {
-    vertex *vertexData;
-    uint16_t* indexData;
-    SDL_Surface *surfaces[16];
-    SOT_GPU_Tilemap *tilemapData;
-    int vertexDataSize;
-    int indexDataSize;
-    int surfaceCount;
-} SOT_GPU_Data;
-
-// Struct holding information about a shader
-// required to load a shader in memory, consumed by the SOT_GPU_PipelineInfo
-typedef struct SOT_GPU_ShaderInfo {
-    char *name;
-    int samplerCount;
-    int uniformCount;
-    int storageBufferCount;
-    int textureCount;
-} SOT_GPU_ShaderInfo;
-
-// Holds data describing the parameters required to initialize a 
-// GPU Pipeline
-typedef struct SOT_GPU_PipelineInfo {
-    SOT_Pipeline_ID pipeline_ID;
-    SOT_GPU_ShaderInfo *vertexShader;
-    SOT_GPU_ShaderInfo *fragmentShader;
-} SOT_GPU_PipelineInfo;
-
-typedef struct SOT_GPU_State {
-    SOT_Pipeline_ID pipeline_ID;
-    SDL_Renderer *renderer;
-    SDL_GPUDevice *device;
-    SDL_GPUSampler *nearestSampler;
+typedef struct SOT_GPU_Buffers {
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
     SDL_GPUBuffer *storageBuffer[8];
     SDL_GPUTexture *textures[16];
     int texturesCount;
     int storageBuffersCount;
+} SOT_GPU_Buffers;
 
-    // pipelines fields
+
+typedef struct SOT_GPU_TransferBuffers {
+    SDL_GPUTransferBuffer *vertexTransferBuffer;
+    SDL_GPUTransferBuffer *indexTransferBuffer;
+    SDL_GPUTransferBuffer *textureTransferBuffer;
+    SDL_GPUTransferBuffer *storageTransferBuffer;
+} SOT_GPU_TransferBuffers;
+
+
+/// @brief Struct holding information about a shader.
+/// Required to load a shader in memory; consumed by SOT_GPU_PipelineInfo.
+/// ```text
+/// name               : Shader name
+/// samplerCount       : Number of texture samplers
+/// uniformCount       : Number of uniforms
+/// storageBufferCount : Number of storage buffers
+/// sorageTextureCount : Number of storage textures
+/// ```
+typedef struct SOT_GPU_ShaderInfo {
+    char *name;              
+    int samplerCount;        
+    int uniformCount;        
+    int storageBufferCount;  
+    int sorageTextureCount;  
+} SOT_GPU_ShaderInfo;
+
+// Holds data describing the parameters required to initialize a 
+// GPU Pipeline
+typedef struct SOT_GPU_PipelineInfo {
+    SOT_PipelineID pipeline_ID;
+    SOT_GPU_ShaderInfo *vertexShader;
+    SOT_GPU_ShaderInfo *fragmentShader;
+    mat4 pvMatrix;
+} SOT_GPU_PipelineInfo;
+
+// CPU bound structure holding the data
+// passed to the SOT_GPU_Upload functions to load
+// buffers and textures to the GPU VRAM.
+typedef struct SOT_GPU_Data {
+    vertex *vertexData;
+    int vertexDataSize;
+    uint16_t *indexData;
+    int indexDataSize;
+    SDL_Surface *surfaces[16];
+    int surfaceCount;
+    int *tilemapData;
+    int tilemapDataSize;
+} SOT_GPU_Data;
+
+typedef struct SOT_GPU_State {
+    SOT_PipelineID pipelineID;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_GPUDevice *device;
+    SDL_GPUSampler *nearestSampler;
+    // GPU buffers
+    SOT_GPU_Buffers buffers;
+    SOT_GPU_TransferBuffers transferBuffers;
+    // pipelines array
+    uint32_t pipelineFlags;
     SDL_GPUGraphicsPipeline *pipeline[16];
-
 } SOT_GPU_State;
 
-SDL_AppResult SOT_InitializeWindow(struct AppState *as);
-SDL_AppResult SOT_InitializePipelineWithInfo(struct AppState *as, SOT_GPU_PipelineInfo *pipelineInfo);
-SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
-SDL_AppResult SOT_UploadTilemap(SOT_GPU_State *gpu, SOT_GPU_Data *data);
-SDL_AppResult SOT_Render(struct AppState *as, mat4 projection_view);
+typedef struct SOT_GPU_RenderpassInfo {
+    SDL_GPURenderPass *renderpass;
+    SDL_GPUTextureSamplerBinding *samplerBindings;
+    SDL_GPUCommandBuffer *cmdBuffer;
+   
+} SOT_GPU_RenderpassInfo;
+
+
+SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags);
+SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State* gpu, SOT_GPU_PipelineInfo *pipelineInfo);
+
+// ------------------------------------------- Buffers Data Management --------------------------------------//
+SDL_AppResult SOT_MapVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
+SDL_AppResult SOT_MapIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
+SDL_AppResult SOT_MapTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
+SDL_AppResult SOT_MapTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
+SDL_AppResult SOT_UploadVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
+SDL_AppResult SOT_UploadIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
+SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
+SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
+SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint32_t bufferFlags);
+SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, struct SOT_Scene *scene);
+
+// ------------------------------------------ Test Methods ---------------------------------------------//
+void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu);
+
 #endif
 
 /*

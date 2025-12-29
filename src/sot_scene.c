@@ -1,15 +1,14 @@
 #define CUTE_TILED_IMPLEMENTATION
 
+#include "common.h"
 #include "sot_scene.h"
-
-
 
 // Create all the actors
 // Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
 // player, later we will use a file as an input (JSON, XML....)
-Scene *CreateScene(AppState *as) {
+SOT_Scene *CreateScene(AppState *as) {
 
-    Scene *currentScene = malloc(sizeof(Scene));
+    SOT_Scene *currentScene = malloc(sizeof(SOT_Scene));
     if (currentScene == NULL) return NULL;
 
     // set the scene ID
@@ -17,8 +16,25 @@ Scene *CreateScene(AppState *as) {
 
     // ...create the tilemap and include it into the scene
     char *assetName = "level_00.json";
-    currentScene->sot_tilemap = CreateTilemap(assetName, as);
+    currentScene->sot_tilemap = SOT_CreateTilemap(assetName, as);
     if (currentScene->sot_tilemap == NULL) return NULL;
+
+
+    /* Create the cameras list entity */
+    SOT_CameraInfo cameraInfo = {
+        .center = {0, 0, 0},
+        .eye = {0,0,-1},
+        .up = {0,1,0}
+    };
+    SOT_ProjectionInfo projectionInfo = {
+        .aspect = SCREEN_WIDTH / SCREEN_HEIGHT,
+        .far = 100,
+        .fov = 45,
+        .near = 5,
+        .mode = SOT_PERSPECTIVE,
+    };
+    currentScene->worldCamera = CreateCameraWitInfo(cameraInfo, projectionInfo);
+    currentScene->uiCamera = CreateCameraWitInfo(cameraInfo, projectionInfo);
 
     if (true == false) 
     {
@@ -59,29 +75,29 @@ Scene *CreateScene(AppState *as) {
     return currentScene;
 }
 
-
-void UpdateScene(AppState *as, Scene * scene, float deltaTime) {
+void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
 
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
     // update game status
 
-    // update camera
-    UpdateActor(as, scene->player, deltaTime);
+    //UpdateCamera(&scene->worldCamera, (vec3) {0,0,-1}, deltaTime, 1);
+    // UpdateActor(as, scene->player, deltaTime);
+
     return;
 }
 
+void SOT_GPU_RenderScene(SOT_Scene *scene, SOT_GPU_State *gpu, SOT_GPU_RenderpassInfo *rpi)
+{
+    SOT_GPU_RenderTilemap(scene->sot_tilemap, gpu, rpi, scene->worldCamera.pvMatrix);
 
-void RenderScene(AppState *as, Scene * scene) {
-
-    // render the map
-    RenderTilemap(scene->sot_tilemap, as);
-
-    // for each actor in the scene, render it on the screen.
-    RenderActor(as, scene->player);    
+    
+    
+    // ------------------------------------------------- Render Actors Section ----------------------------------------------------------//
+    // ------------------------------------------------- Render UI Section --------------------------------------------------------------//    
 }
 
-void DestroyScene(Scene * scene) {
+void DestroyScene(SOT_Scene * scene) {
     DestroyActor(scene->player);
     DestroyTilemap(scene->sot_tilemap);
     free(scene);

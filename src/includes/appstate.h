@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct AppState
 {
-    SDL_Window *pWindow;
+    
     SOT_GPU_State *gpu;
     Uint64 last_step;
     bool full_screen_enabled;

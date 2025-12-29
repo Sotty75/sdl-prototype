@@ -3,15 +3,16 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3_image/SDL_image.h>
 #include "appstate.h"
-#include "sot_gpu_pipeline.h"
 #include "sot_tilemap.h"
 #include "sot_texture.h"
+#include "sot_gpu_pipeline.h"
+#include "sot_quad.h"
 
 
-sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState) 
+sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState) 
 {
     // Allocate memory for the tilemap object
-    sot_tilemap_t *tm = malloc(sizeof(sot_tilemap_t));
+    sot_tilemap *tm = malloc(sizeof(sot_tilemap));
 
     // Load the tilemap from the file
     char *tileMapPath = NULL;
@@ -33,7 +34,7 @@ sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState)
     tm->gpuTilemapInfo.TILESET_WIDTH = map->tilesets[0].imagewidth;
 
     //...load the colliders from the colliders layer
-    cute_tiled_layer_t *collidersLayer = GetLayer(map, "Game-Collisions");
+    cute_tiled_layer_t *collidersLayer = SOT_GetLayer(map, "Game-Collisions");
     cute_tiled_object_t *currentObject = collidersLayer->objects;
 
     //...fill the colliders list
@@ -41,7 +42,7 @@ sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState)
     
     while (currentObject != NULL) {
         sot_collider_node_t *currentNode = malloc(sizeof(sot_collider_node_t));
-        currentNode->collider = GetCollider(currentObject);
+        currentNode->collider = SOT_GetCollider(currentObject);
         currentNode->next = NULL;
         if (previousNode == NULL) { tm->colliders = currentNode; }
         else { previousNode->next = currentNode; }
@@ -56,7 +57,7 @@ sot_tilemap_t *CreateTilemap(char *tilemapFilename, AppState *appState)
     return tm;
 }
 
-sot_collider_t *GetCollider(cute_tiled_object_t *tiledObject) {
+sot_collider_t *SOT_GetCollider(cute_tiled_object_t *tiledObject) {
     // get collider type
     char *colliderType = NULL;
     cute_tiled_property_t *properties = tiledObject->properties;
@@ -98,7 +99,7 @@ sot_collider_t *GetCollider(cute_tiled_object_t *tiledObject) {
 }
 
 
-cute_tiled_layer_t *GetLayer(cute_tiled_map_t *map, char *layerName) {
+cute_tiled_layer_t *SOT_GetLayer(cute_tiled_map_t *map, char *layerName) {
     cute_tiled_layer_t *currentLayer = map->layers;
     while (currentLayer != NULL) {
         if (strcmp(layerName, currentLayer->name.ptr) == 0) 
@@ -109,62 +110,124 @@ cute_tiled_layer_t *GetLayer(cute_tiled_map_t *map, char *layerName) {
     return currentLayer;
 }
 
-void RenderTilemap(sot_tilemap_t *current_tilemap, AppState *appState) {
+/// @brief This function performs two different operations. 
+///
+/// 1. Initialize the data structures to be sent to the GPU specific for the Tilemap.
+///
+/// 2. Upload the data to the GPU RAM.
+/// 
+/// @param current_tilemap In-Memory object model of the tiled map.
+/// @param gpuData Generid data stracture to store GPU source data (vertex, index, storage buffers data and textures.)
+void SOT_GPU_InitializeTilemap(sot_tilemap *tm, SOT_GPU_State *gpu) {
 
-    cute_tiled_map_t *map = current_tilemap->tilemap;
-    
-    for (int y = 0; y < map->height; y++) {
-        for (int x = 0; x < map->width; x++) {
-            int currentTile = x + map->width * y;
-            int size = map->layers[0].data_count;
-            int currentTileIndex = map->layers[0].data[currentTile];
+    // Create a new GPU Data structure
+    SOT_GPU_Data gpuData = {0};
 
-            // tiles with index 0 are empty, move to the next one
-            if (currentTileIndex == 0)
-                continue;
+    // Create a new quad to use as a template for the single tile
+    sot_quad tilemapQuad = sot_quad_create();
 
-            // we need to decrement the tile index to have a zero starting index.
-            currentTileIndex--;
+    // Vertext Buffer Data
+    gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
+    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
+    memcpy(gpuData.vertexData, tilemapQuad.verts, gpuData.vertexDataSize);
 
-            // source rectangle depends in the currentTileIndex
-            // i need also to know the size of the tileset in terms of width and height and the size of each tile
-            int tileWidth = map->tilesets[0].tilewidth;
-            int tileHeight = map->tilesets[0].tileheight;
-            int tilesetWidth = map->tilesets[0].imagewidth;
-            int tilesetHeight = map->tilesets[0].imageheight;
+    // Index Buffer Data
+    gpuData.indexDataSize = QUAD_INDEXES * sizeof(uint16_t);
+    gpuData.indexData = (uint16_t *) malloc(gpuData.indexDataSize);
+    memcpy(gpuData.indexData, tilemapQuad.indexes, gpuData.indexDataSize);
 
-            SDL_FRect sourceTile = 
-            {    
-                .x = (currentTileIndex * tileWidth) % tilesetWidth,
-                .y = tileHeight * ((currentTileIndex * tileWidth) / tilesetWidth),
-                .w = tileWidth,
-                .h = tileHeight
-            };
+    // Textures Data
+    SDL_Surface *tilesetSurface = NULL;
+    GetSurfaceFromImage(&tilesetSurface, "textures", tm->tilesetFilename);
+    gpuData.surfaces[0] = tilesetSurface;
+    gpuData.surfaceCount = 1;
 
-            // destination rectangle are the tiles on the screen.
-            // The tiled map should already containing this information
-            //      Tiles per row
-            //      Tiles per column
-            // in this case we move from the top to the bottom, we are already in the cycle, so we have both X and Y.
-            SDL_FRect destinationTile = {
-                .x = (x % map->width) * tileWidth,
-                .y = y * tileHeight,
-                .w = tileWidth,
-                .h = tileHeight
-            };
+    // Load Tilemap Data
+    gpuData.tilemapDataSize = tm->tilesCount * (sizeof(int));
+    gpuData.tilemapData = (int *) malloc(gpuData.tilemapDataSize);
+    SDL_memcpy(gpuData.tilemapData, tm->tiles, gpuData.tilemapDataSize);
 
-            // SDL_RenderTexture(appState->gpu->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
-        }
-
-        sot_collider_node_t * collider = current_tilemap->colliders;
-            while (collider) {
-                DrawCollidersDebugInfo(*(collider->collider), appState);
-                collider = collider->next;
-            }
-    }
+    //...upload data to GPU buffers used by the shader
+    SOT_MapVertexBufferData(gpu, &gpuData);
+    SOT_MapIndexBufferData(gpu, &gpuData);
+    SOT_MapTextureData(gpu, &gpuData);
+    SOT_MapTilemapData(gpu, &gpuData);
+    SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE | SOT_BUFFER_TILEMAP);
 }
 
-void DestroyTilemap(sot_tilemap_t *current_tilemap) {
+// Render the tilemap
+// - Initialize the tilemapInfo struct to pass to the shader as a uniform
+// - Push tilemapInfo struct as a unifotm
+// - Push the projection view as a uniform
+// - Bind Vertex and Index buffers for the basic tile QUAD
+// - render the tiles as one instance x tile
+void SOT_GPU_RenderTilemap(sot_tilemap *tm, SOT_GPU_State* gpu, SOT_GPU_RenderpassInfo *rpi, mat4 pvMatrix)
+{
+    SDL_BindGPUGraphicsPipeline(rpi->renderpass, gpu->pipeline[SOT_RP_TILEMAP]);
+    SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, rpi->samplerBindings, gpu->buffers.texturesCount);
+    SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 0, pvMatrix, sizeof(mat4));
+    SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 1, &(tm->gpuTilemapInfo), sizeof(SOT_GPU_TilemapInfo));
+    SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers.vertexBuffer, .offset = 0}, 1);
+    SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers.indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+    SDL_BindGPUVertexStorageBuffers(rpi->renderpass, 0, gpu->buffers.storageBuffer, 1);
+
+    // Draw all the tiles of the shader
+    SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, tm->tilesCount, 0, 0, 0);
+
+    // Colliders Debug Info
+    // sot_collider_node_t * collider = current_tilemap->colliders;
+    // while (collider) {
+    //     DrawCollidersDebugInfo(*(collider->collider), as);
+    //     collider = collider->next;
+    // }
+
+
+        // for (int y = 0; y < map->height; y++) {
+    //     for (int x = 0; x < map->width; x++) {
+    //         int currentTile = x + map->width * y;
+    //         int size = map->layers[0].data_count;
+    //         int currentTileIndex = map->layers[0].data[currentTile];
+
+    //         // tiles with index 0 are empty, move to the next one
+    //         if (currentTileIndex == 0)
+    //             continue;
+
+    //         // we need to decrement the tile index to have a zero starting index.
+    //         currentTileIndex--;
+
+    //         // source rectangle depends in the currentTileIndex
+    //         // i need also to know the size of the tileset in terms of width and height and the size of each tile
+    //         int tileWidth = map->tilesets[0].tilewidth;
+    //         int tileHeight = map->tilesets[0].tileheight;
+    //         int tilesetWidth = map->tilesets[0].imagewidth;
+    //         int tilesetHeight = map->tilesets[0].imageheight;
+
+    //         SDL_FRect sourceTile = 
+    //         {    
+    //             .x = (currentTileIndex * tileWidth) % tilesetWidth,
+    //             .y = tileHeight * ((currentTileIndex * tileWidth) / tilesetWidth),
+    //             .w = tileWidth,
+    //             .h = tileHeight
+    //         };
+
+    //         // destination rectangle are the tiles on the screen.
+    //         // The tiled map should already containing this information
+    //         //      Tiles per row
+    //         //      Tiles per column
+    //         // in this case we move from the top to the bottom, we are already in the cycle, so we have both X and Y.
+    //         SDL_FRect destinationTile = {
+    //             .x = (x % map->width) * tileWidth,
+    //             .y = y * tileHeight,
+    //             .w = tileWidth,
+    //             .h = tileHeight
+    //         };
+
+    //         // SDL_RenderTexture(appState->gpu->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
+    //     }
+       
+}
+
+void DestroyTilemap(sot_tilemap *current_tilemap) {
     cute_tiled_free_map(current_tilemap->tilemap);
     DestroyColliders(current_tilemap->colliders);
     free(current_tilemap);

@@ -201,11 +201,11 @@ Rendering of a simple tiled map has been completed.
 
 ## October 11, 2025
 
-Today I would like to focus on the collissions and in putting some additional information in my tiled map. I cna breakdown this part in three steps. 
+Today I would like to focus on the collisions and in putting some additional information in my tiled map. I cna breakdown this part in three steps. 
 
 - Add a start position object to the map, so that the main character will be rendered over there in the first place. [DONE]
 - Add a collision shape to the tiles in the tileset and read them from the code [DONE]
-- Add some gravity to the world, meaning the carachter will fall until he founds some ground (and, why not, a fall animation)
+- Add some gravity to the world, meaning the character will fall until he founds some ground (and, why not, a fall animation)
 - Implementing the collision logic so that when the character hits the ground, the fall is stopped.
 
 ## October 14, 2025
@@ -216,9 +216,9 @@ Before to apply the pattern though, I would like to test the collisions system.
 I have my falling sprite and a map with a few collision shapes in place. 
 I can breakdown this work in three steps:
 
-- attache a collider to my player sprite [DONE]
+- attach a collider to my player sprite [DONE]
 - read these shapes while loading a tilemap and create possibly an array of colliders [DONE]
-- test the character is not allowed to move if there is a collition hit condition.
+- test the character is not allowed to move if there is a collision hit condition.
 
 ### Wrap-up
 I have completed the first two tasks, we will implement the collision detection tomorrow to test the logic.
