@@ -85,8 +85,6 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
 }
 
 SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineInfo *info) {
-    gpu->pipelineID = info->pipeline_ID;
-
     // Initialize base path used to load assets
     InitializeAssetsLoader();
 
@@ -203,8 +201,8 @@ SDL_AppResult SOT_MapVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
         .props = 0
     };
 
-    gpu->buffers.vertexBuffer = SDL_CreateGPUBuffer(gpu->device, &vertexBufferInfo);
-    if (gpu->buffers.vertexBuffer == NULL)
+    gpu->buffers[data->pipelineID].vertexBuffer = SDL_CreateGPUBuffer(gpu->device, &vertexBufferInfo);
+    if (gpu->buffers[data->pipelineID].vertexBuffer == NULL)
 	{
 		SDL_Log("Failed to create vertex buffer!");
 		return SDL_APP_FAILURE;
@@ -240,8 +238,8 @@ SDL_AppResult SOT_MapIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
         .props = 0
     };
 
-    gpu->buffers.indexBuffer = SDL_CreateGPUBuffer(gpu->device, &indexBufferInfo);
-    if (gpu->buffers.indexBuffer == NULL)
+    gpu->buffers[data->pipelineID].indexBuffer = SDL_CreateGPUBuffer(gpu->device, &indexBufferInfo);
+    if (gpu->buffers[data->pipelineID].indexBuffer == NULL)
 	{
 		SDL_Log("Failed to create index buffer!");
 		return SDL_APP_FAILURE;
@@ -277,8 +275,8 @@ SDL_AppResult SOT_MapTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
         .props = 0
     };
 
-    gpu->buffers.storageBuffer[0] = SDL_CreateGPUBuffer(gpu->device, &storageBufferInfo);
-    if (gpu->buffers.storageBuffer[0] == NULL)
+    gpu->buffers[data->pipelineID].storageBuffer[0] = SDL_CreateGPUBuffer(gpu->device, &storageBufferInfo);
+    if (gpu->buffers[data->pipelineID].storageBuffer[0] == NULL)
 	{
 		SDL_Log("Failed to create tilemap storage buffer!");
 		return SDL_APP_FAILURE;
@@ -337,7 +335,7 @@ SDL_AppResult SOT_UploadVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data,
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = gpu->buffers.vertexBuffer,
+			.buffer = gpu->buffers[data->pipelineID].vertexBuffer,
 			.offset = 0,
 			.size =  data->vertexDataSize
 		},
@@ -356,7 +354,7 @@ SDL_AppResult SOT_UploadIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, 
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = gpu->buffers.indexBuffer,
+			.buffer = gpu->buffers[data->pipelineID].indexBuffer,
 			.offset = 0,
 			.size =  data->indexDataSize
 		},
@@ -376,7 +374,7 @@ SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
             offset += data->surfaces[j]->w * data->surfaces[j]->h * 4;
         }
     
-        gpu->buffers.textures[i] = SDL_CreateGPUTexture(gpu->device, &(SDL_GPUTextureCreateInfo) {
+        gpu->buffers[data->pipelineID].textures[i] = SDL_CreateGPUTexture(gpu->device, &(SDL_GPUTextureCreateInfo) {
             .type = SDL_GPU_TEXTURETYPE_2D,
             .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
             .width = data->surfaces[i]->w,
@@ -385,7 +383,7 @@ SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
             .num_levels = 1,
             .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
     	});
-        gpu->buffers.texturesCount++;
+        gpu->buffers[data->pipelineID].texturesCount++;
 
         SDL_UploadToGPUTexture(
             copyPass,
@@ -394,7 +392,7 @@ SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
                 .offset = offset /* Zeros out the rest */
             },
             &(SDL_GPUTextureRegion){
-                .texture = gpu->buffers.textures[i],
+                .texture = gpu->buffers[data->pipelineID].textures[i],
                 .w = data->surfaces[i]->w,
                 .h = data->surfaces[i]->h,
                 .d = 1
@@ -415,7 +413,7 @@ SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = gpu->buffers.storageBuffer[0],
+			.buffer = gpu->buffers[data->pipelineID].storageBuffer[0],
 			.offset = 0,
 			.size =  data->tilemapDataSize
 		},
@@ -505,14 +503,6 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
 	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
 	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-    SDL_GPUTextureSamplerBinding textureBindings[gpu->buffers.texturesCount];
-
-    for (int i = 0; i < gpu->buffers.texturesCount; i++ ) {
-        textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
-            .texture = gpu->buffers.textures[i], 
-            .sampler = gpu->nearestSampler
-        };
-    }
 
 	if (swapchainTexture != NULL)
 	{
@@ -528,16 +518,23 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
         SOT_GPU_RenderpassInfo *rpi = &(SOT_GPU_RenderpassInfo) {
             .cmdBuffer = cmdbuf,
             .renderpass = renderPass,
-            .samplerBindings = textureBindings
         };
 
         if (gpu->pipelineFlags & SOT_RPF_TEST)
         {
+            
+            SDL_GPUTextureSamplerBinding textureBindings[gpu->buffers[SOT_RP_TEST].texturesCount];
+            for (int i = 0; i < gpu->buffers[SOT_RP_TEST].texturesCount; i++ ) {
+                textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
+                    .texture = gpu->buffers[SOT_RP_TEST].textures[i], 
+                    .sampler = gpu->nearestSampler
+                };
+            }
             SDL_BindGPUGraphicsPipeline(rpi->renderpass, gpu->pipeline[SOT_RP_TEST]);
-            SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, rpi->samplerBindings, gpu->buffers.texturesCount);
+            SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, textureBindings, gpu->buffers[SOT_RPF_TEST].texturesCount);
             SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 0, scene->worldCamera.pvMatrix, sizeof(mat4));
-            SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers.vertexBuffer, .offset = 0}, 1);
-            SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers.indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+            SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers[SOT_RPF_TEST].vertexBuffer, .offset = 0}, 1);
+            SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers[SOT_RPF_TEST].indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
             // Draw all the tiles of the shader
             SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, 1, 0, 0, 0);

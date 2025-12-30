@@ -87,6 +87,7 @@ typedef struct SOT_GPU_PipelineInfo {
 // passed to the SOT_GPU_Upload functions to load
 // buffers and textures to the GPU VRAM.
 typedef struct SOT_GPU_Data {
+    SOT_PipelineID pipelineID;
     vertex *vertexData;
     int vertexDataSize;
     uint16_t *indexData;
@@ -98,17 +99,15 @@ typedef struct SOT_GPU_Data {
 } SOT_GPU_Data;
 
 typedef struct SOT_GPU_State {
-    SOT_PipelineID pipelineID;
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_GPUDevice *device;
     SDL_GPUSampler *nearestSampler;
-    // GPU buffers
-    SOT_GPU_Buffers buffers;
     SOT_GPU_TransferBuffers transferBuffers;
-    // pipelines array
-    uint32_t pipelineFlags;
+    // Pipelines Status
+    uint32_t pipelineFlags;                     
     SDL_GPUGraphicsPipeline *pipeline[16];
+    SOT_GPU_Buffers buffers[16];
 } SOT_GPU_State;
 
 typedef struct SOT_GPU_RenderpassInfo {
@@ -133,6 +132,8 @@ SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
 SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint32_t bufferFlags);
 SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, struct SOT_Scene *scene);
+
+// Helper methods
 
 // ------------------------------------------ Test Methods ---------------------------------------------//
 void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu);

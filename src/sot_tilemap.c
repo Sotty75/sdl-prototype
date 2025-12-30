@@ -123,6 +123,7 @@ void SOT_GPU_InitializeTilemap(sot_tilemap *tm, SOT_GPU_State *gpu) {
 
     // Create a new GPU Data structure
     SOT_GPU_Data gpuData = {0};
+    gpuData.pipelineID = SOT_RP_TILEMAP;
 
     // Create a new quad to use as a template for the single tile
     sot_quad tilemapQuad = sot_quad_create();
@@ -164,13 +165,20 @@ void SOT_GPU_InitializeTilemap(sot_tilemap *tm, SOT_GPU_State *gpu) {
 // - render the tiles as one instance x tile
 void SOT_GPU_RenderTilemap(sot_tilemap *tm, SOT_GPU_State* gpu, SOT_GPU_RenderpassInfo *rpi, mat4 pvMatrix)
 {
+    SDL_GPUTextureSamplerBinding textureBindings[gpu->buffers[SOT_RP_TILEMAP].texturesCount];
+    for (int i = 0; i < gpu->buffers[SOT_RP_TILEMAP].texturesCount; i++ ) {
+        textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
+            .texture = gpu->buffers[SOT_RP_TILEMAP].textures[i], 
+            .sampler = gpu->nearestSampler
+        };
+    }
     SDL_BindGPUGraphicsPipeline(rpi->renderpass, gpu->pipeline[SOT_RP_TILEMAP]);
-    SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, rpi->samplerBindings, gpu->buffers.texturesCount);
+    SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, textureBindings, gpu->buffers[SOT_RP_TILEMAP].texturesCount);
     SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 0, pvMatrix, sizeof(mat4));
     SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 1, &(tm->gpuTilemapInfo), sizeof(SOT_GPU_TilemapInfo));
-    SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers.vertexBuffer, .offset = 0}, 1);
-    SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers.indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-    SDL_BindGPUVertexStorageBuffers(rpi->renderpass, 0, gpu->buffers.storageBuffer, 1);
+    SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers[SOT_RP_TILEMAP].vertexBuffer, .offset = 0}, 1);
+    SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers[SOT_RP_TILEMAP].indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+    SDL_BindGPUVertexStorageBuffers(rpi->renderpass, 0, gpu->buffers[SOT_RP_TILEMAP].storageBuffer, 1);
 
     // Draw all the tiles of the shader
     SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, tm->tilesCount, 0, 0, 0);
