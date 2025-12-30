@@ -20,6 +20,7 @@
 // - TILESET_WIDTH: width of the source tileset in pixels.
 typedef struct SOT_GPU_TilemapInfo {
     int32_t COLUMNS;
+    int32_t ROWS;
     int32_t TILE_WIDTH;
     int32_t TILE_HEIGHT;
     int32_t TILESET_WIDTH;

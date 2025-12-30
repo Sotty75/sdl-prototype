@@ -220,7 +220,7 @@ SDL_AppResult SOT_MapVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
     if (gpu->transferBuffers.vertexTransferBuffer == NULL)
 	{
 		SDL_Log("Failed to create transfer buffer!");
-		return -SDL_APP_FAILURE;
+		return SDL_APP_FAILURE;
 	}
 
     vertex* transferData = SDL_MapGPUTransferBuffer(gpu->device, gpu->transferBuffers.vertexTransferBuffer, false);
@@ -291,6 +291,10 @@ SDL_AppResult SOT_MapTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
         .size = data->tilemapDataSize,
         .props = 0
     });
+
+    int* transferData = SDL_MapGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer, false);
+    SDL_memcpy(transferData,  data->tilemapData, data->tilemapDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer);
     return SDL_APP_CONTINUE;
 }
 

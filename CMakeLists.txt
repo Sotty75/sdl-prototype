@@ -87,14 +87,19 @@ message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")
 # This will correctly print the path to "my_project/src/"
 message("CMAKE_CURRENT_SOURCE_DIR in src is: ${CMAKE_CURRENT_SOURCE_DIR}")
 
-# Add a custom command to copy the 'assets' folder after the build is complete
-add_custom_command(
-    TARGET sdl-prototype POST_BUILD
+# ==========================================
+# ASSET SYNC (RUNS EVERY BUILD)
+# ==========================================
+# We use ${CMAKE_BINARY_DIR} instead of $<TARGET_FILE_DIR:...> to break the cycle.
+add_custom_target(CopyAssets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/assets"
-            "$<TARGET_FILE_DIR:sdl-prototype>/assets"
-    COMMENT "Copying assets folder to output directory"
+            "${CMAKE_BINARY_DIR}/assets"
+    COMMENT "Syncing assets folder..."
 )
+
+# Make sure the game waits for assets to be copied before running/linking
+add_dependencies(sdl-prototype CopyAssets)  
 
 # --- Automatic DLL Copying for Runtime ---
 # This command will copy the required SDL and dependency DLLs to the executable's

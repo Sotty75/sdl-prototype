@@ -254,7 +254,7 @@
         {
          "columns":8,
          "firstgid":1,
-         "image":"x16-basic-tileset.png",
+         "image":"..\/textures\/x16-basic-tileset.png",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,

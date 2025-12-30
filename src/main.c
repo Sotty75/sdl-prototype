@@ -53,7 +53,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     if (as->gpu->pipelineFlags & SOT_RPF_TEST)
         SOT_GPU_InitializeTestData(as->gpu);
     else {
-        SOT_GPU_InitializeTilemap(currentScene->sot_tilemap, as->gpu);
+        SOT_GPU_InitializeTilemap(currentScene->tilemap, as->gpu);
     }
     
 

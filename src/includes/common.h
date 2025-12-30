@@ -5,8 +5,8 @@
 #include <SDL3/SDL_gpu.h>
 #include "cglm.h"
 
-#define SCREEN_WIDTH 640.0f
-#define SCREEN_HEIGHT 400.0f
+#define SCREEN_WIDTH 1980.0f
+#define SCREEN_HEIGHT 1080.0f
 
 void InitializeAssetsLoader();
 

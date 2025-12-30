@@ -28,7 +28,8 @@ sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState)
     SDL_memcpy(tm->tiles,  map->layers[0].data, dataSize);
 
     //...fill the gpu tilemap info
-    tm->gpuTilemapInfo.COLUMNS = map->layers[0].height;
+    tm->gpuTilemapInfo.COLUMNS = map->layers[0].width;
+    tm->gpuTilemapInfo.ROWS = map->layers[0].height;
     tm->gpuTilemapInfo.TILE_WIDTH = map->tilesets[0].tilewidth;
     tm->gpuTilemapInfo.TILE_HEIGHT = map->tilesets[0].tileheight;
     tm->gpuTilemapInfo.TILESET_WIDTH = map->tilesets[0].imagewidth;
