@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 #include "common.h"
+#include "sot_gpu_debug_info.h"
 
 // Forward-declare AppState to break circular dependency
 struct AppState;
@@ -18,6 +19,7 @@ typedef enum SOT_PipelineID {
     SOT_RP_TILEMAP,
     SOT_RP_SPRITE,
     SOT_RP_OVERLAY,
+    SOT_RP_DEBUG,
 } SOT_PipelineID;
 
 typedef enum {
@@ -25,7 +27,8 @@ typedef enum {
     SOT_RPF_TEST           = 1 << 0,  // 1
     SOT_RPF_SPRITES        = 1 << 1,  // 1
     SOT_RPF_TILEMAP        = 1 << 2,  // 2
-    SOT_RPF_OVERLAY        = 1 << 3,   // 4
+    SOT_RPF_OVERLAY        = 1 << 3,  // 4
+    SOT_RPF_DEBUG          = 1 << 4,  // 8
 } SOT_GPU_PIPELINE_FLAGS;
 
 // GPU Buffers Management data structures
@@ -35,7 +38,7 @@ typedef enum {
     SOT_BUFFER_VERTEX       = 1 << 0,  // 1
     SOT_BUFFER_INDEX        = 1 << 1,  // 2
     SOT_BUFFER_TEXTURE      = 1 << 2,  // 4
-    SOT_BUFFER_TILEMAP      = 1 << 3,  // 8
+    SOT_BUFFER_SSB          = 1 << 3,  // 8
 } SOT_GPU_BUFFER_FLAGS;
 
 
@@ -80,7 +83,7 @@ typedef struct SOT_GPU_PipelineInfo {
     SOT_PipelineID pipeline_ID;
     SOT_GPU_ShaderInfo *vertexShader;
     SOT_GPU_ShaderInfo *fragmentShader;
-    mat4 pvMatrix;
+    SDL_GPUPrimitiveType primitiveType;
 } SOT_GPU_PipelineInfo;
 
 // CPU bound structure holding the data
@@ -108,6 +111,8 @@ typedef struct SOT_GPU_State {
     uint32_t pipelineFlags;                     
     SDL_GPUGraphicsPipeline *pipeline[16];
     SOT_GPU_Buffers buffers[16];
+    // Debug Info
+    SOT_GPU_DebugInfo *debugInfo;
 } SOT_GPU_State;
 
 typedef struct SOT_GPU_RenderpassInfo {

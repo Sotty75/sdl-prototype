@@ -35,7 +35,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     if (!as) { return SDL_APP_FAILURE; }
     
     // ----------------------------- Initialize the graphics system -----------------------------------//
-    SOT_GPU_InitRenderer(as, SOT_RPF_TILEMAP);
+    SOT_GPU_InitRenderer(as, SOT_RPF_TILEMAP | SOT_RPF_DEBUG);
     // SOT_GPU_InitRenderer(as, SOT_RPF_TEST);
 
     // ------------------------------ Initialize the Gamepad ------------------------------------------//
@@ -52,9 +52,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // World Initialization
     if (as->gpu->pipelineFlags & SOT_RPF_TEST)
         SOT_GPU_InitializeTestData(as->gpu);
-    else {
+    if (as->gpu->pipelineFlags & SOT_RPF_TILEMAP)
         SOT_GPU_InitializeTilemap(currentScene->tilemap, as->gpu);
-    }
     
 
     // 
@@ -74,7 +73,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-    /*
+    
     AppState *as = (AppState *)appstate;
 
     if (event->type == SDL_EVENT_QUIT) {
@@ -85,17 +84,19 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     {
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-            MoveActor(currentScene->player, event);
+            // MoveActor(currentScene->player, event);
             break;
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
                 case SDL_SCANCODE_0:
                     as->full_screen_enabled = !as->full_screen_enabled;
-                    SDL_SetWindowFullscreen(as->pWindow, as->full_screen_enabled);
+            // SDL_SetWindowFullscreen(as->pWindow, as->full_screen_enabled);
                     break;
                 case SDL_SCANCODE_1:
                     as->debugInfo.displayColliders = !as->debugInfo.displayColliders;
                     break;
+                case SDL_SCANCODE_ESCAPE:
+                    return SDL_APP_SUCCESS;
                 default:
                     break;
                 }
@@ -103,7 +104,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         default:
             break;
     }
-    */
+    
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 

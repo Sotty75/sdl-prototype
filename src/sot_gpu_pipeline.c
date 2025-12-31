@@ -54,6 +54,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .pipeline_ID = SOT_RP_TEST,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.vert", 0, 1, 0, 0},
            .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.frag", 1, 0, 0, 0},
+           .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
     if (pipelinesFlags & SOT_RPF_TILEMAP) 
@@ -61,6 +62,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .pipeline_ID = SOT_RP_TILEMAP,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap_v1.vert", 0, 2, 1, 0},
            .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap_v1.frag", 1, 0, 0, 0},
+           .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
     if (pipelinesFlags & SOT_RPF_SPRITES) 
@@ -68,6 +70,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .pipeline_ID = SOT_RP_TEST,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.vert", 0, 1, 0, 0},
            .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.frag", 1, 0, 0, 0},
+           .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
     if (pipelinesFlags & SOT_RPF_OVERLAY) 
@@ -75,6 +78,15 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .pipeline_ID = SOT_RP_TEST,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.vert", 0, 1, 0, 0},
            .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.frag", 1, 0, 0, 0},
+           .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+    });
+
+    if (pipelinesFlags & SOT_RPF_DEBUG) 
+        SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
+           .pipeline_ID = SOT_RP_DEBUG,
+           .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderDebug.vert", 0, 1, 0, 0},
+           .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderDebug.frag", 0, 0, 0, 0},
+           .primitiveType =SDL_GPU_PRIMITIVETYPE_LINELIST,
     });
 
 
@@ -165,7 +177,7 @@ SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineI
 		.vertex_shader = vertexShader,
 		.fragment_shader = fragmentShader,
         .vertex_input_state = vertexInputState,
-        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .primitive_type = info->primitiveType,
         .rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL,
         .rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE,
         .target_info = {
@@ -193,7 +205,13 @@ SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineI
 }
 
 SDL_AppResult SOT_MapVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
-       // ------------------------------ Vertex Data Buffer - START ------------------------------------------//
+
+    // ------------------------------ Vertex Data Buffer - START ------------------------------------------//
+
+    if (gpu->buffers[data->pipelineID].vertexBuffer != NULL) {
+        SDL_ReleaseGPUBuffer(gpu->device, gpu->buffers[data->pipelineID].vertexBuffer);
+        gpu->buffers[data->pipelineID].vertexBuffer = NULL;
+    }
 
     SDL_GPUBufferCreateInfo vertexBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
@@ -232,6 +250,11 @@ SDL_AppResult SOT_MapIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 
     // ------------------------------ Index Data Buffer - START ------------------------------------------//
     
+    if (gpu->buffers[data->pipelineID].indexBuffer != NULL) {
+        SDL_ReleaseGPUBuffer(gpu->device, gpu->buffers[data->pipelineID].indexBuffer);
+        gpu->buffers[data->pipelineID].indexBuffer = NULL;
+    }
+
     SDL_GPUBufferCreateInfo indexBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_INDEX,
         .size = data->indexDataSize,
@@ -268,7 +291,13 @@ SDL_AppResult SOT_MapIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 }
 
 SDL_AppResult SOT_MapTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
-     
+   
+    if (gpu->buffers[data->pipelineID].storageBuffer[0] != NULL) {
+        SDL_ReleaseGPUBuffer(gpu->device, gpu->buffers[data->pipelineID].storageBuffer[0]);
+        gpu->buffers[data->pipelineID].storageBuffer[0] = NULL;
+    }
+    
+
     SDL_GPUBufferCreateInfo storageBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
         .size = data->tilemapDataSize,
@@ -437,7 +466,7 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
         SOT_MapTextureData(gpu, data);
     }
 
-    if (bufferFlags & SOT_BUFFER_TILEMAP) {
+    if (bufferFlags & SOT_BUFFER_SSB) {
         SOT_MapTilemapData(gpu, data);
     }
 
@@ -463,16 +492,29 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
         SOT_UploadTextureData(gpu, data, copyPass);
     }
 
-    if (bufferFlags & SOT_BUFFER_TILEMAP) {
+    if (bufferFlags & SOT_BUFFER_SSB) {
         SOT_UploadTilemapData(gpu, data, copyPass);
     }
     
     SDL_EndGPUCopyPass(copyPass);
     SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
-	SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.vertexTransferBuffer);
-    SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.indexTransferBuffer);
-    SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer);
-    SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.textureTransferBuffer);
+    
+    // Release the Transfer Buffers
+    if (bufferFlags & SOT_BUFFER_VERTEX) {
+	    SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.vertexTransferBuffer);
+    }
+
+    if (bufferFlags & SOT_BUFFER_INDEX) {
+        SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.indexTransferBuffer);
+    }
+
+    if (bufferFlags & SOT_BUFFER_TEXTURE) {
+        SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.textureTransferBuffer);
+    }
+
+    if (bufferFlags & SOT_BUFFER_SSB) {
+        SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer);
+    }
 
     return SDL_APP_CONTINUE;
 }
@@ -539,7 +581,8 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
             // Draw all the tiles of the shader
             SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, 1, 0, 0, 0);
         }
-        else
+
+        if (gpu->pipelineFlags & SOT_RPF_TILEMAP)
         {
             SOT_GPU_RenderScene(scene, gpu, rpi);
         }
@@ -580,4 +623,22 @@ void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu) {
     SOT_MapIndexBufferData(gpu, &gpuData);
     SOT_MapTextureData(gpu, &gpuData);
     SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE);
+}
+
+void SOT_GPU_InitializeDebugData(SOT_GPU_State *gpu) {
+
+    // Create a new GPU Data structure
+    SOT_GPU_Data gpuData = {0};
+
+    // Create a new quad to use as a template for the single tile
+    sot_quad quad = sot_quad_create();
+
+    // Vertext Buffer Data
+    gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
+    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
+    memcpy(gpuData.vertexData, quad.verts, gpuData.vertexDataSize);
+
+    //...upload data to GPU buffers used by the shader
+    SOT_MapVertexBufferData(gpu, &gpuData);
+    SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX);
 }

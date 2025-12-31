@@ -150,11 +150,7 @@ void SOT_GPU_InitializeTilemap(sot_tilemap *tm, SOT_GPU_State *gpu) {
     SDL_memcpy(gpuData.tilemapData, tm->tiles, gpuData.tilemapDataSize);
 
     //...upload data to GPU buffers used by the shader
-    SOT_MapVertexBufferData(gpu, &gpuData);
-    SOT_MapIndexBufferData(gpu, &gpuData);
-    SOT_MapTextureData(gpu, &gpuData);
-    SOT_MapTilemapData(gpu, &gpuData);
-    SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE | SOT_BUFFER_TILEMAP);
+    SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE | SOT_BUFFER_SSB);
 }
 
 // Render the tilemap
@@ -183,6 +179,15 @@ void SOT_GPU_RenderTilemap(sot_tilemap *tm, SOT_GPU_State* gpu, SOT_GPU_Renderpa
     // Draw all the tiles of the shader
     SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, tm->tilesCount, 0, 0, 0);
 
+    if (gpu->pipelineFlags & SOT_RPF_DEBUG)
+    {
+        // Test Data to Validate the debug info renderer
+        SOT_GPU_ClearLines(gpu);
+        SOT_GPU_AddLine(gpu, (vec3) {0,0,0}, (vec3) {1,1,0});
+        SOT_GPU_RefreshDebugInfo(gpu);
+        SOT_GPU_RenderDebugInfo(gpu, rpi, pvMatrix);
+    }
+        
     // Colliders Debug Info
     // sot_collider_node_t * collider = current_tilemap->colliders;
     // while (collider) {
@@ -191,50 +196,15 @@ void SOT_GPU_RenderTilemap(sot_tilemap *tm, SOT_GPU_State* gpu, SOT_GPU_Renderpa
     // }
 
 
-        // for (int y = 0; y < map->height; y++) {
-    //     for (int x = 0; x < map->width; x++) {
-    //         int currentTile = x + map->width * y;
-    //         int size = map->layers[0].data_count;
-    //         int currentTileIndex = map->layers[0].data[currentTile];
-
-    //         // tiles with index 0 are empty, move to the next one
-    //         if (currentTileIndex == 0)
-    //             continue;
-
-    //         // we need to decrement the tile index to have a zero starting index.
-    //         currentTileIndex--;
-
-    //         // source rectangle depends in the currentTileIndex
-    //         // i need also to know the size of the tileset in terms of width and height and the size of each tile
-    //         int tileWidth = map->tilesets[0].tilewidth;
-    //         int tileHeight = map->tilesets[0].tileheight;
-    //         int tilesetWidth = map->tilesets[0].imagewidth;
-    //         int tilesetHeight = map->tilesets[0].imageheight;
-
-    //         SDL_FRect sourceTile = 
-    //         {    
-    //             .x = (currentTileIndex * tileWidth) % tilesetWidth,
-    //             .y = tileHeight * ((currentTileIndex * tileWidth) / tilesetWidth),
-    //             .w = tileWidth,
-    //             .h = tileHeight
-    //         };
-
-    //         // destination rectangle are the tiles on the screen.
-    //         // The tiled map should already containing this information
-    //         //      Tiles per row
-    //         //      Tiles per column
-    //         // in this case we move from the top to the bottom, we are already in the cycle, so we have both X and Y.
-    //         SDL_FRect destinationTile = {
-    //             .x = (x % map->width) * tileWidth,
-    //             .y = y * tileHeight,
-    //             .w = tileWidth,
-    //             .h = tileHeight
-    //         };
-
-    //         // SDL_RenderTexture(appState->gpu->renderer, current_tilemap->tilesetTexture, &sourceTile, &destinationTile);
-    //     }
+    
        
 }
+
+void SOT_GPU_UpdateTilemapDebugInfo(sot_tilemap *current_tilemap, SOT_GPU_State* gpu) 
+{
+
+}
+
 
 void DestroyTilemap(sot_tilemap *current_tilemap) {
     cute_tiled_free_map(current_tilemap->tilemap);

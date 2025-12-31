@@ -57,5 +57,7 @@ cute_tiled_layer_t *SOT_GetLayer(cute_tiled_map_t *map, char *layerName);
 // Rendering section
 void SOT_GPU_InitializeTilemap(sot_tilemap *current_tilemap, SOT_GPU_State *gpu);
 void SOT_GPU_RenderTilemap(sot_tilemap *current_tilemap, SOT_GPU_State* gpu, SOT_GPU_RenderpassInfo *rpi, mat4 pvMatrix);
+void SOT_GPU_UpdateTilemapDebugInfo(sot_tilemap *current_tilemap, SOT_GPU_State* gpu);
+
 
 #endif
