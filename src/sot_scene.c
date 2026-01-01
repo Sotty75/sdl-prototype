@@ -86,6 +86,7 @@ void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
     // recalculate actors position (collision check)
     // update game status
     // UpdateActor(as, scene->player, deltaTime);
+    // UpdateCamera(&scene->worldCamera, (vec3) {0.5,-1,-1.5}, deltaTime, 1);
     return;
 }
 

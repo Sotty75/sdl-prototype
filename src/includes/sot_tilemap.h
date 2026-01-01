@@ -24,6 +24,7 @@ typedef struct SOT_GPU_TilemapInfo {
     int32_t TILE_WIDTH;
     int32_t TILE_HEIGHT;
     int32_t TILESET_WIDTH;
+    int32_t TILESET_HEIGHT;
 } SOT_GPU_TilemapInfo;
 
 // ------------------------------------------- Tilemap Entity Info --------------------------------------------------------------//

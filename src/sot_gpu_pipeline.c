@@ -42,10 +42,10 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
     gpu->nearestSampler = SDL_CreateGPUSampler(gpu->device, &(SDL_GPUSamplerCreateInfo) {
 		.min_filter = SDL_GPU_FILTER_NEAREST,
 		.mag_filter = SDL_GPU_FILTER_NEAREST,
-		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 	});
 
     // Initialize the rendering pipelines

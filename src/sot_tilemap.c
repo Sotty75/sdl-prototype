@@ -16,7 +16,7 @@ sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState)
 
     // Load the tilemap from the file
     char *tileMapPath = NULL;
-    SDL_asprintf(&tileMapPath, "%sassets\\%s", SDL_GetBasePath(), tilemapFilename);
+    SDL_asprintf(&tileMapPath, "%sassets\\maps\\%s", SDL_GetBasePath(), tilemapFilename);
     cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
 
     //...fill the tilemap object properties
@@ -33,6 +33,7 @@ sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState)
     tm->gpuTilemapInfo.TILE_WIDTH = map->tilesets[0].tilewidth;
     tm->gpuTilemapInfo.TILE_HEIGHT = map->tilesets[0].tileheight;
     tm->gpuTilemapInfo.TILESET_WIDTH = map->tilesets[0].imagewidth;
+    tm->gpuTilemapInfo.TILESET_HEIGHT = map->tilesets[0].imageheight;
 
     //...load the colliders from the colliders layer
     cute_tiled_layer_t *collidersLayer = SOT_GetLayer(map, "Game-Collisions");
@@ -183,7 +184,7 @@ void SOT_GPU_RenderTilemap(sot_tilemap *tm, SOT_GPU_State* gpu, SOT_GPU_Renderpa
     {
         // Test Data to Validate the debug info renderer
         SOT_GPU_ClearLines(gpu);
-        SOT_GPU_AddLine(gpu, (vec3) {0,0,0}, (vec3) {1,1,0});
+        SOT_GPU_AddLine(gpu, (vec3) {1,1,0}, (vec3) {2,2,0});
         SOT_GPU_RefreshDebugInfo(gpu);
         SOT_GPU_RenderDebugInfo(gpu, rpi, pvMatrix);
     }
