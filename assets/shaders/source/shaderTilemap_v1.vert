@@ -7,6 +7,8 @@ struct TilemapInfo {
     int TILE_H;
     int TILESET_W;
     int TILESET_H;
+    int _PAD_0;
+    int _PAD_1;
 };
 
 layout (location = 0) in vec3 inPos;
@@ -35,8 +37,10 @@ void main()
 
     // calculate Translation Matrix
     mat4 model = mat4(1.0);
-    model[3][0] = k;
-    model[3][1] = -r + ti.ROWS;
+    model[0][0] = ti.TILE_W;
+    model[1][1] = ti.TILE_H;
+    model[3][0] = k * ti.TILE_W;
+    model[3][1] = -r * ti.TILE_H;
 
     // --- 2. UV Logic (The Fix) ---
     

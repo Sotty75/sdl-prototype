@@ -21,9 +21,9 @@ SOT_Scene *CreateScene(AppState *as) {
 
     // calculate the z-camera distance (fov / 2)
     float fov = 45.0;
-    float zCamera = (1/SDL_tan(fov/2))*0.5*(scene->tilemap->gpuTilemapInfo.ROWS + 1);
+    float zCamera = (1/SDL_tan(fov/2))*(0.5*(scene->tilemap->gpuTilemapInfo.ROWS + 1))*scene->tilemap->gpuTilemapInfo.TILE_HEIGHT;
     // set the camera at the center of the scene.    
-    vec2 cameraPosition = {0.5*scene->tilemap->gpuTilemapInfo.COLUMNS, 0.5*scene->tilemap->gpuTilemapInfo.ROWS};
+    vec2 cameraPosition = {0.5*scene->tilemap->gpuTilemapInfo.COLUMNS*scene->tilemap->gpuTilemapInfo.TILE_WIDTH, -0.5*scene->tilemap->gpuTilemapInfo.ROWS*scene->tilemap->gpuTilemapInfo.TILE_HEIGHT};
 
     /* Create the cameras list entity */
     SOT_CameraInfo cameraInfo = {
@@ -86,7 +86,7 @@ void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
     // recalculate actors position (collision check)
     // update game status
     // UpdateActor(as, scene->player, deltaTime);
-    // UpdateCamera(&scene->worldCamera, (vec3) {0.5,-1,-1.5}, deltaTime, 1);
+    // UpdateCamera(&scene->worldCamera, (vec3) {0,-1,0}, deltaTime, 1);
     return;
 }
 

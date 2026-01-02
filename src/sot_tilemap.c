@@ -79,9 +79,9 @@ sot_collider_t *SOT_GetCollider(cute_tiled_object_t *tiledObject) {
     if (strcmp(colliderType, "AABB") == 0) {
         collider->type = C2_TYPE_AABB; 
         collider->shape.AABB.min.x = tiledObject->x;
-        collider->shape.AABB.min.y = tiledObject->y;
+        collider->shape.AABB.min.y = -tiledObject->y;
         collider->shape.AABB.max.x = tiledObject->x + tiledObject->width;
-        collider->shape.AABB.max.y = tiledObject->y + tiledObject->height;
+        collider->shape.AABB.max.y = -(tiledObject->y + tiledObject->height);
     }
     else if (strcmp(colliderType, "POLY") == 0) {
         
@@ -90,7 +90,7 @@ sot_collider_t *SOT_GetCollider(cute_tiled_object_t *tiledObject) {
         
         for (int i = 0; i < tiledObject->vert_count; i++) {
             collider->shape.poly.verts[i].x = tiledObject->x + tiledObject->vertices[2*i];
-            collider->shape.poly.verts[i].y = tiledObject->y + tiledObject->vertices[2*i+1];
+            collider->shape.poly.verts[i].y = -(tiledObject->y + tiledObject->vertices[2*i+1]);
         }
 
         // Generates the normals information.
@@ -182,19 +182,21 @@ void SOT_GPU_RenderTilemap(sot_tilemap *tm, SOT_GPU_State* gpu, SOT_GPU_Renderpa
 
     if (gpu->pipelineFlags & SOT_RPF_DEBUG)
     {
-        // Test Data to Validate the debug info renderer
         SOT_GPU_ClearLines(gpu);
-        SOT_GPU_AddLine(gpu, (vec3) {1,1,0}, (vec3) {2,2,0});
-        SOT_GPU_RefreshDebugInfo(gpu);
+
+        // Colliders Debug Info
+        sot_collider_node_t * collider = tm->colliders;
+        while (collider) {
+           DrawCollidersDebugInfo(gpu, *(collider->collider));
+           collider = collider->next;
+        }
+        // Test Data to Validate the debug info renderer
+        
+        SOT_GPU_UploadDebugInfo(gpu);
         SOT_GPU_RenderDebugInfo(gpu, rpi, pvMatrix);
     }
         
-    // Colliders Debug Info
-    // sot_collider_node_t * collider = current_tilemap->colliders;
-    // while (collider) {
-    //     DrawCollidersDebugInfo(*(collider->collider), as);
-    //     collider = collider->next;
-    // }
+    
 
 
     

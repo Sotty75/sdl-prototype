@@ -115,7 +115,7 @@ void SetRenderPosition(sot_actor_t *actor)
     };
 }
 
-void RenderActor(const AppState *appState, sot_actor_t *actor) {
+void RenderActor(const AppState *as, sot_actor_t *actor) {
 
     sot_sprite_t *animation = actor->pCurrentSprite;
 
@@ -134,9 +134,9 @@ void RenderActor(const AppState *appState, sot_actor_t *actor) {
         actor->lastStep = now;            
     }
 
-    SetRenderPosition(actor);
-    SDL_RenderTexture(appState->gpu->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
-    DrawCollidersDebugInfo(actor->collider, appState);
+    // SetRenderPosition(actor);
+    // SDL_RenderTexture(appState->gpu->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
+    DrawCollidersDebugInfo(as->gpu, actor->collider);
 
     return;
 }

@@ -69,7 +69,7 @@ void SOT_GPU_ClearLines(struct SOT_GPU_State *gpu) {
     return;
 }
 
-void SOT_GPU_RefreshDebugInfo(SOT_GPU_State *gpu) {
+void SOT_GPU_UploadDebugInfo(SOT_GPU_State *gpu) {
     // Create a new GPU Data structure
     SOT_GPU_Data gpuData = {0};
     gpuData.pipelineID = SOT_RP_DEBUG;
