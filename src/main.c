@@ -20,7 +20,7 @@
 #include <SDL3/SDL_gamepad.h>
 #include <box2d/box2d.h>
 #include "sot_engine.h"
-#include "common.h"
+#include "sot_common.h"
 #include "cglm.h"
 
 static AppState *as = NULL;

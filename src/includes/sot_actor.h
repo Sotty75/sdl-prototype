@@ -42,8 +42,7 @@ typedef struct SOT_Actor {
     c2Manifold collisionInfo[50];
 } SOT_Actor;
 
-SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, SOT_Animation **anims, C2_TYPE colliderType);
-void SOT_LoadActorAnimationFromFile(SOT_Actor *actor, char* filename);
+SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animationFile);
 void SetPosition(SOT_Actor *actor, vec2 pos);
 void SetVelocity(SOT_Actor *actor, vec2 vel);
 void SetCollider(SOT_Actor *actor, sot_collider_t collider);

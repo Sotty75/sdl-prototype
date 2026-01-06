@@ -1,8 +1,6 @@
 #include "sot_actor.h"
-#include "cJSON.h"
 
-
-SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos) 
+SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
 {
     SOT_Actor *actor = malloc(sizeof(SOT_Actor));
     if (actor == NULL) return NULL;
@@ -16,13 +14,20 @@ SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos)
     actor->velocity[0]=10;
     actor->velocity[1]=0;
    
+    // Bind animations to actor
+    SOT_AnimationInfo *animationInfo = SOT_LoadAnimations(animationsFile);
+
+    // TODO: Modify the sprite editor tool to include also the collider type and to move the animation name inside of the animation JSON block
+    // TODO: Initialize the animation data and uplaod the data on the GPU Memory
+    // TODO: Destory the animation info object
+
     return actor;
 }
 
-void SOT_LoadActorAnimationFromFile(SOT_Actor *actor, char* filename) {
+void SOT_BindActorAnimations(SOT_Actor *actor, SOT_AnimationInfo *animationInfo)
+ {
     
-    cJSON
-    // Bind the animations to the actor
+   /*  // Bind the animations to the actor
     actor->animations = anims;
     actor->lastStep = SDL_GetTicks();
     actor->activeAnimation = actor->animations[0];
@@ -55,7 +60,7 @@ void SOT_LoadActorAnimationFromFile(SOT_Actor *actor, char* filename) {
     
     actor->collider = collider;
 
-    AppendCollider(appState->pDynamicColliders, &(actor->collider));
+    AppendCollider(appState->pDynamicColliders, &(actor->collider)); */
 }
 
 void SetPosition(SOT_Actor *actor, vec2 pos) { 

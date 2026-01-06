@@ -1,7 +1,7 @@
 #ifndef _DEBUG_INFO_H_
 #define _DEBUG_INFO_H_
 
-#include "common.h"
+#include "sot_common.h"
 
 struct SOT_GPU_State;
 struct SOT_GPU_RenderpassInfo;

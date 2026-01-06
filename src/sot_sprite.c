@@ -8,7 +8,7 @@
 SOT_Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
     int stepRateMillis, bool cycle,  AppState *appstate)
 {
-    // ..initialize the animation structure
+    /* // ..initialize the animation structure
     SOT_Animation *animation = malloc(sizeof(SOT_Animation));
     if (animation == NULL) return NULL; 
 
@@ -68,9 +68,9 @@ SOT_Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIn
         // ...we finally prepare for the next frame by setting  
         // the currentFrame as previousFrame
         previousFrame = currentFrame;
-    }
+    } */
 
-    return animation;
+    return NULL; //animation;
 }
 
 /*
@@ -78,7 +78,7 @@ SOT_Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIn
 *   in the heap.
 */
 void DestroyAnimation(SOT_Animation *animation) {
-    Frame *currentFrame = animation->currentFrame; 
+    /* Frame *currentFrame = animation->currentFrame; 
     for (int i = 0; i < animation->framesCount; i++) 
     {
         // free the sprite rect memory and the current sprite memory
@@ -88,7 +88,7 @@ void DestroyAnimation(SOT_Animation *animation) {
 
         currentFrame = nextFrame;
     }
-    free(animation);
+    free(animation); */
 }
 
 

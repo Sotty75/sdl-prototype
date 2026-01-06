@@ -6,7 +6,7 @@
 #define QUAD_INDEXES 6
 
 // include common type definitions
-#include "common.h"
+#include "sot_common.h"
 
 typedef struct sot_quad {
     vertex verts[QUAD_VERTS];

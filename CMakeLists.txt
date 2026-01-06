@@ -54,6 +54,7 @@ FetchContent_MakeAvailable(sdl3_image)
 file(GLOB_RECURSE SOURCE_FILES
     CONFIGURE_DEPENDS 
     "src/*.c"
+    "include/cJSON/cJSON.c"
 )
 
 # Create the executable from the source files

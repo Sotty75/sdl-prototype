@@ -556,7 +556,7 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
     }
     
     if (bufferFlags & SOT_SPRITES_SSB) {
-        SOT_UploasSpriteInfoData(gpu, data);
+        SOT_UploadSpriteInfoData(gpu, data, copyPass);
     }
 
     SDL_EndGPUCopyPass(copyPass);

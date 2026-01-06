@@ -1,6 +1,6 @@
 #define CUTE_TILED_IMPLEMENTATION
 
-#include "common.h"
+#include "sot_common.h"
 #include "sot_scene.h"
 
 // Create all the actors
@@ -41,10 +41,8 @@ SOT_Scene *CreateScene(AppState *as) {
     scene->worldCamera = CreateCameraWitInfo(cameraInfo, projectionInfo);
     scene->uiCamera = CreateCameraWitInfo(cameraInfo, projectionInfo);
 
-    if (true == false) 
-    {
         //... load the spritesheet inside of the texture
-        SDL_Surface *monkeySpriteSheet = NULL;
+        /* SDL_Surface *monkeySpriteSheet = NULL;
         SOT_Animation *walkRight = NULL;
         SOT_Animation *walkLeft = NULL;
         SOT_Animation *idle = NULL;
@@ -57,17 +55,15 @@ SOT_Scene *CreateScene(AppState *as) {
         animations[0] = idle;
         animations[1] = walkLeft;
         animations[2] = walkRight;
-        animations[3] = NULL;
+        animations[3] = NULL; */
 
-        // Create the player actor and add it to the scene.
-        // ...get the player start position from the marker in the tiled-map
-        cute_tiled_object_t *player = scene->tilemap->tilemap->layers[1].objects;
-        cute_tiled_object_t *playerObject = SOT_GetObjectByName(scene->tilemap->tilemap, "player_start");
-        vec2 startPosition = { playerObject->x, playerObject->y };
-        SOT_Actor *player = CreateActor(as, "Player", startPosition, animations, C2_TYPE_CIRCLE);
-        scene->player = player;
+    // Create the player actor and add it to the scene.
+    // ...get the player start position from the marker in the tiled-map
+    cute_tiled_object_t *playerObject = SOT_GetObjectByName(scene->tilemap->tilemap, "player_start");
+    vec2 startPosition = { playerObject->x, playerObject->y };
+    SOT_Actor *player = CreateActor(as, "Player", startPosition, "monkey.json");
+    scene->player = player;
 
-    }
     
     return scene;
 }
