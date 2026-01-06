@@ -5,19 +5,18 @@
  * from a spritesheet. the sprites in the spitesheet have to be sorted in order so that we can index the source 
  * sprite efrom the spritesheet by providing the index of the first sprite, the index of the last sprite and the size of each sprite
  */
-sot_sprite_t *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
+SOT_Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
     int stepRateMillis, bool cycle,  AppState *appstate)
 {
     // ..initialize the animation structure
-    sot_sprite_t *animation = malloc(sizeof(sot_sprite_t));
+    SOT_Animation *animation = malloc(sizeof(SOT_Animation));
     if (animation == NULL) return NULL; 
 
     animation->name = name;
     animation->framesCount = (endIndex - startIndex) + 1;
-    animation->width = width;
-    animation->height = height;
+    animation->info->frameSize[0] = width;
+    animation->info->frameSize[1] = height;
     animation->stepRateMillis = stepRateMillis;
-    animation->currentFrame = NULL;
     animation->cycle = cycle;
 
     // Load the spritesheet in a texture atlas
@@ -78,7 +77,7 @@ sot_sprite_t *CreateAnimation(char *name, SDL_Surface *spritesheet, int startInd
 *   Free the memory allocated for the animation
 *   in the heap.
 */
-void DestroySprite(sot_sprite_t *animation) {
+void DestroyAnimation(SOT_Animation *animation) {
     Frame *currentFrame = animation->currentFrame; 
     for (int i = 0; i < animation->framesCount; i++) 
     {

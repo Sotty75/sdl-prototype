@@ -34,11 +34,12 @@ typedef enum {
 // GPU Buffers Management data structures
 
 typedef enum {
-    SOT_BUFFER_NONE         = 0,
-    SOT_BUFFER_VERTEX       = 1 << 0,  // 1
-    SOT_BUFFER_INDEX        = 1 << 1,  // 2
-    SOT_BUFFER_TEXTURE      = 1 << 2,  // 4
-    SOT_BUFFER_SSB          = 1 << 3,  // 8
+    SOT_BUFFER_NONE          = 0,
+    SOT_BUFFER_VERTEX        = 1 << 0,  // 1
+    SOT_BUFFER_INDEX         = 1 << 1,  // 2
+    SOT_BUFFER_TEXTURE       = 1 << 2,  // 4
+    SOT_TILEMAP_SSB          = 1 << 3,  // 8
+    SOT_SPRITES_SSB          = 1 << 4,  // 8
 } SOT_GPU_BUFFER_FLAGS;
 
 
@@ -86,19 +87,30 @@ typedef struct SOT_GPU_PipelineInfo {
     SDL_GPUPrimitiveType primitiveType;
 } SOT_GPU_PipelineInfo;
 
+// Sprito Info describing an individual sprite as 
+// consumed by the sprite shader.
+typedef struct SOT_GPU_SpriteInfo {
+    vec2 position;
+    ivec2 framePosition;
+    ivec2 frameSize;
+    ivec2 atlasSize;
+} SOT_GPU_SpriteInfo;
+
 // CPU bound structure holding the data
 // passed to the SOT_GPU_Upload functions to load
 // buffers and textures to the GPU VRAM.
 typedef struct SOT_GPU_Data {
     SOT_PipelineID pipelineID;
     vertex *vertexData;
-    int vertexDataSize;
     uint16_t *indexData;
-    int indexDataSize;
     SDL_Surface *surfaces[16];
-    int surfaceCount;
+    SOT_GPU_SpriteInfo sprites[2000];
     int *tilemapData;
+    int vertexDataSize;
+    int indexDataSize;
+    int surfaceCount;
     int tilemapDataSize;
+    
 } SOT_GPU_Data;
 
 typedef struct SOT_GPU_State {

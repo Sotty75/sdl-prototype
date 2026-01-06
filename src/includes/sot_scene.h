@@ -12,7 +12,7 @@
 
 typedef struct SOT_Scene {
     int id;
-    sot_actor_t *player;
+    SOT_Actor *player;
     sot_tilemap *tilemap;
     sot_camera worldCamera;
     sot_camera uiCamera;

@@ -42,6 +42,7 @@ sot_camera CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo pro
 void SetCameraView(sot_camera *t, SOT_CameraInfo cameraInfo);
 void SetCameraProjection(sot_camera *t, SOT_ProjectionInfo projectionInfo);
 void UpdateCamera(sot_camera *t, vec3 direction, float deltaTime, float velocity);
+void UpdateCameraPan(sot_camera *t, vec3 direction, float deltaTime, float velocity);
 void FreeCamera(sot_camera **);
 
 #endif

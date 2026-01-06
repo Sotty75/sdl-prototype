@@ -112,6 +112,17 @@ cute_tiled_layer_t *SOT_GetLayer(cute_tiled_map_t *map, char *layerName) {
     return currentLayer;
 }
 
+cute_tiled_object_t *SOT_GetObjectByName(cute_tiled_map_t *map, char *objectName) {
+    cute_tiled_object_t *currentObject = map->layers[1].objects;
+    while (currentObject != NULL) {
+        if (strcmp(currentObject->name.ptr, objectName) == 0) {
+            return currentObject;
+        }
+    }
+
+    return NULL;
+}
+
 /// @brief This function performs two different operations. 
 ///
 /// 1. Initialize the data structures to be sent to the GPU specific for the Tilemap.
@@ -151,7 +162,7 @@ void SOT_GPU_InitializeTilemap(sot_tilemap *tm, SOT_GPU_State *gpu) {
     SDL_memcpy(gpuData.tilemapData, tm->tiles, gpuData.tilemapDataSize);
 
     //...upload data to GPU buffers used by the shader
-    SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE | SOT_BUFFER_SSB);
+    SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE | SOT_TILEMAP_SSB);
 }
 
 // Render the tilemap

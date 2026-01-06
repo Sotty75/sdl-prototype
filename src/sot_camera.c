@@ -26,6 +26,18 @@ void UpdateCamera(sot_camera *t, vec3 direction, float deltaTime, float velocity
     glm_mat4_mul(t->projection, t->view, t->pvMatrix);
 }
 
+void UpdateCameraPan(sot_camera *t, vec3 direction, float deltaTime, float velocity) 
+{
+    glm_vec3_normalize(direction);
+    glm_vec3_scale(direction, velocity * deltaTime, direction);
+    glm_vec3_add(t->cameraInfo.eye, direction, t->cameraInfo.eye);
+    glm_vec3_add(t->cameraInfo.center, direction, t->cameraInfo.center);
+    glm_lookat(t->cameraInfo.eye, t->cameraInfo.center, t->cameraInfo.up, t->view);
+
+    // update the projection-view matrix for the renderer.
+    glm_mat4_mul(t->projection, t->view, t->pvMatrix);
+}
+
 /* Update the View matrix stored in the transofrm entity. */
 void SetCameraView(sot_camera *t, SOT_CameraInfo cameraInfo) {
     t->cameraInfo = cameraInfo;

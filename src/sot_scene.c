@@ -45,15 +45,15 @@ SOT_Scene *CreateScene(AppState *as) {
     {
         //... load the spritesheet inside of the texture
         SDL_Surface *monkeySpriteSheet = NULL;
-        sot_sprite_t *walkRight = NULL;
-        sot_sprite_t *walkLeft = NULL;
-        sot_sprite_t *idle = NULL;
+        SOT_Animation *walkRight = NULL;
+        SOT_Animation *walkLeft = NULL;
+        SOT_Animation *idle = NULL;
         walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as);
         walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, as);
         idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, as);
 
         //...pack the animations in a NULL terminated array
-        sot_sprite_t **animations = malloc(sizeof(sot_sprite_t*) * 4);
+        SOT_Animation **animations = malloc(sizeof(SOT_Animation*) * 4);
         animations[0] = idle;
         animations[1] = walkLeft;
         animations[2] = walkRight;
@@ -61,18 +61,10 @@ SOT_Scene *CreateScene(AppState *as) {
 
         // Create the player actor and add it to the scene.
         // ...get the player start position from the marker in the tiled-map
-        cute_tiled_object_t *currentObject = scene->tilemap->tilemap->layers[1].objects;
-        char *playerStart = "player_start";
-        vec2 startPosition = {0,0};
-        while (currentObject != NULL) {
-            if (strcmp(currentObject->name.ptr, playerStart) == 0) {
-                vec2 currentPosition = { currentObject->x, currentObject->y };
-                glm_vec2_copy(currentPosition, startPosition);
-            }
-            currentObject = currentObject->next;
-        }
-        
-        sot_actor_t *player = CreateActor(as, "Player", startPosition, animations, C2_TYPE_CIRCLE);
+        cute_tiled_object_t *player = scene->tilemap->tilemap->layers[1].objects;
+        cute_tiled_object_t *playerObject = SOT_GetObjectByName(scene->tilemap->tilemap, "player_start");
+        vec2 startPosition = { playerObject->x, playerObject->y };
+        SOT_Actor *player = CreateActor(as, "Player", startPosition, animations, C2_TYPE_CIRCLE);
         scene->player = player;
 
     }
@@ -86,7 +78,7 @@ void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
     // recalculate actors position (collision check)
     // update game status
     // UpdateActor(as, scene->player, deltaTime);
-    // UpdateCamera(&scene->worldCamera, (vec3) {0,-1,0}, deltaTime, 1);
+    UpdateCameraPan(&scene->worldCamera, (vec3) {0,0,0}, deltaTime, 50);
     return;
 }
 
@@ -94,9 +86,6 @@ void SOT_GPU_RenderScene(SOT_Scene *scene, SOT_GPU_State *gpu, SOT_GPU_Renderpas
 {
     SOT_GPU_RenderTilemap(scene->tilemap, gpu, rpi, scene->worldCamera.pvMatrix);
 
-    
-    
-    
     // ------------------------------------------------- Render Actors Section ----------------------------------------------------------//
     // ------------------------------------------------- Render UI Section --------------------------------------------------------------//    
 }

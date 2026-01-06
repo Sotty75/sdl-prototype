@@ -60,16 +60,16 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
     if (pipelinesFlags & SOT_RPF_TILEMAP) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
            .pipeline_ID = SOT_RP_TILEMAP,
-           .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap_v1.vert", 0, 2, 1, 0},
-           .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap_v1.frag", 1, 0, 0, 0},
+           .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.vert", 0, 2, 1, 0},
+           .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.frag", 1, 0, 0, 0},
            .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
     if (pipelinesFlags & SOT_RPF_SPRITES) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
-           .pipeline_ID = SOT_RP_TEST,
-           .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.vert", 0, 1, 0, 0},
-           .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.frag", 1, 0, 0, 0},
+           .pipeline_ID = SOT_RP_SPRITE,
+           .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderSprite.vert", 0, 1, 1, 0},
+           .fragmentShader = &(SOT_GPU_ShaderInfo) {"shaderSprite.frag", 1, 0, 0, 0},
            .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
@@ -325,6 +325,40 @@ SDL_AppResult SOT_MapTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
     return SDL_APP_CONTINUE;
 }
 
+SDL_AppResult SOT_MapSpriteInfoData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
+   
+    int spriteDataSize = 2000 * sizeof(SOT_GPU_SpriteInfo);
+
+    if (gpu->buffers[data->pipelineID].storageBuffer[0] == NULL) {
+        
+        SDL_GPUBufferCreateInfo storageBufferInfo = {
+            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+            .size = spriteDataSize,
+            .props = 0
+        };
+
+        gpu->buffers[data->pipelineID].storageBuffer[0] = SDL_CreateGPUBuffer(gpu->device, &storageBufferInfo);
+        if (gpu->buffers[data->pipelineID].storageBuffer[0] == NULL)
+        {
+            SDL_Log("Failed to create spriteinfo storage buffer!");
+            return SDL_APP_FAILURE;
+        }    
+    }
+
+    gpu->transferBuffers.storageTransferBuffer = SDL_CreateGPUTransferBuffer
+    (gpu->device, 
+        &(SDL_GPUTransferBufferCreateInfo) {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = spriteDataSize,
+        .props = 0
+    });
+
+    int* transferData = SDL_MapGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer, false);
+    SDL_memcpy(transferData,  data->sprites, spriteDataSize);
+    SDL_UnmapGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer);
+    return SDL_APP_CONTINUE;
+}
+
 SDL_AppResult SOT_MapTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
        // ------------------------------ Texture Data Buffer ------------------------------------------//
 	
@@ -452,6 +486,27 @@ SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
     return SDL_APP_CONTINUE;
 }
 
+SDL_AppResult SOT_UploadSpriteInfoData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass)
+{
+    int spriteDataSize = 2000 * sizeof(SOT_GPU_SpriteInfo);
+
+    SDL_UploadToGPUBuffer(
+        copyPass,
+        &(SDL_GPUTransferBufferLocation) {
+            .transfer_buffer = gpu->transferBuffers.storageTransferBuffer,
+            .offset = 0
+        },
+        &(SDL_GPUBufferRegion) {
+            .buffer = gpu->buffers[data->pipelineID].storageBuffer[0],
+            .offset = 0,
+            .size =  spriteDataSize
+        },
+        false
+	);
+
+    return SDL_APP_CONTINUE;
+}
+
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint32_t bufferFlags) {
 
     if (bufferFlags & SOT_BUFFER_VERTEX) {
@@ -466,8 +521,12 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
         SOT_MapTextureData(gpu, data);
     }
 
-    if (bufferFlags & SOT_BUFFER_SSB) {
+    if (bufferFlags & SOT_TILEMAP_SSB) {
         SOT_MapTilemapData(gpu, data);
+    }
+
+    if (bufferFlags & SOT_SPRITES_SSB) {
+        SOT_MapSpriteInfoData(gpu, data);
     }
 
 	// Upload the transfer data to the vertex buffer
@@ -492,10 +551,14 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
         SOT_UploadTextureData(gpu, data, copyPass);
     }
 
-    if (bufferFlags & SOT_BUFFER_SSB) {
+    if (bufferFlags & SOT_TILEMAP_SSB) {
         SOT_UploadTilemapData(gpu, data, copyPass);
     }
     
+    if (bufferFlags & SOT_SPRITES_SSB) {
+        SOT_UploasSpriteInfoData(gpu, data);
+    }
+
     SDL_EndGPUCopyPass(copyPass);
     SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
     
@@ -512,7 +575,7 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
         SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.textureTransferBuffer);
     }
 
-    if (bufferFlags & SOT_BUFFER_SSB) {
+    if ((bufferFlags & SOT_TILEMAP_SSB) || (bufferFlags & SOT_SPRITES_SSB)) {
         SDL_ReleaseGPUTransferBuffer(gpu->device, gpu->transferBuffers.storageTransferBuffer);
     }
 

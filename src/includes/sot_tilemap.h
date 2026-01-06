@@ -56,6 +56,7 @@ sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState);
 void DestroyTilemap(sot_tilemap *tilemap);
 sot_collider_t *SOT_GetCollider(cute_tiled_object_t *tiledObject) ;
 cute_tiled_layer_t *SOT_GetLayer(cute_tiled_map_t *map, char *layerName);
+cute_tiled_object_t *SOT_GetObjectByName(cute_tiled_map_t *map, char *objectName);
 
 // Rendering section
 void SOT_GPU_InitializeTilemap(sot_tilemap *current_tilemap, SOT_GPU_State *gpu);

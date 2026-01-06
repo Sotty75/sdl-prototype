@@ -6,7 +6,7 @@
 
 // Forward-declare the SOT_Texture struct
 // This tells the compiler that "struct SOT_Texture" is a valid type
-struct sot_actor_t;
+struct SOT_Actor;
 struct sot_texture_t;
 struct sot_collider_node_t;
 

@@ -5,18 +5,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include "sot_texture.h"
-
-
-/*
-   Struct to store an individual frame LP_Frame
-   LP_Frame * - Pinter to next frame of the animation
-   SDL_Surface * fs - with frame pixel information
-*/
-typedef struct Frame {
-    struct Frame *next;
-    SDL_FRect *sprite;
-} Frame;
-
+#include "sot_gpu_pipeline.h"
 
 /*
 /   Struct to store animation info LP_Animation
@@ -27,22 +16,21 @@ typedef struct Frame {
 /       - frame->height
 /       - frames array
 */
-typedef struct {
+typedef struct SOT_Animation {
+    int id;
     char *name;
-    bool cycle;
-    int framesCount;
-    int width;
-    int height;
+    char *atlasName;
     int stepRateMillis;
-    SDL_Texture *atlas;
-    Frame *currentFrame;
-} sot_sprite_t;
+    int framesCount;
+    bool cycle;
+    SOT_GPU_SpriteInfo *info;  //-->collection of frames for the current Animation
+} SOT_Animation;
 
 
 
 // Prototipi delle funzioni che usano la struttura
-sot_sprite_t *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis, bool cycle, AppState* appState);
-void DestroySprite(sot_sprite_t *animation);
+SOT_Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, int stepRateMillis, bool cycle, AppState* appState);
+void DestroyAnimation(SOT_Animation *animation);
 
 
 #endif // SPRITES_H

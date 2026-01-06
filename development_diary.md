@@ -301,4 +301,83 @@ In concrete steps:
   to make better use of the memory. To do that, we may need to use another type of data structure so we can remove a texture from the list whatever is its position.
 - rather than a linked list, for some data structures like arrays of colliders and in general for ECS approach it should be better to  
   use arrays of a given lenght.
+- Modify the actors allocation strategy to move them to an array of actors rather than storing them in a simple pointer using the malloc in the CreateActor function.
+- Introduce a GameState Struct to hold the game status. One of the members will be another struct holding the entities buffers (framesArray, actorsArray, levelsArray?) nd another one containing the components buffars (positionsBuffer, velocity buffer...)
 
+## Assets Packing
+
+Protecting game assets is a standard practice, but it is important to remember the Golden Rule of Game Security: If the game can read it, a dedicated hacker can eventually read it. Your goal is not to create an unbreakable vault, but to make it annoying enough that casual players can't just browse your files.
+
+Here are the standard techniques used in C engine development, ranked from "Simple" to "Professional."
+
+1. Simple Archiving (The "Container" Approach)
+Instead of shipping thousands of .json and .png files in folders, you pack them into a single binary file (often called a .pak, .dat, or .wad).
+
+How it works: You write a simple tool that reads all your files and concatenates them into one big file. You add a "Header" or "Table of Contents" at the beginning that says: "The file 'hero.png' starts at byte 1024 and is 500 bytes long."
+
+Why it helps: A user sees one big file named data.pak and cannot easily double-click to see your sprites.
+
+Recommended C Library: PhysicsFS (PhysFS).
+
+This is the industry standard for C. It lets you mount a .zip file (or your own custom archive) and treat it like a regular hard drive folder in your code. You can literally rename assets.zip to assets.pak, and PhysFS will handle it transparently.
+
+2. Binary Serialization (Getting rid of JSON)
+JSON is human-readable, which is great for development but bad for protection.
+
+How it works: Instead of shipping the text file, you write a "cooker" (a build tool) that parses the JSON and writes the data directly into C-struct memory layouts (Binary).
+
+Example:
+
+`JSON: { "hp": 100, "speed": 5.5 } (Text, easy to edit).`
+
+Binary: 0x64 0x00 0x00 0x00 0x00 0x00 0xB0 0x40 (Raw bytes).
+
+Why it helps: It is much faster to load (no parsing needed) and completely unreadable without knowing your specific data structure.
+
+Libraries: FlatBuffers or MessagePack (specifically the C versions like mpack).
+
+3. Obfuscation (The "XOR" Trick)
+This is the most common technique for indie games. It is fast, easy to implement, and stops 99% of people.
+
+How it works: You pick a "magic byte" (or a short key). Before saving your file, you run a simple XOR operation on every byte.
+
+```C
+
+// Simple XOR Obfuscation Logic
+char key = 0x5A; // Secret key
+for (int i = 0; i < fileSize; i++) {
+    buffer[i] ^= key; 
+}
+```
+The result: If someone tries to open your PNG, it will look like garbage/noise. The game simply runs the XOR again when loading to restore the original data.
+
+Pros: Extremely fast, zero performance cost.
+
+4. Compression
+Using compression libraries serves a dual purpose: it shrinks your game size and "scrambles" the data so it isn't plain text.
+
+How it works: Compress your JSON or Texture chunks using LZ4 or Zstd before saving them to your archive.
+
+Why it helps: A text editor opening a compressed file sees gibberish. Only someone who knows which compression algorithm you used can decompress it.
+
+Recommended C Library: LZ4 (extremely fast decompression, perfect for games).
+
+5. Encryption (The "Heavy Duty" Option)
+If you need real security (e.g., preventing modification of leaderboard data), you use standard encryption algorithms like AES.
+
+How it works: You use a library to encrypt the data using a complex key.
+
+The Catch: You must store the decryption key inside your game's executable. A skilled hacker can use a "Hex Editor" or "Debugger" to find this key in your RAM. There is no way around this in a standalone offline game.
+
+Recommended C Library: tiny-AES-c or Monocypher (both are small, easy to embed in C engines).
+
+The Recommended "Pro" Workflow
+For your engine, do not overcomplicate it. The best balance of performance and protection is:
+
+Cook your Assets: Convert JSON to a binary format (or just compress it).
+
+Pack into an Archive: Combine everything into a custom .pak file.
+
+Obfuscate the Header: XOR the "Table of Contents" of your archive.
+
+Why this is effective: If a hacker opens your file, they can't see the file names or where files begin/end because the header is XOR'd. Even if they decode the header, the files inside are binary/compressed blobs. This stops everyone except experienced reverse engineers.
