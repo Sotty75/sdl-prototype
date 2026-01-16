@@ -1,6 +1,7 @@
 {
     "atlas_name": "monkey-sheet-16",
-    "image_path": "C:/Coding/sdl-prototype/assets/textures/monkey-sheet-16.png",
+    "image_path": "e:/Coding/sdl-prototype/assets/textures/monkey-sheet-16.png",
+    "collider": "C2_TYPE_CIRCLE",
     "animations": {
         "walk_R": {
             "frame_count": 9,

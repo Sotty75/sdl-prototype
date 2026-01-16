@@ -5,7 +5,7 @@
 #include "appstate.h"
 #include "sot_camera.h"
 #include "sot_actor.h"
-#include "sot_sprite.h"
+#include "sot_animation.h"
 #include "sot_tilemap.h"
 #include "cute_tiled.h"
 #include  "sot_gpu_pipeline.h"

@@ -8,7 +8,7 @@
 #include "cglm.h"
 #include "cute_c2.h"
 #include "appstate.h"
-#include "sot_sprite.h"
+#include "sot_animation.h"
 #include "sot_collider.h"
 #include "sot_math_interop.h"
 

@@ -27,6 +27,7 @@ typedef struct SOT_FramesInfo {
 typedef struct SOT_SpritesheetInfo {
 	char* atlasName;
 	char* atlasPath;
+	char* collider;
 	SOT_FramesInfo framesInfo[128];
 } SOT_AnimationInfo;
 

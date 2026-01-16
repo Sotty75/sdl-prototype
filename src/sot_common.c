@@ -34,17 +34,26 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
 
 	SOT_AnimationInfo *animationInfo = (SOT_AnimationInfo *) malloc(sizeof(SOT_AnimationInfo));
 
-    // access the JSON data
+    // Access the JSON data
     cJSON *atlas_name = cJSON_GetObjectItemCaseSensitive(json, "atlas_name");
     if (cJSON_IsString(atlas_name) && (atlas_name->valuestring != NULL)) {
-		animationInfo->atlasName = (char *)malloc(SDL_strlen(atlas_name->valuestring));
-		 SDL_strlcpy(animationInfo->atlasName, atlas_name->valuestring, SDL_strlen(atlas_name->valuestring));
+		int sl = SDL_strlen(atlas_name->valuestring) + 1;
+		animationInfo->atlasName = (char *)SDL_malloc(sl);
+		 SDL_strlcpy(animationInfo->atlasName, atlas_name->valuestring, sl);
     }
 
     cJSON *image_path = cJSON_GetObjectItemCaseSensitive(json, "image_path");
 	if (cJSON_IsString(image_path) && (image_path->valuestring != NULL)) {
-		animationInfo->atlasPath = (char *)malloc(SDL_strlen(image_path->valuestring));
-		SDL_strlcpy(animationInfo->atlasPath, image_path->valuestring, SDL_strlen(image_path->valuestring));
+		int sl = SDL_strlen(image_path->valuestring) + 1;
+		animationInfo->atlasPath = (char *)SDL_malloc(sl);
+		SDL_strlcpy(animationInfo->atlasPath, image_path->valuestring, sl);
+    }
+
+    cJSON *collider = cJSON_GetObjectItemCaseSensitive(json, "collider");
+	if (cJSON_IsString(collider) && (collider->valuestring != NULL)) {
+		int sl = SDL_strlen(collider->valuestring) + 1;
+		animationInfo->collider = (char *)SDL_malloc(sl);
+		SDL_strlcpy(animationInfo->collider, collider->valuestring, sl);
     }
 
 	int i = 0;
@@ -53,10 +62,17 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
 
 	cJSON_ArrayForEach(animation, animations)
 	{
+		if (animation->string != NULL)
+		{
+			int sl = sizeof(SDL_strlen(animation->string) + 1);
+			animationInfo->framesInfo[i].name = (char *)SDL_malloc(sl);
+			SDL_strlcpy(animationInfo->framesInfo[i].name, animation->string, sl);
+		}
+
 		cJSON *frame_count = cJSON_GetObjectItemCaseSensitive(animation, "frame_count");
 		animationInfo->framesInfo[i].framesCount = frame_count->valueint;
 
-		animationInfo->framesInfo[i].frames = (vec4*) malloc(frame_count->valueint * sizeof(vec4));
+		animationInfo->framesInfo[i].frames = (vec4*) SDL_malloc(frame_count->valueint * sizeof(vec4));
 		int j = 0;
 		cJSON *frame = NULL;
 		cJSON *frames = cJSON_GetObjectItemCaseSensitive(animation, "frames");

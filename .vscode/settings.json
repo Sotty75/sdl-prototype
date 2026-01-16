@@ -4,7 +4,6 @@
         "box.h": "c",
         "sdl_gamepad.h": "c",
         "sdl_image.h": "c",
-        "sot_sprites.h": "c",
         "sdl_render.h": "c",
         "sot_texture.h": "c",
         "sot_actor.h": "c",
@@ -17,7 +16,6 @@
         "typeinfo": "c",
         "sdl_gpu.h": "c",
         "cute_c2.h": "c",
-        "sot_sprite.h": "c",
         "test_main.h": "c"
     },
     "editor.suggestOnTriggerCharacters": true,

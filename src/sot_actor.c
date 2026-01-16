@@ -17,7 +17,7 @@ SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animation
     // Bind animations to actor
     SOT_AnimationInfo *animationInfo = SOT_LoadAnimations(animationsFile);
 
-    // TODO: Modify the sprite editor tool to include also the collider type and to move the animation name inside of the animation JSON block
+    // TODO: Modify the sprite editor tool to include also the collider type
     // TODO: Initialize the animation data and uplaod the data on the GPU Memory
     // TODO: Destory the animation info object
 
