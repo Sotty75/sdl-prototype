@@ -1,10 +1,10 @@
 # Minimum version required for cmake
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.21)
 
 # Project definition: name and language
 project(sdl-prototype LANGUAGES C)
 
-# C Version Requried
+# C Version Required
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -114,6 +114,8 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:SDL3_image::SDL3_image>"
             "$<TARGET_FILE_DIR:sdl-prototype>"
+    # SDL_image may have its own dependencies (like libpng, libjpeg).
+    # We need to copy those as well. This expression gets them.
     COMMAND ${CMAKE_COMMAND} -E copy
             "$<TARGET_RUNTIME_DLLS:SDL3_image::SDL3_image>"
             "$<TARGET_FILE_DIR:sdl-prototype>"
