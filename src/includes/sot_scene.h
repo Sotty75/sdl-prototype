@@ -3,37 +3,25 @@
 
 #include <stdlib.h>
 #include "appstate.h"
+#include "sot_camera.h"
 #include "sot_actor.h"
-#include "sot_sprite.h"
+#include "sot_animation.h"
 #include "sot_tilemap.h"
 #include "cute_tiled.h"
+#include  "sot_gpu_pipeline.h"
 
-
-
-typedef struct Scene {
+typedef struct SOT_Scene {
     int id;
-    sot_actor_t *player;
-    sot_tilemap_t *sot_tilemap;
-} Scene;
+    SOT_Actor *player;
+    sot_tilemap *tilemap;
+    sot_camera worldCamera;
+    sot_camera uiCamera;
+} SOT_Scene;
 
 
-Scene* CreateScene(AppState *as);
-
-
-/*****************************************************
- * 
- *   Iterates through all the entities of the scene to update the status based on t
- *   the current game state / player input
- * 
- *****************************************************/
-void UpdateScene(AppState *as, Scene * scene, float deltaTime);
-
-/*****************************************************
- * 
- *   Renders the scene on the screen
- *    
- *****************************************************/
-void RenderScene(AppState *as, Scene * scene);
-void DestroyScene(Scene * scene);
+SOT_Scene* CreateScene(AppState *as);
+void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime);
+void SOT_GPU_RenderScene(SOT_Scene * scene, SOT_GPU_State *gpu, SOT_GPU_RenderpassInfo *rpi);
+void DestroyScene(SOT_Scene * scene);
 
 #endif

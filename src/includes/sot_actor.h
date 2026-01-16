@@ -8,11 +8,13 @@
 #include "cglm.h"
 #include "cute_c2.h"
 #include "appstate.h"
-#include "sot_sprite.h"
+#include "sot_animation.h"
 #include "sot_collider.h"
+#include "sot_math_interop.h"
+
+
 
 #define GAMEPAD_DEADZONE 8000
-
 
 typedef enum {
     IDLE,
@@ -24,30 +26,32 @@ typedef enum {
     JUMP
 } Direction;
 
-typedef struct sot_actor_t {
-    char *name;
+typedef struct SOT_Actor {
+    int actorID;                // --> Used as an index in the batch sprites rendering array. At this specific index, we will store the spritinfo for the current frame.
+    char *actorName;
+    char *atlasName;
     bool applyGravity;
     vec2 position;
     vec2 velocity;
     SDL_FRect renderRect;
-    sot_sprite_t **pSprites;
-    sot_sprite_t *pCurrentSprite;
+    SOT_Animation **animations;
+    SOT_Animation *activeAnimation;
     Uint64 lastStep;
     Direction direction;
     sot_collider_t collider;
     c2Manifold collisionInfo[50];
-} sot_actor_t;
+} SOT_Actor;
 
-sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType); 
-void SetPosition(sot_actor_t *actor, vec2 pos);
-void SetVelocity(sot_actor_t *actor, vec2 vel);
-void SetCollider(sot_actor_t *actor, sot_collider_t collider);
-void UpdateCollider(sot_actor_t *actor);
-void MoveActor(sot_actor_t *actor, SDL_Event *event);
-void Hit(const AppState *as, sot_actor_t *actor);
-void UpdateActor(const AppState *as, sot_actor_t *actor, float deltaTime);
-void SetRenderPosition(sot_actor_t *actor);
-void RenderActor(const AppState *as, sot_actor_t *actor);
-void DestroyActor(sot_actor_t *actor);
+SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animationFile);
+void SetPosition(SOT_Actor *actor, vec2 pos);
+void SetVelocity(SOT_Actor *actor, vec2 vel);
+void SetCollider(SOT_Actor *actor, sot_collider_t collider);
+void UpdateCollider(SOT_Actor *actor);
+void MoveActor(SOT_Actor *actor, SDL_Event *event);
+void Hit(const AppState *as, SOT_Actor *actor);
+void UpdateActor(const AppState *as, SOT_Actor *actor, float deltaTime);
+void SetRenderPosition(SOT_Actor *actor);
+void RenderActor(const AppState *as, SOT_Actor *actor);
+void DestroyActor(SOT_Actor *actor);
 
 #endif // ACTOR_H

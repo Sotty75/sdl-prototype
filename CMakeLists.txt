@@ -1,16 +1,16 @@
 # Minimum version required for cmake
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.21)
 
 # Project definition: name and language
 project(sdl-prototype LANGUAGES C)
 
-# C Version Requried
+# C Version Required
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 
 # ==========================================
-# 2. SETUP BOX2D (MODIFICATO - FetchContent)
+# 2. SETUP BOX2D (FetchContent)
 # ==========================================
 # Questo blocco scarica i sorgenti e li compila con MinGW
 # risolvendo l'errore del file .lib incompatibile.
@@ -31,14 +31,14 @@ message(STATUS "Downloading and compiling SDL3...")
 FetchContent_Declare(
     sdl3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        release-3.2.28 # Or a specific release tag like "release-3.1.0"
+    GIT_TAG        release-3.2.28
 )
 
 message(STATUS "Downloading and compiling SDL3_image...")
 FetchContent_Declare(
     sdl3_image
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
-    GIT_TAG        release-3.2.4 # Or a specific release tag
+    GIT_TAG        release-3.2.4
 )
 
 # Make the content available to the project.
@@ -54,6 +54,7 @@ FetchContent_MakeAvailable(sdl3_image)
 file(GLOB_RECURSE SOURCE_FILES
     CONFIGURE_DEPENDS 
     "src/*.c"
+    "include/cJSON/cJSON.c"
 )
 
 # Create the executable from the source files
@@ -69,8 +70,9 @@ target_link_libraries(sdl-prototype PRIVATE
 # Include header libraries
 target_include_directories(sdl-prototype PRIVATE
     "${PROJECT_SOURCE_DIR}/include/cute_headers"    
-    "${PROJECT_SOURCE_DIR}/src/includes"
+    "${PROJECT_SOURCE_DIR}/include/cJSON"
     "${PROJECT_SOURCE_DIR}/include/cglm"
+    "${PROJECT_SOURCE_DIR}/src/includes"
     "${box2d_SOURCE_DIR}/include"
 )
 
@@ -87,14 +89,19 @@ message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")
 # This will correctly print the path to "my_project/src/"
 message("CMAKE_CURRENT_SOURCE_DIR in src is: ${CMAKE_CURRENT_SOURCE_DIR}")
 
-# Add a custom command to copy the 'assets' folder after the build is complete
-add_custom_command(
-    TARGET sdl-prototype POST_BUILD
+# ==========================================
+# ASSET SYNC (RUNS EVERY BUILD)
+# ==========================================
+# We use ${CMAKE_BINARY_DIR} instead of $<TARGET_FILE_DIR:...> to break the cycle.
+add_custom_target(CopyAssets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/assets"
-            "$<TARGET_FILE_DIR:sdl-prototype>/assets"
-    COMMENT "Copying assets folder to output directory"
+            "${CMAKE_BINARY_DIR}/assets"
+    COMMENT "Syncing assets folder..."
 )
+
+# Make sure the game waits for assets to be copied before running/linking
+add_dependencies(sdl-prototype CopyAssets)  
 
 # --- Automatic DLL Copying for Runtime ---
 # This command will copy the required SDL and dependency DLLs to the executable's

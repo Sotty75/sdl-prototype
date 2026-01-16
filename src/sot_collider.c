@@ -46,40 +46,39 @@ int CollidersCount(sot_collider_node_t* colliders) {
     return count;
 }
 
-void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) {
-    if (!appState->debugInfo.displayColliders)
-        return;
-
-    // Debug info is rendered in red color
-    SDL_SetRenderDrawColor(appState->pRenderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-
+void DrawCollidersDebugInfo(SOT_GPU_State *gpu, sot_collider_t pCollider) {
+   
     switch (pCollider.type) {
         case C2_TYPE_AABB:
             {
-                SDL_FRect rect = 
-                {
-                    .x = pCollider.shape.AABB.min.x,
-                    .y = pCollider.shape.AABB.min.y,
-                    .w = pCollider.shape.AABB.max.x - pCollider.shape.AABB.min.x,
-                    .h = pCollider.shape.AABB.max.y - pCollider.shape.AABB.min.y
-                };
-
-                SDL_RenderRect(appState->pRenderer, &rect);
+                vec3 p0 = {pCollider.shape.AABB.min.x, pCollider.shape.AABB.min.y, 0};
+                vec3 p1 = {pCollider.shape.AABB.max.x, pCollider.shape.AABB.min.y, 0};
+                vec3 p2 = {pCollider.shape.AABB.max.x, pCollider.shape.AABB.max.y, 0};
+                vec3 p3 = {pCollider.shape.AABB.min.x, pCollider.shape.AABB.max.y, 0};
+                SOT_GPU_AddLine(gpu, p0, p1);
+                SOT_GPU_AddLine(gpu, p1, p2);
+                SOT_GPU_AddLine(gpu, p2, p3);
+                SOT_GPU_AddLine(gpu, p3, p0);
             } break;
         case C2_TYPE_CIRCLE:
             {
                 c2v position = pCollider.shape.circle.p;
                 float radius = pCollider.shape.circle.r;
 
-                // creates a "circ7le" centered in the collider position approximate, with 36 segments
+                // creates a "circle" centered in the collider position approximate, with 36 segments
                 SDL_FPoint circle[45];
                 for (int i = 0; i <= 44; i++) {
                     double angle_radians = (8.0 / 180.0) * M_PI * i ;
                     circle[i].x = position.x + radius*cos(angle_radians);
                     circle[i].y = position.y + radius*sin(angle_radians);
                 }
-                SDL_RenderPoint(appState->pRenderer, position.x, position.y);
-                SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&circle, 45);
+
+                for (int i = 0; i < 44; i++) {
+                    double angle_radians = (8.0 / 180.0) * M_PI * i ;
+                    vec3 p0 = {circle[i].x, circle[i].y, 0};
+                    vec3 p1 = {circle[i+1].x, circle[i+1].y, 0};
+                    SOT_GPU_AddLine(gpu, p0, p1);
+                }
             } break;
         case C2_TYPE_POLY:
             {
@@ -108,12 +107,14 @@ void DrawCollidersDebugInfo(sot_collider_t pCollider, const AppState* appState) 
                         .y = nPos.y + 10 * pCollider.shape.poly.norms[i].y
                     };
 
-                    SDL_RenderLine(appState->pRenderer, nPos.x, nPos.y, nVector.x, nVector.y);
+                    // Render Normals
+                    SOT_GPU_AddLine(gpu, (vec3) {nPos.x, nPos.y,0}, (vec3) {nVector.x, nVector.y,0});
                 }
 
-                // render edges
-                SDL_RenderLines(appState->pRenderer, (const SDL_FPoint *)&poly, size + 1);
-
+                // Render Edges
+                for (int i = 0; i < size; i = i+1) {
+                    SOT_GPU_AddLine(gpu, (vec3) {poly[i].x, poly[i].y,0}, (vec3) {poly[i+1].x, poly[i+1].y,0});
+                }
             } break;
         default:
             break;

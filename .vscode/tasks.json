@@ -2,30 +2,31 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "CMake: clean",
+            "label": "SOT-CMake: clean",
             "type": "cmake",
             "command": "clean",
-            "detail": "Pulisce gli artefatti della build."
+            "detail": "Clean all the build artifacts."
         },
         {
-            "label": "CMake: build",
+            "label": "SOT-CMake: build",
             "type": "cmake",
             "command": "build",
-            "detail": "Costruisce il target predefinito (build incrementale)."
-        },
-        {
-            "label": "CMake: Clean & Rebuild",
-            "dependsOn": [
-                "CMake: clean",
-                "CMake: build"
-            ],
-            "dependsOrder": "sequence",
+            "detail": "Build the project incrementally.",
             "group": {
                 "kind": "build",
-                "isDefault": true
-            },
+                "isDefault": true   
+            }
+        },
+        {
+            "label": "SOT-CMake: Clean & Rebuild",
+            "dependsOn": [
+                "SOT-CMake: clean",
+                "SOT-CMake: build"
+            ],
+            "dependsOrder": "sequence",
+            "group": "build",       
             "problemMatcher": [],
-            "detail": "Esegue 'clean' e poi 'build' in sequenza."
+            "detail": "Execute the Clen & Build operations sequentially."
         }
     ]
 }

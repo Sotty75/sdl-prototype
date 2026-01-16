@@ -1,15 +1,11 @@
-#include <stdlib.h>
 #include "sot_actor.h"
-#include "appstate.h"
 
-
-
-sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t **anims, C2_TYPE colliderType) 
+SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
 {
-    sot_actor_t *actor = malloc(sizeof(sot_actor_t));
+    SOT_Actor *actor = malloc(sizeof(SOT_Actor));
     if (actor == NULL) return NULL;
 
-    actor->name = name;
+    actor->actorName = name;
     actor->applyGravity = true;
 
     // set actor position and velocity
@@ -17,29 +13,42 @@ sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t 
     actor->position[1]=pos[1];
     actor->velocity[0]=10;
     actor->velocity[1]=0;
+   
+    // Bind animations to actor
+    SOT_AnimationInfo *animationInfo = SOT_LoadAnimations(animationsFile);
+
+    // TODO: Modify the sprite editor tool to include also the collider type
+    // TODO: Initialize the animation data and uplaod the data on the GPU Memory
+    // TODO: Destory the animation info object
+
+    return actor;
+}
+
+void SOT_BindActorAnimations(SOT_Actor *actor, SOT_AnimationInfo *animationInfo)
+ {
     
-    // Sprite Initialization
-    actor->pSprites = anims;
+   /*  // Bind the animations to the actor
+    actor->animations = anims;
     actor->lastStep = SDL_GetTicks();
-    actor->pCurrentSprite = actor->pSprites[0];
-    SetRenderPosition(actor);
-    
+    actor->activeAnimation = actor->animations[0];
+
+    // Initialize the collider
+
     // Collider Initialization
     sot_collider_t collider = {0};
 
     switch (colliderType) {
         case C2_TYPE_CIRCLE:
             collider.type = C2_TYPE_CIRCLE;
-            collider.shape.circle.p.x = actor->position[0];
-            collider.shape.circle.p.y = actor->position[1];
-            collider.shape.circle.r = actor->pSprites[0]->width/2;
+            collider.shape.circle.p = *vec2_to_c2v(&actor->position);
+            collider.shape.circle.r = actor->animations[0]->info->frameSize[0]/2;
             break;
         case C2_TYPE_AABB:
             collider.type = C2_TYPE_AABB;
-            collider.shape.AABB.min.x = -actor->pSprites[0]->width/2;
-            collider.shape.AABB.max.x = actor->pSprites[0]->width/2;
-            collider.shape.AABB.min.y = -actor->pSprites[0]->height/2;
-            collider.shape.AABB.max.y = actor->pSprites[0]->height/2;
+            collider.shape.AABB.min.x = -actor->animations[0]->info->frameSize[0]/2;
+            collider.shape.AABB.max.x = actor->animations[0]->info->frameSize[0]/2;
+            collider.shape.AABB.min.y = -actor->animations[0]->info->frameSize[0]/2;
+            collider.shape.AABB.max.y = actor->animations[0]->info->frameSize[0]/2;
             break;
         case C2_TYPE_NONE:
         case C2_TYPE_CAPSULE:
@@ -50,24 +59,21 @@ sot_actor_t *CreateActor(AppState *appState, char *name, vec2 pos, sot_sprite_t 
     }
     
     actor->collider = collider;
-    AppendCollider(appState->pDynamicColliders, &(actor->collider));
 
-
-    return actor;
+    AppendCollider(appState->pDynamicColliders, &(actor->collider)); */
 }
 
-
-void SetPosition(sot_actor_t *actor, vec2 pos) { 
+void SetPosition(SOT_Actor *actor, vec2 pos) { 
     glm_vec2_copy(pos, actor->position);
     return; 
 }
 
-void SetVelocity(sot_actor_t *actor, vec2 pos) { 
+void SetVelocity(SOT_Actor *actor, vec2 pos) { 
     glm_vec2_copy(pos, actor->velocity);
     return; 
 }
 
-void SetCollider(sot_actor_t *actor, sot_collider_t collider) {
+void SetCollider(SOT_Actor *actor, sot_collider_t collider) {
     actor->collider = collider;
     return;
 }
@@ -76,21 +82,20 @@ void SetCollider(sot_actor_t *actor, sot_collider_t collider) {
  *   Updates the collider poition / geometry to follow the sprite
  *   current position while moving on the screen.
  */
-void UpdateCollider(sot_actor_t *actor) {
+void UpdateCollider(SOT_Actor *actor) {
     sot_collider_t *collider = &(actor->collider);
 
     switch (collider->type) {
         case C2_TYPE_CIRCLE:
-            collider->shape.circle.p.x = actor->position[0];
-            collider->shape.circle.p.y = actor->position[1];
-            collider->shape.circle.r = actor->pSprites[0]->width/2;
+            collider->shape.circle.p = *vec2_to_c2v(&actor->position);
+            collider->shape.circle.r = actor->animations[0]->info->frameSize[0]/2;
             break;
         case C2_TYPE_AABB:
             collider->type = C2_TYPE_AABB;
-            collider->shape.AABB.min.x = -actor->pSprites[0]->width/2;
-            collider->shape.AABB.max.x = actor->pSprites[0]->width/2;
-            collider->shape.AABB.min.y = -actor->pSprites[0]->height/2;
-            collider->shape.AABB.max.y = actor->pSprites[0]->height/2;
+            collider->shape.AABB.min.x = -actor->animations[0]->info->frameSize[0]/2;
+            collider->shape.AABB.max.x = actor->animations[0]->info->frameSize[0]/2;
+            collider->shape.AABB.min.y = -actor->animations[0]->info->frameSize[0]/2;
+            collider->shape.AABB.max.y = actor->animations[0]->info->frameSize[0]/2;
             break;
         case C2_TYPE_NONE:
         case C2_TYPE_CAPSULE:
@@ -106,22 +111,22 @@ void UpdateCollider(sot_actor_t *actor) {
 
 // Updates the renderRect position based on the the current actor position.
 // Position is applied to the center of the sprite.
-void SetRenderPosition(sot_actor_t *actor) 
+void SetRenderPosition(SOT_Actor *actor) 
 {
-    int deltaX = actor->pCurrentSprite->width/2;
-    int deltaY = actor->pCurrentSprite->height/2;
+    int deltaX = actor->activeAnimation->info->frameSize[0]/2;
+    int deltaY = actor->activeAnimation->info->frameSize[1]/2;
 
     actor->renderRect = (SDL_FRect) {
         .x = actor->position[0]-deltaX,
         .y = actor->position[1]-deltaY,
-        .w = actor->pCurrentSprite->width,
-        .h = actor->pCurrentSprite->height
+        .w = actor->activeAnimation->info->frameSize[0],
+        .h = actor->activeAnimation->info->frameSize[1]
     };
 }
 
-void RenderActor(const AppState *appState, sot_actor_t *actor) {
+void RenderActor(const AppState *as, SOT_Actor *actor) {
 
-    sot_sprite_t *animation = actor->pCurrentSprite;
+    SOT_Animation *animation = actor->activeAnimation;
 
     // Get the current time different from last step
     // if higher than the animation time step
@@ -134,19 +139,19 @@ void RenderActor(const AppState *appState, sot_actor_t *actor) {
     while ((now - actor->lastStep) >= animation->stepRateMillis) 
     {
         // navigate to the next frame in the linked list of frames
-        animation->currentFrame = animation->currentFrame->next;
+        // animation->currentFrame = animation->currentFrame->next;
         actor->lastStep = now;            
     }
 
-    SetRenderPosition(actor);
-    SDL_RenderTexture(appState->pRenderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
-    DrawCollidersDebugInfo(actor->collider, appState);
+    // SetRenderPosition(actor);
+    // SDL_RenderTexture(appState->gpu->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
+    DrawCollidersDebugInfo(as->gpu, actor->collider);
 
     return;
 }
 
 
-void MoveActor(sot_actor_t *actor, SDL_Event *event) 
+void MoveActor(SOT_Actor *actor, SDL_Event *event) 
 {
     if (actor == NULL) return;
 
@@ -170,7 +175,7 @@ void MoveActor(sot_actor_t *actor, SDL_Event *event)
     return; 
 }
 
-void Hit(const AppState *as, sot_actor_t *actor) {
+void Hit(const AppState *as, SOT_Actor *actor) {
     
     memset(actor->collisionInfo, 0, sizeof(actor->collisionInfo));
     int hit = false;
@@ -241,7 +246,7 @@ void Hit(const AppState *as, sot_actor_t *actor) {
     return;
 }
 
-void UpdateActor(const AppState *as, sot_actor_t *actor, float deltaTime) {
+void UpdateActor(const AppState *as, SOT_Actor *actor, float deltaTime) {
 
     if (actor == NULL)
         return;
@@ -263,18 +268,18 @@ void UpdateActor(const AppState *as, sot_actor_t *actor, float deltaTime) {
     switch (actor->direction)
     {
         case MOVE_RIGHT:
-            if (actor->pCurrentSprite != actor->pSprites[2]) actor->pCurrentSprite = actor->pSprites[2];
+            if (actor->activeAnimation != actor->animations[2]) actor->activeAnimation = actor->animations[2];
             actor->position[0] += actor->velocity[0] * deltaTime;
             break;
         case MOVE_LEFT:
-            if (actor->pCurrentSprite != actor->pSprites[1]) actor->pCurrentSprite = actor->pSprites[1];
+            if (actor->activeAnimation != actor->animations[1]) actor->activeAnimation = actor->animations[1];
             actor->position[0] -= actor->velocity[0] * deltaTime;
             break;
         case FALL:
             actor->position[1] += 2 * deltaTime;
             break;
         case IDLE:
-            if (actor->pCurrentSprite != actor->pSprites[0]) actor->pCurrentSprite = actor->pSprites[0];
+            if (actor->activeAnimation != actor->animations[0]) actor->activeAnimation = actor->animations[0];
         default:
             break;
     }
@@ -286,11 +291,11 @@ void UpdateActor(const AppState *as, sot_actor_t *actor, float deltaTime) {
     return;
 }
 
-void DestroyActor(sot_actor_t *actor) { 
+void DestroyActor(SOT_Actor *actor) { 
     if (actor == NULL) return;
     
-    for (int i = 0; actor->pSprites[i] != NULL; i++) {
-        DestroySprite(actor->pSprites[i]);
+    for (int i = 0; actor->animations[i] != NULL; i++) {
+        DestroyAnimation(actor->animations[i]);
     }
 
     free(actor);

@@ -5,20 +5,20 @@
     and an image and creates a surface linked by the surface pointer
     to be reused to create for example a texture.
 */
-SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
+SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *folderName, char *assetName)
 {
-    char *spritesheetPath = NULL;
+    char *assetPath = NULL;
 
     //... load the spritesheet inside of the texture
-    SDL_asprintf(&spritesheetPath, "%sassets\\%s", SDL_GetBasePath(), assetName);  /* allocate a string of the full file path */
-    *surface = IMG_Load(spritesheetPath);
+    SDL_asprintf(&assetPath, "%sassets\\%s\\%s", SDL_GetBasePath(), folderName, assetName);  /* allocate a string of the full file path */
+    *surface = IMG_Load(assetPath);
 
     if (!(*surface)) {
         SDL_Log("Couldn't load spritesheet: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    SDL_free(spritesheetPath);
+    SDL_free(assetPath);
 
     return SDL_APP_CONTINUE;
 }
@@ -28,10 +28,10 @@ Creates a texture, this is not adding the texture automatically to the textures 
 The texture pool is managed by the GetTexture function, which checks if the texture is in the pool.
 If not, it will be created using this function, added to the pool, and returned to the user.
 */
-sot_texture_t *CreateTexture(char *name, AppState* appState) {
+sot_texture_t *CreateTexture(AppState* appState, char *fileName) {
     SDL_Surface *spritesheetSurface = NULL;
-    GetSurfaceFromImage(&spritesheetSurface, name);
-    SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->pRenderer, spritesheetSurface);
+    GetSurfaceFromImage(&spritesheetSurface, "textures", fileName);
+    SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->gpu->renderer, spritesheetSurface);
     if (txt == NULL) {
             SDL_Log("Couldn't create texture from surface: %s", SDL_GetError());
             return NULL;
@@ -40,7 +40,7 @@ sot_texture_t *CreateTexture(char *name, AppState* appState) {
     SDL_DestroySurface(spritesheetSurface);
 
     sot_texture_t *sotTexture = malloc(sizeof(sot_texture_t));
-    sotTexture->name = name;
+    sotTexture->name = fileName;
     sotTexture->texture = txt;
     sotTexture->next = NULL;
 
@@ -48,12 +48,12 @@ sot_texture_t *CreateTexture(char *name, AppState* appState) {
 }
 
 
-SDL_Texture *GetTexture(char *name, AppState* appState) {
+SDL_Texture *GetTexture(AppState* appState, char *name) {
 
     sot_texture_t *sotTexture = appState->pTexturesPool;
 
     if (sotTexture == NULL) {
-        sotTexture = CreateTexture(name, appState);
+        sotTexture = CreateTexture(appState, name);
         appState->pTexturesPool = sotTexture;
         return sotTexture->texture;
     }
@@ -72,7 +72,7 @@ SDL_Texture *GetTexture(char *name, AppState* appState) {
             // and add it to the pool. 
             // then it is returned to the user.
             if (sotTexture->next == NULL) {
-                sotTexture->next = CreateTexture(name, appState);
+                sotTexture->next = CreateTexture(appState, name);
                 return sotTexture->next->texture;
             }
             else {

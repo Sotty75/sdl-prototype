@@ -201,11 +201,11 @@ Rendering of a simple tiled map has been completed.
 
 ## October 11, 2025
 
-Today I would like to focus on the collissions and in putting some additional information in my tiled map. I cna breakdown this part in three steps. 
+Today I would like to focus on the collisions and in putting some additional information in my tiled map. I cna breakdown this part in three steps. 
 
 - Add a start position object to the map, so that the main character will be rendered over there in the first place. [DONE]
 - Add a collision shape to the tiles in the tileset and read them from the code [DONE]
-- Add some gravity to the world, meaning the carachter will fall until he founds some ground (and, why not, a fall animation)
+- Add some gravity to the world, meaning the character will fall until he founds some ground (and, why not, a fall animation)
 - Implementing the collision logic so that when the character hits the ground, the fall is stopped.
 
 ## October 14, 2025
@@ -216,9 +216,9 @@ Before to apply the pattern though, I would like to test the collisions system.
 I have my falling sprite and a map with a few collision shapes in place. 
 I can breakdown this work in three steps:
 
-- attache a collider to my player sprite [DONE]
+- attach a collider to my player sprite [DONE]
 - read these shapes while loading a tilemap and create possibly an array of colliders [DONE]
-- test the character is not allowed to move if there is a collition hit condition.
+- test the character is not allowed to move if there is a collision hit condition.
 
 ### Wrap-up
 I have completed the first two tasks, we will implement the collision detection tomorrow to test the logic.
@@ -252,38 +252,6 @@ Also I may think of porting this to use Box2D, but that is a possible task for n
 
 I have reworked the test tiled map to use a better tiles resolution (now they are 16x16 pixels) and implemented the logic to handle polygonal colliders in the map, required to work with slopes.
 
-
-## December 6, 2025
-
-Back to the developer diary. I was not away, but instead I have been working on a separate branch where I have beens tudying how to migrate the project to use SDL_GPU as it opens up to better control of the entire engine. 
-I reached the point where i can "comfortably" work with Quads, which is the first step in order to replicate the same rendering loginc i have in main using standard SDL functions.
-
-Now it is time to move to the next step, which is, again, rendering our tile set.
-I will have to rething how to pass the tilemap information to the render cycle, but the challenge is taken. 
-
-## December 7, 2025
-
-I think that the plan needs to be as follows:
-
-- Implement a render queue.  
-The current implementation has still some hardocoded logic. Instead I want the render method to work on some kind of generic data structure holding the data used for rendering (a kind of render queue) which is filled ahead when updating the scene. 
-- This render queue will have:
-   - The vertices / indexes to be added into the vertex buffer (only if needed...we work with quads so probably we only need one quad to render everything.n
-   - The textures to be bound to the pipeline.
-   The models for each instance of the quad to be rendered
-   - The MODEL transform to position each instance of the QUAD
-   - The UV coordinates for each instance of the QUAD (which means each tileset)
-- This will probably requirea new shader to consider the UV coordinates in the shader itself.
-
-In concrete steps:
-
-1. Modify the current shader to work on a single quad (simple vertex/index buffer). [DONE]
-2. Replace the uniform storing the models for each quad with a storage buffer. [DONE]
-3. Pass the tileset texture instead of the test texture. [DONE]
-4. Modify the storage buffer to pass the shader not only the model transfor of each quad, but also the U,V coordinates.
-5. Store this infotmation inside of a render queue data structure that we can use in the render phase to update the uniform data buffers.
-6. The renderer does only need to know the number of instances to render, the shader will read ther ight UV/Model on a per instance basis.
-
 ## Later
 
 - Implementation of a precise delta time logic which does not depend on the system framerate.
@@ -299,4 +267,3 @@ In concrete steps:
   to make better use of the memory. To do that, we may need to use another type of data structure so we can remove a texture from the list whatever is its position.
 - rather than a linked list, for some data structures like arrays of colliders and in general for ECS approach it should be better to  
   use arrays of a given lenght.
-
