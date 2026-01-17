@@ -36,6 +36,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     as = (AppState *)SDL_calloc(1, sizeof(AppState));
     if (!as) { return SDL_APP_FAILURE; }
     
+    InitializeAssetsLoader();
+
     // ----------------------------- Initialize the graphics system -----------------------------------//
     SOT_GPU_InitRenderer(as, SOT_RPF_TILEMAP | SOT_RPF_DEBUG);
     // SOT_GPU_InitRenderer(as, SOT_RPF_TEST);
