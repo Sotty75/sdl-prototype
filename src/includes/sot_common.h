@@ -10,7 +10,13 @@
 #define SCREEN_WIDTH 1980.0f
 #define SCREEN_HEIGHT 1080.0f
 
-void InitializeAssetsLoader();
+typedef struct SOT_Paths{
+	char *Base;
+	char *Textures;
+	char *Shaders;
+	char *TiledMaps;
+	char *Animations;
+} SOT_Paths;
 
 typedef struct {
 	vec3 position;
@@ -18,20 +24,11 @@ typedef struct {
 	vec2 texCoords;
 } vertex;
 
-typedef struct SOT_FramesInfo {
-	char *name;
-	vec4 *frames;
-	uint16_t framesCount;
-} SOT_FramesInfo;
+// Global Variables
+extern SOT_Paths Paths;
 
-typedef struct SOT_SpritesheetInfo {
-	char* atlasName;
-	char* atlasPath;
-	char* collider;
-	SOT_FramesInfo framesInfo[128];
-} SOT_AnimationInfo;
-
-SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename);
+void InitializePaths();
+void InitializeAssetsLoader();
 
 SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels);
 
@@ -49,4 +46,6 @@ SDL_GPUComputePipeline* CreateComputePipelineFromShader(
 	const char* shaderFilename,
 	SDL_GPUComputePipelineCreateInfo *createInfo
 );
+
+
 #endif

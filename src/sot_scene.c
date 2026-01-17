@@ -6,7 +6,7 @@
 // Create all the actors
 // Put the actors in the scene, for the time being we will hardcode the create scene logi to my test
 // player, later we will use a file as an input (JSON, XML....)
-SOT_Scene *CreateScene(AppState *as) {
+SOT_Scene *SOT_InitializeScene(AppState *as) {
 
     SOT_Scene *scene = malloc(sizeof(SOT_Scene));
     if (scene == NULL) return NULL;
@@ -61,7 +61,7 @@ SOT_Scene *CreateScene(AppState *as) {
     // ...get the player start position from the marker in the tiled-map
     cute_tiled_object_t *playerObject = SOT_GetObjectByName(scene->tilemap->tilemap, "player_start");
     vec2 startPosition = { playerObject->x, playerObject->y };
-    SOT_Actor *player = CreateActor(as, "Player", startPosition, "monkey.json");
+    SOT_Actor *player = SOT_CreateActor(as, "Player", startPosition, "monkey.json");
     scene->player = player;
 
     

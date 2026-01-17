@@ -10,8 +10,6 @@
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 
-
-
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -23,9 +21,13 @@
 #include "sot_common.h"
 #include "cglm.h"
 
+//---- Globals Definition -----//
+SOT_Paths Paths = {0};
+SDL_Gamepad *gamepad = NULL;
+
+//---- Locals Definition -----///
 static AppState *as = NULL;
 static SOT_Scene *currentScene = NULL; 
-SDL_Gamepad *gamepad = NULL;
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -45,7 +47,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
          gamepad = SDL_OpenGamepad(gamepads[0]);
 
     // Initialize our main scene
-    currentScene = CreateScene(as);
+    currentScene = SOT_InitializeScene(as);
     if (currentScene == NULL) 
         return SDL_APP_FAILURE;
 

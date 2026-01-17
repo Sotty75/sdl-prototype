@@ -4,8 +4,24 @@
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+#include "common.h"
 #include "sot_texture.h"
 #include "sot_gpu_pipeline.h"
+
+typedef struct SOT_FramesInfo {
+	char *name;
+	vec4 *frames;
+	uint16_t framesCount;
+} SOT_FramesInfo;
+
+typedef struct SOT_SpritesheetInfo {
+	char* atlasName;
+	char* atlasPath;
+	char* collider;
+	SOT_FramesInfo framesInfo[128];
+} SOT_AnimationInfo;
+
+SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename);
 
 /*
 /   Struct to store animation info LP_Animation

@@ -5,12 +5,12 @@
     and an image and creates a surface linked by the surface pointer
     to be reused to create for example a texture.
 */
-SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *folderName, char *assetName)
+SDL_AppResult GetSurfaceFromImage(SDL_Surface **surface, char *assetName)
 {
     char *assetPath = NULL;
 
     //... load the spritesheet inside of the texture
-    SDL_asprintf(&assetPath, "%sassets\\%s\\%s", SDL_GetBasePath(), folderName, assetName);  /* allocate a string of the full file path */
+    SDL_asprintf(&assetPath, "%s\\%s", Paths.Textures, assetName);  /* allocate a string of the full file path */
     *surface = IMG_Load(assetPath);
 
     if (!(*surface)) {
@@ -30,7 +30,7 @@ If not, it will be created using this function, added to the pool, and returned 
 */
 sot_texture_t *CreateTexture(AppState* appState, char *fileName) {
     SDL_Surface *spritesheetSurface = NULL;
-    GetSurfaceFromImage(&spritesheetSurface, "textures", fileName);
+    GetSurfaceFromImage(&spritesheetSurface, fileName);
     SDL_Texture *txt = SDL_CreateTextureFromSurface(appState->gpu->renderer, spritesheetSurface);
     if (txt == NULL) {
             SDL_Log("Couldn't create texture from surface: %s", SDL_GetError());

@@ -33,7 +33,6 @@ typedef struct SOT_Actor {
     bool applyGravity;
     vec2 position;
     vec2 velocity;
-    SDL_FRect renderRect;
     SOT_Animation **animations;
     SOT_Animation *activeAnimation;
     Uint64 lastStep;
@@ -42,7 +41,7 @@ typedef struct SOT_Actor {
     c2Manifold collisionInfo[50];
 } SOT_Actor;
 
-SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animationFile);
+SOT_Actor *SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationFile);
 void SetPosition(SOT_Actor *actor, vec2 pos);
 void SetVelocity(SOT_Actor *actor, vec2 vel);
 void SetCollider(SOT_Actor *actor, sot_collider_t collider);

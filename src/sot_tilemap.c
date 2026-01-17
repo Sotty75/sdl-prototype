@@ -16,7 +16,7 @@ sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState)
 
     // Load the tilemap from the file
     char *tileMapPath = NULL;
-    SDL_asprintf(&tileMapPath, "%sassets\\maps\\%s", SDL_GetBasePath(), tilemapFilename);
+    SDL_asprintf(&tileMapPath, "%s\\%s", Paths.TiledMaps, tilemapFilename);
     cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
 
     //...fill the tilemap object properties
@@ -152,7 +152,7 @@ void SOT_GPU_InitializeTilemap(sot_tilemap *tm, SOT_GPU_State *gpu) {
 
     // Textures Data
     SDL_Surface *tilesetSurface = NULL;
-    GetSurfaceFromImage(&tilesetSurface, "textures", tm->tilesetFilename);
+    GetSurfaceFromImage(&tilesetSurface, tm->tilesetFilename);
     gpuData.surfaces[0] = tilesetSurface;
     gpuData.surfaceCount = 1;
 

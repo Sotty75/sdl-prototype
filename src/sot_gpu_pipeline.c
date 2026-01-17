@@ -677,7 +677,7 @@ void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu) {
 
     // Textures Data
     SDL_Surface *surface = NULL;
-    GetSurfaceFromImage(&surface, "textures", "wall.png");
+    GetSurfaceFromImage(&surface, "wall.png");
     gpuData.surfaces[0] = surface;
     gpuData.surfaceCount = 1;
 

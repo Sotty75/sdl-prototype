@@ -1,108 +1,34 @@
 #include "sot_common.h"
 
-static const char* BasePath = NULL;
-void InitializeAssetsLoader()
+void InitializePaths() 
 {
-	BasePath = SDL_GetBasePath();
+
 }
 
-SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
-	// open the file
-	char fullPath[256];
-	SDL_snprintf(fullPath, sizeof(fullPath), "%sassets\\animations\\%s", BasePath, animationsFilename);
-    FILE *fp = fopen(fullPath, "r");
-    if (fp == NULL) {
-        SDL_Log("Error: Unable to open the animations file %s.\n", fullPath);
-        return NULL;
-    }
+void InitializeAssetsLoader()
+{
+	Paths.Base = (char *)SDL_GetBasePath();
 
-	// read the file contents into a string
-    char buffer[4096];
-    int len = fread(buffer, 1, sizeof(buffer), fp);
-    fclose(fp);
+	char shadersPath[256];
+	char texturesPath[256];
+	char tilemapsPath[256];
+	char animationsPath[256];
 
-	// parse the JSON data
-    cJSON *json = cJSON_Parse(buffer);
-    if (json == NULL) {
-        const char *error_ptr = cJSON_GetErrorPtr();
-        if (error_ptr != NULL) {
-            printf("Error: %s\n", error_ptr);
-        }
-        cJSON_Delete(json);
-        return NULL;
-    }
+	SDL_snprintf(shadersPath, sizeof(shadersPath), "%sAssets/Shaders/", Paths.Base);
+	Paths.Shaders = (char *) SDL_malloc(SDL_strlen(shadersPath) + 1);
+	SDL_strlcpy(Paths.Shaders, shadersPath, SDL_strlen(shadersPath) + 1);
 
-	SOT_AnimationInfo *animationInfo = (SOT_AnimationInfo *) malloc(sizeof(SOT_AnimationInfo));
+	SDL_snprintf(texturesPath, sizeof(texturesPath), "%sAssets/Textures/", Paths.Base);
+	Paths.Textures = (char *) SDL_malloc(SDL_strlen(texturesPath) + 1);
+	SDL_strlcpy(Paths.Textures, texturesPath, SDL_strlen(texturesPath) + 1);
 
-    // Access the JSON data
-    cJSON *atlas_name = cJSON_GetObjectItemCaseSensitive(json, "atlas_name");
-    if (cJSON_IsString(atlas_name) && (atlas_name->valuestring != NULL)) {
-		int sl = SDL_strlen(atlas_name->valuestring) + 1;
-		animationInfo->atlasName = (char *)SDL_malloc(sl);
-		 SDL_strlcpy(animationInfo->atlasName, atlas_name->valuestring, sl);
-    }
+	SDL_snprintf(tilemapsPath, sizeof(tilemapsPath), "%sAssets/Maps/", Paths.Base);
+	Paths.TiledMaps = (char *) SDL_malloc(SDL_strlen(tilemapsPath) + 1);
+	SDL_strlcpy(Paths.TiledMaps, tilemapsPath, SDL_strlen(tilemapsPath) + 1);
 
-    cJSON *image_path = cJSON_GetObjectItemCaseSensitive(json, "image_path");
-	if (cJSON_IsString(image_path) && (image_path->valuestring != NULL)) {
-		int sl = SDL_strlen(image_path->valuestring) + 1;
-		animationInfo->atlasPath = (char *)SDL_malloc(sl);
-		SDL_strlcpy(animationInfo->atlasPath, image_path->valuestring, sl);
-    }
-
-    cJSON *collider = cJSON_GetObjectItemCaseSensitive(json, "collider");
-	if (cJSON_IsString(collider) && (collider->valuestring != NULL)) {
-		int sl = SDL_strlen(collider->valuestring) + 1;
-		animationInfo->collider = (char *)SDL_malloc(sl);
-		SDL_strlcpy(animationInfo->collider, collider->valuestring, sl);
-    }
-
-	int i = 0;
-	cJSON *animation = NULL;
-	cJSON *animations = cJSON_GetObjectItemCaseSensitive(json, "animations");
-
-	cJSON_ArrayForEach(animation, animations)
-	{
-		if (animation->string != NULL)
-		{
-			int sl = sizeof(SDL_strlen(animation->string) + 1);
-			animationInfo->framesInfo[i].name = (char *)SDL_malloc(sl);
-			SDL_strlcpy(animationInfo->framesInfo[i].name, animation->string, sl);
-		}
-
-		cJSON *frame_count = cJSON_GetObjectItemCaseSensitive(animation, "frame_count");
-		animationInfo->framesInfo[i].framesCount = frame_count->valueint;
-
-		animationInfo->framesInfo[i].frames = (vec4*) SDL_malloc(frame_count->valueint * sizeof(vec4));
-		int j = 0;
-		cJSON *frame = NULL;
-		cJSON *frames = cJSON_GetObjectItemCaseSensitive(animation, "frames");
-		cJSON_ArrayForEach(frame, frames) 
-		{
-			// read x value
-			cJSON *x_value = cJSON_GetObjectItemCaseSensitive(frame, "x");
-			animationInfo->framesInfo[i].frames[j][0] = x_value->valueint;
-	
-			// read y value
-			cJSON *y_value = cJSON_GetObjectItemCaseSensitive(frame, "y");
-			animationInfo->framesInfo[i].frames[j][1] = y_value->valueint;
-
-			// read w value
-			cJSON *w_value = cJSON_GetObjectItemCaseSensitive(frame, "w");
-			animationInfo->framesInfo[i].frames[j][2] = w_value->valueint;
-
-			// read h value
-			cJSON *h_value = cJSON_GetObjectItemCaseSensitive(frame, "h");
-			animationInfo->framesInfo[i].frames[j][3] = h_value->valueint;
-
-			j++;
-		}
-		
-		++i;
-	}
-
-    // delete the JSON object
-    cJSON_Delete(json);
-	return animationInfo;
+	SDL_snprintf(animationsPath, sizeof(animationsPath), "%sAssets/Animations/", Paths.Base);
+	Paths.Animations = (char *) SDL_malloc(SDL_strlen(animationsPath) + 1);
+	SDL_strlcpy(Paths.Animations, animationsPath, SDL_strlen(animationsPath) + 1);
 }
 
 SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
@@ -110,7 +36,7 @@ SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
 	char fullPath[256];
 	SDL_Surface *result;
 	SDL_PixelFormat format;
-	SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets\\%s", BasePath, imageFilename);
+	SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets\\%s", Paths.Base, imageFilename);
 
 	result = SDL_LoadBMP(fullPath);
 	if (result == NULL)
@@ -178,15 +104,15 @@ SDL_GPUShader* LoadShader(
 	const char *entrypoint;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%s\\Compiled\\SPIRV\\%s.spv", Paths.Shaders, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%s\\Compiled\\MSL\\%s.msl", Paths.Shaders, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
 		entrypoint = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%s\\Compiled\\DXIL\\%s.dxil", Paths.Shaders, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 		entrypoint = "main";
 	} else {
@@ -237,15 +163,15 @@ SDL_GPUComputePipeline* CreateComputePipelineFromShader(
 	const char *entrypoint;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets\\%s.spv", Paths.Shaders, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%s\\%s.msl", Paths.Shaders, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
 		entrypoint = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sAssets/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "%s\\%s.dxil", Paths.Shaders, shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 		entrypoint = "main";
 	} else {

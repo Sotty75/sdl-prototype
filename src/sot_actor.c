@@ -1,6 +1,6 @@
 #include "sot_actor.h"
 
-SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
+SOT_Actor *SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
 {
     SOT_Actor *actor = malloc(sizeof(SOT_Actor));
     if (actor == NULL) return NULL;
@@ -17,7 +17,6 @@ SOT_Actor *CreateActor(AppState *appState, char *name, vec2 pos, char *animation
     // Bind animations to actor
     SOT_AnimationInfo *animationInfo = SOT_LoadAnimations(animationsFile);
 
-    // TODO: Modify the sprite editor tool to include also the collider type
     // TODO: Initialize the animation data and uplaod the data on the GPU Memory
     // TODO: Destory the animation info object
 
@@ -116,12 +115,12 @@ void SetRenderPosition(SOT_Actor *actor)
     int deltaX = actor->activeAnimation->info->frameSize[0]/2;
     int deltaY = actor->activeAnimation->info->frameSize[1]/2;
 
-    actor->renderRect = (SDL_FRect) {
-        .x = actor->position[0]-deltaX,
-        .y = actor->position[1]-deltaY,
-        .w = actor->activeAnimation->info->frameSize[0],
-        .h = actor->activeAnimation->info->frameSize[1]
-    };
+    // actor->renderRect = (SDL_FRect) {
+    //     .x = actor->position[0]-deltaX,
+    //     .y = actor->position[1]-deltaY,
+    //     .w = actor->activeAnimation->info->frameSize[0],
+    //     .h = actor->activeAnimation->info->frameSize[1]
+    // };
 }
 
 void RenderActor(const AppState *as, SOT_Actor *actor) {

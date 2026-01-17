@@ -19,7 +19,7 @@ typedef struct SOT_Scene {
 } SOT_Scene;
 
 
-SOT_Scene* CreateScene(AppState *as);
+SOT_Scene* SOT_InitializeScene(AppState *as);
 void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime);
 void SOT_GPU_RenderScene(SOT_Scene * scene, SOT_GPU_State *gpu, SOT_GPU_RenderpassInfo *rpi);
 void DestroyScene(SOT_Scene * scene);
