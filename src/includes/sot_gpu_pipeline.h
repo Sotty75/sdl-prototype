@@ -87,11 +87,22 @@ typedef struct SOT_GPU_PipelineInfo {
     SDL_GPUPrimitiveType primitiveType;
 } SOT_GPU_PipelineInfo;
 
-// Sprito Info describing an individual sprite as 
-// consumed by the sprite shader.
+/**
+ * @brief Data structure representing a single sprite instance for GPU rendering.
+ * 
+ * This structure is packed into a storage buffer (SSBO) and accessed by the 
+ * vertex shader to render sprites efficiently in a single draw call (instancing 
+ * or batching). It contains the spatial configuration and texture coordinates 
+ * required to map a specific frame from a texture atlas onto a quad in world space.
+ * 
+ * @param position World space coordinates (x, y) where the sprite will be rendered.
+ * @param frameCoords The top-left coordinate (x, y) of the sprite frame within the texture atlas.
+ * @param frameSize The dimensions (width, height) of the sprite frame in pixels.
+ * @param atlasSize The total dimensions (width, height) of the texture atlas, used for UV normalization.
+ */
 typedef struct SOT_GPU_SpriteInfo {
     vec2 position;
-    ivec2 framePosition;
+    ivec2 frameCoords;
     ivec2 frameSize;
     ivec2 atlasSize;
 } SOT_GPU_SpriteInfo;

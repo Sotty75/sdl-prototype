@@ -41,21 +41,7 @@ SOT_Scene *SOT_InitializeScene(AppState *as) {
     scene->worldCamera = CreateCameraWitInfo(cameraInfo, projectionInfo);
     scene->uiCamera = CreateCameraWitInfo(cameraInfo, projectionInfo);
 
-        //... load the spritesheet inside of the texture
-        /* SDL_Surface *monkeySpriteSheet = NULL;
-        SOT_Animation *walkRight = NULL;
-        SOT_Animation *walkLeft = NULL;
-        SOT_Animation *idle = NULL;
-        walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as);
-        walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, as);
-        idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, as);
-
-        //...pack the animations in a NULL terminated array
-        SOT_Animation **animations = malloc(sizeof(SOT_Animation*) * 4);
-        animations[0] = idle;
-        animations[1] = walkLeft;
-        animations[2] = walkRight;
-        animations[3] = NULL; */
+        
 
     // Create the player actor and add it to the scene.
     // ...get the player start position from the marker in the tiled-map
@@ -73,7 +59,7 @@ void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
     // receives the input from the player as an appstate
     // recalculate actors position (collision check)
     // update game status
-    // UpdateActor(as, scene->player, deltaTime);
+    UpdateActor(as, scene->player, deltaTime);
     UpdateCameraPan(&scene->worldCamera, (vec3) {0,0,0}, deltaTime, 50);
     return;
 }

@@ -133,14 +133,14 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
 		if (animation->string != NULL)
 		{
 			int sl = SDL_strlen(animation->string) + 1;
-			animationInfo->framesInfo[i].name = (char *)SDL_malloc(sl);
-			SDL_strlcpy(animationInfo->framesInfo[i].name, animation->string, sl);
+			animationInfo->data[i].name = (char *)SDL_malloc(sl);
+			SDL_strlcpy(animationInfo->data[i].name, animation->string, sl);
 		}
 
 		cJSON *frame_count = cJSON_GetObjectItemCaseSensitive(animation, "frame_count");
-		animationInfo->framesInfo[i].framesCount = frame_count->valueint;
+		animationInfo->data[i].count = frame_count->valueint;
 
-		animationInfo->framesInfo[i].frames = (vec4*) SDL_malloc(frame_count->valueint * sizeof(vec4));
+		animationInfo->data[i].frames = (vec4*) SDL_malloc(frame_count->valueint * sizeof(vec4));
 		int j = 0;
 		cJSON *frame = NULL;
 		cJSON *frames = cJSON_GetObjectItemCaseSensitive(animation, "frames");
@@ -148,25 +148,27 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
 		{
 			// read x value
 			cJSON *x_value = cJSON_GetObjectItemCaseSensitive(frame, "x");
-			animationInfo->framesInfo[i].frames[j][0] = x_value->valueint;
+			animationInfo->data[i].frames[j][0] = x_value->valueint;
 	
 			// read y value
 			cJSON *y_value = cJSON_GetObjectItemCaseSensitive(frame, "y");
-			animationInfo->framesInfo[i].frames[j][1] = y_value->valueint;
+			animationInfo->data[i].frames[j][1] = y_value->valueint;
 
 			// read w value
 			cJSON *w_value = cJSON_GetObjectItemCaseSensitive(frame, "w");
-			animationInfo->framesInfo[i].frames[j][2] = w_value->valueint;
+			animationInfo->data[i].frames[j][2] = w_value->valueint;
 
 			// read h value
 			cJSON *h_value = cJSON_GetObjectItemCaseSensitive(frame, "h");
-			animationInfo->framesInfo[i].frames[j][3] = h_value->valueint;
+			animationInfo->data[i].frames[j][3] = h_value->valueint;
 
 			j++;
-		}
-		
-		++i;
+		} 
+
+        i++;
 	}
+
+    animationInfo->count = i;
 
     // delete the JSON object
     cJSON_Delete(json);
