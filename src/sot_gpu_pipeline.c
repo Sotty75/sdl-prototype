@@ -327,7 +327,7 @@ SDL_AppResult SOT_MapTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
 
 SDL_AppResult SOT_MapSpriteInfoData(SOT_GPU_State *gpu, SOT_GPU_Data *data) {
    
-    int spriteDataSize = 2000 * sizeof(SOT_GPU_SpriteInfo);
+    int spriteDataSize = 2000 * sizeof(SOT_GPU_SpriteInstance);
 
     if (gpu->buffers[data->pipelineID].storageBuffer[0] == NULL) {
         
@@ -486,9 +486,9 @@ SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SOT_UploadSpriteInfoData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass)
+SDL_AppResult SOT_UploadSpritesData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass)
 {
-    int spriteDataSize = 2000 * sizeof(SOT_GPU_SpriteInfo);
+    int spriteDataSize = 2000 * sizeof(SOT_GPU_SpriteInstance);
 
     SDL_UploadToGPUBuffer(
         copyPass,
@@ -556,7 +556,7 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
     }
     
     if (bufferFlags & SOT_SPRITES_SSB) {
-        SOT_UploadSpriteInfoData(gpu, data, copyPass);
+        SOT_UploadSpritesData(gpu, data, copyPass);
     }
 
     SDL_EndGPUCopyPass(copyPass);
@@ -582,11 +582,18 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
     return SDL_APP_CONTINUE;
 }
 
-/* Renders a scene defied as:
-- Tilemap
-- Actors
-- GUI elements
-*/
+/**
+ * @brief Orchestrates the main rendering loop for a single frame.
+ * 
+ * This function handles the low-level GPU command buffer acquisition, swapchain 
+ * texture acquisition, and render pass management. It iterates through the 
+ * active render pipelines (e.g., Tilemap, Sprites, Debug) defined in the 
+ * GPU state and dispatches the appropriate draw calls for the current scene.
+ * 
+ * @param gpu Pointer to the GPU state structure containing device and pipeline context.
+ * @param scene Pointer to the scene object containing the entities to render.
+ * @return SDL_AppResult SDL_APP_CONTINUE on success, or SDL_APP_FAILURE if a critical GPU error occurs.
+ */
 SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene) 
 {
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
@@ -645,10 +652,8 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
             SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, 1, 0, 0, 0);
         }
 
-        if (gpu->pipelineFlags & SOT_RPF_TILEMAP)
-        {
-            SOT_GPU_RenderScene(scene, gpu, rpi);
-        }
+        SOT_GPU_RenderScene(scene, gpu, rpi);
+        
         
         SDL_EndGPURenderPass(renderPass);
 	}

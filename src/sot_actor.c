@@ -1,25 +1,20 @@
 #include "sot_actor.h"
 
-SOT_Actor *SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
+SOT_Actor SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
 {
-    SOT_Actor *actor = malloc(sizeof(SOT_Actor));
+    SOT_Actor actor;
     
-    if (actor == NULL) 
-        return NULL;
-    else 
-        SDL_memset(actor, 0, sizeof(actor));
-
-    actor->actorName = name;
-    actor->physics.body = SOT_PHB_KINEMATIC;
+    actor.actorName = name;
+    actor.physics.body = SOT_PHB_KINEMATIC;
 
     // set actor position and velocity
-    actor->transform.position[0] = pos[0];
-    actor->transform.position[1] = pos[1];
-    actor->physics.v_magnitude = 10;
-    glm_vec2_copy((vec2){1.0f, 0.0f}, actor->physics.v_direction);
+    actor.transform.position[0] = pos[0];
+    actor.transform.position[1] = pos[1];
+    actor.physics.v_magnitude = 10;
+    glm_vec2_copy((vec2){1.0f, 0.0f}, actor.physics.v_direction);
    
     SOT_AnimationInfo *animationInfo = SOT_LoadAnimations(animationsFile); 
-    SOT_ActorBindAnimations(actor, animationInfo);
+    SOT_ActorBindAnimations(&actor, animationInfo);
     
     // TODO: Remove the Direction field from the actor, and make it a property of the animation (ACTION)
     //  typedef enum {
@@ -34,8 +29,6 @@ SOT_Actor *SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *anima
     // this will require to modify again the sprite editor and the animation json file.
     // instead of using an enum i think it is better to use a string with some constants already predefined so we
     // can create custom actions later. For hte moment i will remove it as i can rely on the animation name.
-    // TODO: Initialize the sprite rendering pipeline (probably in a different file).
-    // TODO: Upload the atlas to the gpu. 
 
     SDL_free(animationInfo);        
     return actor;
@@ -50,11 +43,8 @@ void SOT_ActorBindAnimations(SOT_Actor *actor, SOT_AnimationInfo *animationInfo)
         
         anim->id = i;
         anim->atlasName = animationInfo->atlasName;
-        SDL_memcpy(&(anim->data), &(animationInfo->data[i]), sizeof(SOT_AnimationData));
-        anim->gpuInfo = NULL;
+        SDL_memcpy(&(anim->sequence), &(animationInfo->sequences[i]), sizeof(SOT_AnimationSequence));
         anim->step_ms = 75;
-
-        actor->currentAnimation = 0;
     }
 
     
@@ -173,7 +163,7 @@ void SetRenderPosition(SOT_Actor *actor)
 void RenderActor(const AppState *as, SOT_Actor *actor) {
 
     SOT_Animation *animation = &(actor->animations[actor->currentAnimation]);
-    SOT_AnimationData *frames = &(animation->data);
+    SOT_AnimationSequence *frames = &(animation->sequence);
 
     // TODO: Move this logic to a different function such as, for example, UpdateAnimation which can be invoked in the UpdateActor,
     // The render operation will be done once th status of the sprite has been updated.

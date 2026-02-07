@@ -100,12 +100,13 @@ typedef struct SOT_GPU_PipelineInfo {
  * @param frameSize The dimensions (width, height) of the sprite frame in pixels.
  * @param atlasSize The total dimensions (width, height) of the texture atlas, used for UV normalization.
  */
-typedef struct SOT_GPU_SpriteInfo {
+typedef struct SOT_GPU_SpriteInstance {
     vec2 position;
     ivec2 frameCoords;
     ivec2 frameSize;
     ivec2 atlasSize;
-} SOT_GPU_SpriteInfo;
+    uint32_t atlasIndex;
+} SOT_GPU_SpriteInstance;
 
 // CPU bound structure holding the data
 // passed to the SOT_GPU_Upload functions to load
@@ -115,26 +116,42 @@ typedef struct SOT_GPU_Data {
     vertex *vertexData;
     uint16_t *indexData;
     SDL_Surface *surfaces[16];
-    SOT_GPU_SpriteInfo sprites[2000];
+    SOT_GPU_SpriteInstance sprites[2000];
     int *tilemapData;
     int vertexDataSize;
     int indexDataSize;
     int surfaceCount;
+    int spritesCount;
     int tilemapDataSize;
     
 } SOT_GPU_Data;
 
+/**
+ * @brief Manages the global state of the GPU rendering subsystem.
+ * 
+ * This structure acts as the central context for all GPU operations. It holds references
+ * to the OS window, the logical GPU device, and the collection of rendering pipelines
+ * and buffers required to draw the scene.
+ * 
+ * @param window Pointer to the SDL window where rendering occurs.
+ * @param renderer Pointer to the SDL renderer (legacy/2D fallback, often unused in pure GPU API).
+ * @param device The logical GPU device context used for creating resources and submitting commands.
+ * @param nearestSampler A shared sampler configured for nearest-neighbor interpolation (pixel art).
+ * @param transferBuffers Collection of staging buffers used to upload data from CPU to GPU memory.
+ * @param pipelineFlags Bitmask indicating which render pipelines are currently active or initialized.
+ * @param pipeline Array of compiled graphics pipelines (shaders + state), indexed by pipeline ID.
+ * @param buffers Array of resource bindings (vertex/index/storage buffers) associated with each pipeline.
+ * @param debugInfo Pointer to dynamic debug geometry (e.g., collider lines) to be rendered.
+ */
 typedef struct SOT_GPU_State {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_GPUDevice *device;
     SDL_GPUSampler *nearestSampler;
     SOT_GPU_TransferBuffers transferBuffers;
-    // Pipelines Status
     uint32_t pipelineFlags;                     
     SDL_GPUGraphicsPipeline *pipeline[16];
     SOT_GPU_Buffers buffers[16];
-    // Debug Info
     SOT_GPU_DebugInfo *debugInfo;
 } SOT_GPU_State;
 
@@ -159,7 +176,7 @@ SDL_AppResult SOT_UploadVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data,
 SDL_AppResult SOT_UploadIndexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
 SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
 SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
-SDL_AppResult SOT_UploadSpriteInfoData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
+SDL_AppResult SOT_UploadSpritesData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint32_t bufferFlags);
 SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, struct SOT_Scene *scene);
 

@@ -27,14 +27,31 @@ typedef enum {
     JUMP
 } Direction;
 
+/**
+ * @brief Represents a game entity (actor) within the scene.
+ * 
+ * This structure aggregates all components necessary to define an interactive object
+ * in the game world, including its identity, spatial properties, physics state,
+ * animation data, and collision information.
+ * 
+ * @param actorID Unique identifier for the actor, often used as an index for batch rendering.
+ * @param actorName Human-readable name of the actor.
+ * @param transform Spatial configuration (position, scale, rotation).
+ * @param physics Physical properties (velocity, body type).
+ * @param animations Array of available animations for this actor.
+ * @param currentAnimation Index of the currently active animation in the animations array.
+ * @param gpuSprite GPU-specific data for the current sprite frame (used for rendering).
+ * @param collider Collision shape associated with the actor.
+ * @param collisionInfo Array storing details about recent collision manifolds.
+ */
 typedef struct SOT_Actor {
     int actorID;                // --> Used as an index in the batch sprites rendering array. At this specific index, we will store the spritinfo for the current frame.
     char *actorName;
     SOT_Transform transform;
     SOT_Physics physics;
     SOT_Animation animations[256];
+    int animationsCount;
     int currentAnimation;
-    // ----------------------------- collision data
     sot_collider_t collider;
     c2Manifold collisionInfo[50];
 } SOT_Actor;
@@ -51,7 +68,7 @@ typedef struct SOT_Actor {
  * @param animationFile Filename of the JSON file containing animation definitions.
  * @return Pointer to the newly created SOT_Actor, or NULL on failure.
  */
-SOT_Actor *SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationFile);
+SOT_Actor SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationFile);
 
 /**
  * @brief Binds loaded animation information to an actor.

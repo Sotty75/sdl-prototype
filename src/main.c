@@ -56,8 +56,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     // World Initialization
     if (as->gpu->pipelineFlags & SOT_RPF_TEST)
         SOT_GPU_InitializeTestData(as->gpu);
-    if (as->gpu->pipelineFlags & SOT_RPF_TILEMAP)
-        SOT_GPU_InitializeTilemap(currentScene->tilemap, as->gpu);
+    
     
     // SDL_SetRenderLogicalPresentation(as->pRenderer, 320, 256, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
     //...store initialized application state so it will be shared in other

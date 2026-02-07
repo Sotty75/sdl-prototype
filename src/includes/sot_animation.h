@@ -16,14 +16,15 @@
  * 
  * @param name The name of the animation sequence (e.g., "Idle", "Run").
  * @param frames Dynamic array of vec4 (x, y, w, h) defining the source rectangle for each frame on the atlas.
- * @param framesCount The total number of frames in this sequence.
+ * @param count The total number of frames in this sequence.
+ * @param current The index of the currently active frame in the sequence.
  */
-typedef struct SOT_AnimationData {
+typedef struct SOT_AnimationSequence {
 	char *name;
 	vec4 *frames;
 	uint16_t count;
 	uint16_t current;
-} SOT_AnimationData;
+} SOT_AnimationSequence;
 
 /**
  * @brief Holds the raw data loaded from an animation definition file (JSON).
@@ -36,7 +37,8 @@ typedef struct SOT_AnimationData {
  * @param atlasPath File path to the texture atlas image.
  * @param collider Name or path of the associated collider definition.
  * @param step_ms Default duration of a frame in milliseconds.
- * @param framesInfo Fixed-size array containing details for up to 128 distinct animation sequences.
+ * @param count The number of animation sequences loaded.
+ * @param sequences Fixed-size array containing details for up to 128 distinct animation sequences.
  */
 typedef struct SOT_AnimationInfo {
 	char* atlasName;
@@ -44,7 +46,7 @@ typedef struct SOT_AnimationInfo {
 	char* collider;
     uint16_t step_ms;
 	uint16_t count;
-	SOT_AnimationData data[128];
+	SOT_AnimationSequence sequences[128];
 	
 } SOT_AnimationInfo;
 
@@ -61,15 +63,15 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename);
  * @param id Unique identifier for this animation instance.
  * @param atlasName Name of the texture atlas used.
  * @param step_ms Duration of a single frame in milliseconds.
- * @param frames The specific frame sequence data (name, count, and texture coordinates).
- * @param info Pointer to the GPU-specific sprite information corresponding to the frames.
+ * @param sequence The specific frame sequence data (name, count, and texture coordinates).
+ * @param gpuInfo Pointer to the GPU-specific sprite information corresponding to the frames.
  */
 typedef struct SOT_Animation {
     int id;
     char *atlasName;
     uint16_t step_ms;
-    SOT_AnimationData data;
-    SOT_GPU_SpriteInfo *gpuInfo;  //-->collection of frames for the current Animation
+    SOT_AnimationSequence sequence;
+    
 } SOT_Animation;
 
 // Prototipi delle funzioni che usano la struttura
