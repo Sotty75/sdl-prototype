@@ -38,7 +38,7 @@ typedef struct sot_camera {
     mat4 pvMatrix;
 } sot_camera;
 
-sot_camera CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo);
+sot_camera CreateCameraWithInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo);
 void SetCameraView(sot_camera *t, SOT_CameraInfo cameraInfo);
 void SetCameraProjection(sot_camera *t, SOT_ProjectionInfo projectionInfo);
 void UpdateCamera(sot_camera *t, vec3 direction, float deltaTime, float velocity);

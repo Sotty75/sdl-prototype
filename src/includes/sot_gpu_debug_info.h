@@ -1,5 +1,5 @@
-#ifndef _DEBUG_INFO_H_
-#define _DEBUG_INFO_H_
+#ifndef SOT_GPU_DEBUG_INFO_H_
+#define SOT_GPU_DEBUG_INFO_H_
 
 #include "sot_common.h"
 
@@ -9,6 +9,7 @@ struct SOT_GPU_RenderpassInfo;
 typedef struct SOT_GPU_DebugInfo {
     vertex *vertexList;
     int linesCount;
+    int linesCapacity;
 } SOT_GPU_DebugInfo;
 
 void SOT_GPU_InitializeDebugInfo(struct SOT_GPU_State *gpu);

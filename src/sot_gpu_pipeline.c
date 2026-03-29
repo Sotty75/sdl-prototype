@@ -3,6 +3,8 @@
 
 
 SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags) {
+    
+    // Initilize SDL metadata information.
     SDL_SetAppMetadata("Example Renderer Clear", "1.0", "com.example.renderer-clear");
 
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO|SDL_INIT_GAMEPAD)) {
@@ -11,15 +13,11 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
     }
 
     // GPU State object allocation
-    SOT_GPU_State *gpu = SDL_malloc(sizeof(SOT_GPU_State));
+    SOT_GPU_State *gpu = SDL_calloc(1, sizeof(SOT_GPU_State));
     if (gpu == NULL) {
         SDL_Log("Unable to allocate memory for the SOT_GPU_State object.");
         return SDL_APP_FAILURE;
     }
-       
-    // Set the GPU State fields all to zero.
-    SDL_memset(gpu, 0, sizeof(SOT_GPU_State));
-
 
     // Initialize the window and renderer entities.
     gpu->window =  SDL_CreateWindow("SDL GPU Prototype", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
@@ -49,7 +47,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
 	});
 
     // Initialize the rendering pipelines
-    if (pipelinesFlags & SOT_RPF_TEST) 
+    if (pipelinesFlags & SOT_RP_TEST_FLAG) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
            .pipeline_ID = SOT_RP_TEST,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.vert", 0, 1, 0, 0},
@@ -57,7 +55,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
-    if (pipelinesFlags & SOT_RPF_TILEMAP) 
+    if (pipelinesFlags & SOT_RP_TILEMAP_FLAG) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
            .pipeline_ID = SOT_RP_TILEMAP,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTilemap.vert", 0, 2, 1, 0},
@@ -65,7 +63,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
-    if (pipelinesFlags & SOT_RPF_SPRITES) 
+    if (pipelinesFlags & SOT_RP_SPRITES_FLAG) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
            .pipeline_ID = SOT_RP_SPRITE,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderSprite.vert", 0, 1, 1, 0},
@@ -73,7 +71,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
-    if (pipelinesFlags & SOT_RPF_OVERLAY) 
+    if (pipelinesFlags & SOT_RP_OVERLAY_FLAG) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
            .pipeline_ID = SOT_RP_TEST,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderTexture.vert", 0, 1, 0, 0},
@@ -81,7 +79,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
            .primitiveType =SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
     });
 
-    if (pipelinesFlags & SOT_RPF_DEBUG) 
+    if (pipelinesFlags & SOT_RP_DEBUG_FLAG) 
         SOT_GPU_InitPipelineWithInfo(gpu, &(SOT_GPU_PipelineInfo) {
            .pipeline_ID = SOT_RP_DEBUG,
            .vertexShader = &(SOT_GPU_ShaderInfo) {"shaderDebug.vert", 0, 1, 0, 0},
@@ -106,7 +104,7 @@ SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineI
             info->vertexShader->samplerCount, 
             info->vertexShader->uniformCount, 
             info->vertexShader->storageBufferCount, 
-            info->vertexShader->sorageTextureCount);
+            info->vertexShader->storageTextureCount);
 
 	if (vertexShader == NULL)
 	{
@@ -119,7 +117,7 @@ SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineI
         info->fragmentShader->samplerCount, 
         info->fragmentShader->uniformCount, 
         info->fragmentShader->storageBufferCount, 
-        info->fragmentShader->sorageTextureCount);
+        info->fragmentShader->storageTextureCount);
 
 	if (fragmentShader == NULL)	{
 		SDL_Log("Failed to create fragment shader!");
@@ -433,7 +431,6 @@ SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
 
         int offset = 0;
         for (int j = 0; j < i; j++) {
-            if (j == 0) continue;
             offset += data->surfaces[j]->w * data->surfaces[j]->h * 4;
         }
     
@@ -632,7 +629,7 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
             .renderpass = renderPass,
         };
 
-        if (gpu->pipelineFlags & SOT_RPF_TEST)
+        if (gpu->pipelineFlags & SOT_RP_TEST_FLAG)
         {
             
             SDL_GPUTextureSamplerBinding textureBindings[gpu->buffers[SOT_RP_TEST].texturesCount];
@@ -643,10 +640,10 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
                 };
             }
             SDL_BindGPUGraphicsPipeline(rpi->renderpass, gpu->pipeline[SOT_RP_TEST]);
-            SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, textureBindings, gpu->buffers[SOT_RPF_TEST].texturesCount);
+            SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, textureBindings, gpu->buffers[SOT_RP_TEST_FLAG].texturesCount);
             SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 0, scene->worldCamera.pvMatrix, sizeof(mat4));
-            SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers[SOT_RPF_TEST].vertexBuffer, .offset = 0}, 1);
-            SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers[SOT_RPF_TEST].indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+            SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers[SOT_RP_TEST_FLAG].vertexBuffer, .offset = 0}, 1);
+            SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers[SOT_RP_TEST_FLAG].indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
             // Draw all the tiles of the shader
             SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, 1, 0, 0, 0);
@@ -672,12 +669,12 @@ void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu) {
 
     // Vertext Buffer Data
     gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
-    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
-    memcpy(gpuData.vertexData, quad.verts, gpuData.vertexDataSize);
+    gpuData.vertexData = (vertex *) SDL_malloc(gpuData.vertexDataSize);
+    SDL_memcpy(gpuData.vertexData, quad.verts, gpuData.vertexDataSize);
 
     // Index Buffer Data
     gpuData.indexDataSize = QUAD_INDEXES * sizeof(uint16_t);
-    gpuData.indexData = (uint16_t *) malloc(gpuData.indexDataSize);
+    gpuData.indexData = (uint16_t *) SDL_malloc(gpuData.indexDataSize);
     memcpy(gpuData.indexData, quad.indexes, gpuData.indexDataSize);
 
     // Textures Data
@@ -691,6 +688,10 @@ void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu) {
     SOT_MapIndexBufferData(gpu, &gpuData);
     SOT_MapTextureData(gpu, &gpuData);
     SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX | SOT_BUFFER_INDEX | SOT_BUFFER_TEXTURE);
+
+    SDL_free(gpuData.vertexData);
+    SDL_free(gpuData.indexData);
+    SDL_DestroySurface(gpuData.surfaces[0]);
 }
 
 void SOT_GPU_InitializeDebugData(SOT_GPU_State *gpu) {
@@ -703,10 +704,12 @@ void SOT_GPU_InitializeDebugData(SOT_GPU_State *gpu) {
 
     // Vertext Buffer Data
     gpuData.vertexDataSize = QUAD_VERTS * sizeof(vertex);
-    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
+    gpuData.vertexData = (vertex *) SDL_malloc(gpuData.vertexDataSize);
     memcpy(gpuData.vertexData, quad.verts, gpuData.vertexDataSize);
 
     //...upload data to GPU buffers used by the shader
     SOT_MapVertexBufferData(gpu, &gpuData);
     SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX);
+
+    SDL_free(gpuData.vertexData);
 }

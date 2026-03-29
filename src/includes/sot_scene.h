@@ -1,5 +1,5 @@
-#ifndef SCENE_H_
-#define SCENE_H_
+#ifndef SOT_SCENE_H_
+#define SOT_SCENE_H_
 
 #include <stdlib.h>
 #include "appstate.h"
@@ -9,6 +9,13 @@
 #include "sot_tilemap.h"
 #include "cute_tiled.h"
 #include  "sot_gpu_pipeline.h"
+
+typedef struct SOT_SceneDescriptor {
+    int id;
+    char *map;
+    char *spritesheet[16];
+    int spritesheetCount;
+} SOT_SceneDescriptor;
 
 typedef struct SOT_Scene {
     int id;
@@ -21,7 +28,8 @@ typedef struct SOT_Scene {
 } SOT_Scene;
 
 
-SOT_Scene* SOT_InitializeScene(AppState *as);
+SOT_SceneDescriptor SOT_LoadScene(char *sceneName);
+SOT_Scene* SOT_InitializeScene(AppState *as, char *sceneName);
 void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime);
 
 // Rendering section - Tilemap

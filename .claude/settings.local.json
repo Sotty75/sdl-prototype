@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(glslc:*)",
+      "Bash(cmake:*)",
+      "Bash(xargs ls:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

@@ -3,35 +3,31 @@
 #include "sot_collider.h"
 
 
-void AppendCollider(sot_collider_node_t* list, sot_collider_t *collider) {
-    sot_collider_node_t *new_node = malloc(sizeof(sot_collider_node_t));
+void AppendCollider(sot_collider_node_t** list, sot_collider_t *collider) {
+    sot_collider_node_t *new_node = SDL_malloc(sizeof(sot_collider_node_t));
     new_node->collider = collider;
     new_node->next = NULL;
 
-    if (list == NULL)
-        list = new_node;
-    else {
-        sot_collider_node_t *last_node = list;
+    if (*list == NULL) {
+        *list = new_node;
+    } else {
+        sot_collider_node_t *last_node = *list;
         while (last_node->next != NULL)
             last_node = last_node->next;
 
         last_node->next = new_node;
     }
-
-    return;
 }
 
 void AppendCollidersList(sot_collider_node_t** destination, sot_collider_node_t* colliders) {
-    
-    if (*destination == NULL)
+    if (*destination == NULL) {
         *destination = colliders;
-    else {
-        while ((*destination)->next != NULL) 
-            (*destination) = (*destination)->next;
-        (*destination)->next = colliders;
-    } 
-
-    return;
+    } else {
+        sot_collider_node_t *last = *destination;
+        while (last->next != NULL)
+            last = last->next;
+        last->next = colliders;
+    }
 }
 
 // Returns the total number of colliders currently present in the list.
@@ -39,7 +35,7 @@ int CollidersCount(sot_collider_node_t* colliders) {
     int count = 0;
 
     while (colliders != NULL) {
-        colliders++;
+        count++;
         colliders = colliders->next;
     }
 
@@ -130,7 +126,7 @@ void DestroyColliders(sot_collider_node_t* list) {
         sot_collider_node_t *current_node = list;
         while (current_node != NULL) {
             sot_collider_node_t *next_node = current_node->next;
-            free(current_node);
+            SDL_free(current_node);
             current_node=next_node;
         }
     }

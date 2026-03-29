@@ -4,69 +4,45 @@
 
 void SOT_GPU_InitializeDebugInfo(SOT_GPU_State *gpu) {
 
-    // allocate the debug info object memory
-    gpu->debugInfo = (SOT_GPU_DebugInfo *) malloc(sizeof(SOT_GPU_DebugInfo));
+    gpu->debugInfo = (SOT_GPU_DebugInfo *) SDL_malloc(sizeof(SOT_GPU_DebugInfo));
     gpu->debugInfo->linesCount = 0;
+    gpu->debugInfo->linesCapacity = 0;
     gpu->debugInfo->vertexList = NULL;
-
-    return;
 }
 
 
-void SOT_GPU_AddLine(SOT_GPU_State *gpu, vec3 startPoint, vec3 endPoint) 
+void SOT_GPU_AddLine(SOT_GPU_State *gpu, vec3 startPoint, vec3 endPoint)
 {
-    int linesCount = gpu->debugInfo->linesCount;
-    vertex *vertexList = gpu->debugInfo->vertexList;
-     
-    if (linesCount == 0) {
-        vertexList = (vertex*) SDL_malloc(2 * sizeof(vertex));
-        vertexList[0] = (vertex) {
-            {startPoint[0], startPoint[1], startPoint[2]},
-            {1.0, 0.0, 0.0}, 
-            {0.0, 0.0}
-        };
-        vertexList[1] = (vertex) {
-            {endPoint[0], endPoint[1], endPoint[2]},
-            {1.0, 0.0, 0.0}, 
-            {0.0, 0.0}
-        };
-        gpu->debugInfo->vertexList = vertexList;
-    }
-    else {
-        vertex *newList = (vertex*) SDL_malloc(2 * (linesCount + 1) * sizeof(vertex));
-        SDL_memcpy(newList, vertexList, 2 * (linesCount) * sizeof(vertex));
-        newList[2*linesCount] = (vertex) {
-            {startPoint[0], startPoint[1], startPoint[2]},
-            {1.0, 0.0, 0.0}, 
-            {0.0, 0.0}
-        };
-        newList[2*linesCount + 1] = (vertex) {
-            {endPoint[0], endPoint[1], endPoint[2]},
-            {1.0, 0.0, 0.0}, 
-            {0.0, 0.0}
-        };
-        SDL_free(vertexList);
-        gpu->debugInfo->vertexList = newList;
+    SOT_GPU_DebugInfo *di = gpu->debugInfo;
+
+    if (di->linesCount >= di->linesCapacity) {
+        int newCap = (di->linesCapacity == 0) ? 64 : di->linesCapacity * 2;
+        di->vertexList = (vertex *) SDL_realloc(di->vertexList, 2 * newCap * sizeof(vertex));
+        di->linesCapacity = newCap;
     }
 
-    gpu->debugInfo->linesCount++;
-    return;
+    int i = di->linesCount;
+    di->vertexList[2 * i] = (vertex) {
+        {startPoint[0], startPoint[1], startPoint[2]},
+        {1.0, 0.0, 0.0},
+        {0.0, 0.0}
+    };
+    di->vertexList[2 * i + 1] = (vertex) {
+        {endPoint[0], endPoint[1], endPoint[2]},
+        {1.0, 0.0, 0.0},
+        {0.0, 0.0}
+    };
+
+    di->linesCount++;
 }
 
 void SOT_GPU_ClearLines(struct SOT_GPU_State *gpu) {
     if (gpu->debugInfo != NULL) {
         gpu->debugInfo->linesCount = 0;
-        
-        if (gpu->debugInfo->vertexList != NULL)
-            SDL_free(gpu->debugInfo->vertexList);
-
-        gpu->debugInfo->vertexList = NULL;    
     }
     else {
         SOT_GPU_InitializeDebugInfo(gpu);
     }
-    
-    return;
 }
 
 void SOT_GPU_UploadDebugInfo(SOT_GPU_State *gpu) {
@@ -76,11 +52,13 @@ void SOT_GPU_UploadDebugInfo(SOT_GPU_State *gpu) {
 
     // Vertext Buffer Data
     gpuData.vertexDataSize = 2 * (gpu->debugInfo->linesCount) * sizeof(vertex);
-    gpuData.vertexData = (vertex *) malloc(gpuData.vertexDataSize);
+    gpuData.vertexData = (vertex *) SDL_malloc(gpuData.vertexDataSize);
     memcpy(gpuData.vertexData, gpu->debugInfo->vertexList, gpuData.vertexDataSize);
 
     //...upload data to GPU buffers used by the shader
     SOT_UploadBufferData(gpu, &gpuData, SOT_BUFFER_VERTEX);
+
+    SDL_free(gpuData.vertexData);
 }
 
 void SOT_GPU_RenderDebugInfo(SOT_GPU_State *gpu, SOT_GPU_RenderpassInfo *rpi, mat4 pvMatrix) 

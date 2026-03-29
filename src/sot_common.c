@@ -1,34 +1,24 @@
 #include "sot_common.h"
 
-void InitializePaths() 
-{
-
-}
-
 void InitializeAssetsLoader()
 {
+	if (Paths.Base != NULL) return;
 	Paths.Base = (char *)SDL_GetBasePath();
 
-	char shadersPath[256];
-	char texturesPath[256];
-	char tilemapsPath[256];
-	char animationsPath[256];
+	Paths.Shaders = (char *) SDL_malloc(256);
+	SDL_snprintf(Paths.Shaders, 256, "%sAssets/Shaders/", Paths.Base);
 
-	SDL_snprintf(shadersPath, sizeof(shadersPath), "%sAssets/Shaders/", Paths.Base);
-	Paths.Shaders = (char *) SDL_malloc(SDL_strlen(shadersPath) + 1);
-	SDL_strlcpy(Paths.Shaders, shadersPath, SDL_strlen(shadersPath) + 1);
+	Paths.Textures = (char *) SDL_malloc(256);
+	SDL_snprintf(Paths.Textures, 256, "%sAssets/Textures/", Paths.Base);
 
-	SDL_snprintf(texturesPath, sizeof(texturesPath), "%sAssets/Textures/", Paths.Base);
-	Paths.Textures = (char *) SDL_malloc(SDL_strlen(texturesPath) + 1);
-	SDL_strlcpy(Paths.Textures, texturesPath, SDL_strlen(texturesPath) + 1);
+	Paths.TiledMaps = (char *) SDL_malloc(256);
+	SDL_snprintf(Paths.TiledMaps, 256, "%sAssets/Maps/", Paths.Base);
 
-	SDL_snprintf(tilemapsPath, sizeof(tilemapsPath), "%sAssets/Maps/", Paths.Base);
-	Paths.TiledMaps = (char *) SDL_malloc(SDL_strlen(tilemapsPath) + 1);
-	SDL_strlcpy(Paths.TiledMaps, tilemapsPath, SDL_strlen(tilemapsPath) + 1);
+	Paths.Animations = (char *) SDL_malloc(256);
+	SDL_snprintf(Paths.Animations, 256, "%sAssets/Animations/", Paths.Base);
 
-	SDL_snprintf(animationsPath, sizeof(animationsPath), "%sAssets/Animations/", Paths.Base);
-	Paths.Animations = (char *) SDL_malloc(SDL_strlen(animationsPath) + 1);
-	SDL_strlcpy(Paths.Animations, animationsPath, SDL_strlen(animationsPath) + 1);
+	Paths.Scenes = (char *) SDL_malloc(256);
+	SDL_snprintf(Paths.Scenes, 256, "%sAssets/Scenes/", Paths.Base);
 }
 
 SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
@@ -60,6 +50,10 @@ SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
 	{
 		SDL_Surface *next = SDL_ConvertSurface(result, format);
 		SDL_DestroySurface(result);
+		if (next == NULL) {
+			SDL_Log("Failed to convert surface: %s", SDL_GetError());
+			return NULL;
+		}
 		result = next;
 	}
 

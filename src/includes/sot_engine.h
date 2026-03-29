@@ -6,7 +6,6 @@
 #include "sot_scene.h"
 #include "sot_animation.h"
 #include "sot_actor.h"
-#include "appstate.h"
 #include "sot_texture.h"
 #include "sot_quad.h"
 #include "sot_gpu_pipeline.h"

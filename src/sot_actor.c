@@ -1,8 +1,8 @@
 #include "sot_actor.h"
 
-SOT_Actor SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile) 
+SOT_Actor SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animationsFile)
 {
-    SOT_Actor actor;
+    SOT_Actor actor = {0};
     
     actor.actorName = name;
     actor.physics.body = SOT_PHB_KINEMATIC;
@@ -30,75 +30,41 @@ SOT_Actor SOT_CreateActor(AppState *appState, char *name, vec2 pos, char *animat
     // instead of using an enum i think it is better to use a string with some constants already predefined so we
     // can create custom actions later. For hte moment i will remove it as i can rely on the animation name.
 
-    SDL_free(animationInfo);        
+    actor.animationInfos[0] = animationInfo;
+    actor.animationInfoCount = 1;
     return actor;
 }
 
+SDL_AppResult SOT_ActorLoadAnimationFile(SOT_Actor *actor, char *animationFile) {
+	if (actor == NULL || animationFile == NULL) return SDL_APP_FAILURE;
+	if (actor->animationInfoCount >= 16) return SDL_APP_FAILURE;
+
+	SOT_AnimationInfo *info = SOT_LoadAnimations(animationFile);
+	if (info == NULL) return SDL_APP_FAILURE;
+
+	actor->animationInfos[actor->animationInfoCount] = info;
+	actor->animationInfoCount++;
+
+	SOT_ActorBindAnimations(actor, info);
+	return SDL_APP_SUCCESS;
+}
+
 void SOT_ActorBindAnimations(SOT_Actor *actor, SOT_AnimationInfo *animationInfo)
- {
-    //...bind the animation data to for each animation to the actor
-    for (int i = 0; i < animationInfo->count; ++i) 
-    {
-        SOT_Animation *anim = &(actor->animations[i]);
-        
-        anim->id = i;
-        anim->atlasName = animationInfo->atlasName;
-        SDL_memcpy(&(anim->sequence), &(animationInfo->sequences[i]), sizeof(SOT_AnimationSequence));
-        anim->step_ms = 75;
-    }
+{
+	//...bind the animation data to for each animation to the actor
+	for (int i = 0; i < animationInfo->count; ++i)
+	{
+		SOT_Animation *anim = &(actor->animations[i]);
 
-    
-    //... load the spritesheet inside of the texture
-        /* SDL_Surface *monkeySpriteSheet = NULL;
-        SOT_Animation *walkRight = NULL;
-        SOT_Animation *walkLeft = NULL;
-        SOT_Animation *idle = NULL;
-        walkRight = CreateAnimation("Monkey_WalkRight", monkeySpriteSheet, 0, 8, 16, 16, 75, true, as);
-        walkLeft = CreateAnimation("Monkey_WalkLeft", monkeySpriteSheet, 9, 17, 16, 16, 75, true, as);
-        idle = CreateAnimation("Monkey_Idle", monkeySpriteSheet, 18, 23, 16, 16, 75, true, as);
+		anim->id = i;
+		anim->info = animationInfo;
+		anim->sequenceIndex = i;
+		anim->currentFrame = 0;
+		anim->elapsedMs = 0;
+		anim->isPlaying = true;
+	}
+	actor->animationsCount = animationInfo->count;
 
-        //...pack the animations in a NULL terminated array
-        SOT_Animation **animations = malloc(sizeof(SOT_Animation*) * 4);
-        animations[0] = idle;
-        animations[1] = walkLeft;
-        animations[2] = walkRight;
-        animations[3] = NULL; */
-
-
-    /* Bind the animations to the actor
-    actor->animations = anims;
-    actor->lastStep = SDL_GetTicks();
-    actor->activeAnimation = actor->animations[0];
-
-    // Initialize the collider
-
-    // Collider Initialization
-    sot_collider_t collider = {0};
-
-    switch (colliderType) {
-        case C2_TYPE_CIRCLE:
-            collider.type = C2_TYPE_CIRCLE;
-            collider.shape.circle.p = *vec2_to_c2v(&actor->position);
-            collider.shape.circle.r = actor->animations[0]->info->frameSize[0]/2;
-            break;
-        case C2_TYPE_AABB:
-            collider.type = C2_TYPE_AABB;
-            collider.shape.AABB.min.x = -actor->animations[0]->info->frameSize[0]/2;
-            collider.shape.AABB.max.x = actor->animations[0]->info->frameSize[0]/2;
-            collider.shape.AABB.min.y = -actor->animations[0]->info->frameSize[0]/2;
-            collider.shape.AABB.max.y = actor->animations[0]->info->frameSize[0]/2;
-            break;
-        case C2_TYPE_NONE:
-        case C2_TYPE_CAPSULE:
-        case C2_TYPE_POLY:
-        default:
-        collider.type = C2_TYPE_NONE;
-            break;
-    }
-    
-    actor->collider = collider;
-
-    AppendCollider(appState->pDynamicColliders, &(actor->collider)); */
 }
 
 void SetPosition(SOT_Actor *actor, vec2 pos) { 
@@ -145,48 +111,38 @@ void UpdateCollider(SOT_Actor *actor, vec2 deltaPos) {
 
 
 
-// Updates the renderRect position based on the the current actor position.
-// Position is applied to the center of the sprite.
-void SetRenderPosition(SOT_Actor *actor) 
+// TODO: Implement SetRenderPosition when software rendering is needed
+void SetRenderPosition(SOT_Actor *actor)
 {
-    // int deltaX = actor->activeAnimation->info->frameSize[0]/2;
-    // int deltaY = actor->activeAnimation->info->frameSize[1]/2;
-
-    // actor->renderRect = (SDL_FRect) {
-    //     .x = actor->position[0]-deltaX,
-    //     .y = actor->position[1]-deltaY,
-    //     .w = actor->activeAnimation->info->frameSize[0],
-    //     .h = actor->activeAnimation->info->frameSize[1]
-    // };
 }
 
 void RenderActor(const AppState *as, SOT_Actor *actor) {
 
-    SOT_Animation *animation = &(actor->animations[actor->currentAnimation]);
-    SOT_AnimationSequence *frames = &(animation->sequence);
+	SOT_Animation *animation = &(actor->animations[actor->currentAnimation]);
+	SOT_AnimationSequence *seq = &(animation->info->sequences[animation->sequenceIndex]);
 
-    // TODO: Move this logic to a different function such as, for example, UpdateAnimation which can be invoked in the UpdateActor,
-    // The render operation will be done once th status of the sprite has been updated.
+	// TODO: Move this logic to a different function such as, for example, UpdateAnimation which can be invoked in the UpdateActor,
+	// The render operation will be done once th status of the sprite has been updated.
 
-    // Get the current time different from last step
-    // if higher than the animation time step
-    // update the texture with the new frame surface.
-    const Uint64 now = SDL_GetTicks();
+	// Get the current time different from last step
+	// if higher than the animation time step
+	// update the texture with the new frame surface.
+	const Uint64 now = SDL_GetTicks();
 
-    // This while will executed once as soon as now reached
-    // the value of the stepRateMillis, it will exit at the first execution
-    // as we immediately reset last_step to now
-    if ((now - as->last_step) >= animation->step_ms) 
-    {
-        // navigate to the next frame in the linked list of frames
-        frames->current = (frames->current == frames->count ) ? 0 : frames->current + 1;
-    }
+	// This while will executed once as soon as now reached
+	// the value of the stepRateMillis, it will exit at the first execution
+	// as we immediately reset last_step to now
+	if ((now - as->last_step) >= animation->info->step_ms)
+	{
+		// navigate to the next frame
+		animation->currentFrame = (animation->currentFrame + 1 >= seq->count) ? 0 : animation->currentFrame + 1;
+	}
 
-    // SetRenderPosition(actor);
-    // SDL_RenderTexture(appState->gpu->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
-    DrawCollidersDebugInfo(as->gpu, actor->collider);
+	// SetRenderPosition(actor);
+	// SDL_RenderTexture(appState->gpu->renderer, animation->atlas, animation->currentFrame->sprite, &(actor->renderRect));
+	DrawCollidersDebugInfo(as->gpu, actor->collider);
 
-    return;
+	return;
 }
 
 
@@ -310,57 +266,35 @@ void UpdateActor(const AppState *as, SOT_Actor *actor, float deltaTime) {
     glm_vec2_scale(actor->physics.v_direction, actor->physics.v_magnitude, velocity);
     vec2 deltaPos = {0, 0};
 
-    // Maybe it is time to switch to a STATES MACHINE??? 
-    /*
-    switch (actor->direction)
-    {
-        case MOVE_RIGHT:
-            if (actor->activeAnimation != actor->animations[2]) actor->activeAnimation = actor->animations[2];
-            actor->position[0] += actor->velocity[0] * deltaTime;
-            if (actor->activeAnimation != &actor->animations[2]) 
-                actor->activeAnimation = &actor->animations[2];
-            
-            deltaPos[0] = velocity[0] * deltaTime;
-            actor->transform.position[0] += deltaPos[0];
-            break;
-        case MOVE_LEFT:
-            if (actor->activeAnimation != actor->animations[1]) actor->activeAnimation = actor->animations[1];
-            actor->position[0] -= actor->velocity[0] * deltaTime;
-            if (actor->activeAnimation != &actor->animations[1]) 
-                actor->activeAnimation = &actor->animations[1];
-            
-            // Assuming velocity is a magnitude-based vector, we invert for left if direction is just a speed scalar
-            // However, if v_direction is (1,0), we need to negate.
-            deltaPos[0] = -velocity[0] * deltaTime;
-            actor->transform.position[0] += deltaPos[0];
-            break;
-        case FALL:
-            actor->position[1] += 2 * deltaTime;
-            deltaPos[1] = 2 * deltaTime; // Simple gravity simulation
-            actor->transform.position[1] += deltaPos[1];
-            break;
-        case IDLE:
-            if (actor->activeAnimation != actor->animations[0]) actor->activeAnimation = actor->animations[0];
-            if (actor->activeAnimation != &actor->animations[0]) 
-                actor->activeAnimation = &actor->animations[0];
-        default:
-            break;
-    }
-
-    // Update the position of the attached collider.
-    UpdateCollider(actor, deltaPos);
-    Hit(as, actor);
-    */
+    // TODO: Implement state machine for actor movement and collision response
     return;
 }
 
-void DestroyActor(SOT_Actor *actor) { 
-    if (actor == NULL) return;
-    /*
-    for (int i = 0; actor->animations[i] != NULL; i++) {
-        DestroyAnimation(actor->animations[i]);
-    }
-    */
-    free(actor);
-    return; 
+void DestroyActor(SOT_Actor *actor) {
+	if (actor == NULL) return;
+
+	// Free all owned SOT_AnimationInfo structures
+	for (int i = 0; i < actor->animationInfoCount; ++i) {
+		SOT_AnimationInfo *info = actor->animationInfos[i];
+		if (info == NULL) continue;
+
+		// Free each sequence
+		for (int j = 0; j < info->count; ++j) {
+			SDL_free(info->sequences[j].name);
+			SDL_free(info->sequences[j].frames);
+		}
+
+		// Free sequences array
+		SDL_free(info->sequences);
+
+		// Free strings
+		SDL_free(info->atlasName);
+		SDL_free(info->atlasPath);
+		SDL_free(info->collider);
+
+		// Free the info struct itself
+		SDL_free(info);
+	}
+
+	return;
 }

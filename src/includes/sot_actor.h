@@ -1,5 +1,5 @@
-#ifndef ACTOR_H
-#define ACTOR_H
+#ifndef SOT_ACTOR_H_
+#define SOT_ACTOR_H_
 
 #include <stdlib.h>
 #include <SDL3/SDL.h>
@@ -29,31 +29,35 @@ typedef enum {
 
 /**
  * @brief Represents a game entity (actor) within the scene.
- * 
+ *
  * This structure aggregates all components necessary to define an interactive object
  * in the game world, including its identity, spatial properties, physics state,
  * animation data, and collision information.
- * 
+ *
  * @param actorID Unique identifier for the actor, often used as an index for batch rendering.
  * @param actorName Human-readable name of the actor.
  * @param transform Spatial configuration (position, scale, rotation).
  * @param physics Physical properties (velocity, body type).
- * @param animations Array of available animations for this actor.
+ * @param animationInfos Array of owned animation definition pointers (one per loaded animation file).
+ * @param animationInfoCount Number of animation definition files loaded.
+ * @param animations Array of animation runtime instances (playback state + back-pointers to definitions).
+ * @param animationsCount Number of animation instances.
  * @param currentAnimation Index of the currently active animation in the animations array.
- * @param gpuSprite GPU-specific data for the current sprite frame (used for rendering).
  * @param collider Collision shape associated with the actor.
  * @param collisionInfo Array storing details about recent collision manifolds.
  */
 typedef struct SOT_Actor {
-    int actorID;                // --> Used as an index in the batch sprites rendering array. At this specific index, we will store the spritinfo for the current frame.
-    char *actorName;
-    SOT_Transform transform;
-    SOT_Physics physics;
-    SOT_Animation animations[256];
-    int animationsCount;
-    int currentAnimation;
-    sot_collider_t collider;
-    c2Manifold collisionInfo[50];
+	int actorID;
+	char *actorName;
+	SOT_Transform transform;
+	SOT_Physics physics;
+	SOT_AnimationInfo *animationInfos[16];
+	int animationInfoCount;
+	SOT_Animation animations[256];
+	int animationsCount;
+	int currentAnimation;
+	sot_collider_t collider;
+	c2Manifold collisionInfo[50];
 } SOT_Actor;
 
 /**

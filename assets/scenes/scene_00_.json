@@ -1,0 +1,9 @@
+{
+    "id": 1,
+    "map": "level_00.json",
+    "spritesheets": [
+        {"name":"monkey-sheet-16.png"},
+        {"name":"snow.png"},
+        {"name":"wall.png"}
+    ]
+}

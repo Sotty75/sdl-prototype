@@ -20,7 +20,7 @@ layout (location = 1) in vec3 inColor;
 layout (location = 2) in vec2 inTexCoord;
 layout (location = 0) out vec2 outTexCoord;
 layout (location = 1) flat out vec4 spriteUVBounds;
-layout (location = 2) out uint atlasIndex;
+layout (location = 2) flat out uint atlasIndex;
 
 layout (set = 0, binding = 0) buffer Sprites {
     SpriteInfo sprites[];
@@ -41,7 +41,7 @@ void main()
     model[0][0] = sprite.FRAME_SIZE.x;
     model[1][1] = sprite.FRAME_SIZE.y;
     model[3][0] = sprite.POSITION.x;
-    model[3][0] = sprite.POSITION.y;
+    model[3][1] = sprite.POSITION.y;
 
     // 1. Calculate Sprite SDimensions
     float spriteUVWidth  = float(sprite.FRAME_SIZE.x) / float(sprite.ATLAS_SIZE.x);
@@ -62,6 +62,6 @@ void main()
     // Pass the standard interpolated coordinate
     // (We don't need mix() here anymore, the fragment shader handles the safety)
     atlasIndex = sprite.ATLAS_INDEX;
-    texCoord = uvOffset + (inTexCoord * vec2(spriteUVWidth, spriteUVHeight));
+    outTexCoord = uvOffset + (inTexCoord * vec2(spriteUVWidth, spriteUVHeight));
     gl_Position = projection_view * model * vec4(inPos, 1.0);
 }

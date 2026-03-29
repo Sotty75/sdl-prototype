@@ -83,12 +83,6 @@ target_compile_definitions(sdl-prototype PRIVATE
     CGLM_FORCE_DEPTH_ZERO_TO_ONE
 )
 
-# This will STILL print the path to "my_project/"
-message("PROJECT_SOURCE_DIR in src is: ${PROJECT_SOURCE_DIR}")
-
-# This will correctly print the path to "my_project/src/"
-message("CMAKE_CURRENT_SOURCE_DIR in src is: ${CMAKE_CURRENT_SOURCE_DIR}")
-
 # ==========================================
 # ASSET SYNC (RUNS EVERY BUILD)
 # ==========================================

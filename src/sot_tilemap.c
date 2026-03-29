@@ -12,19 +12,20 @@
 sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState) 
 {
     // Allocate memory for the tilemap object
-    sot_tilemap *tm = malloc(sizeof(sot_tilemap));
+    sot_tilemap *tm = SDL_malloc(sizeof(sot_tilemap));
 
     // Load the tilemap from the file
     char *tileMapPath = NULL;
     SDL_asprintf(&tileMapPath, "%s\\%s", Paths.TiledMaps, tilemapFilename);
     cute_tiled_map_t* map = cute_tiled_load_map_from_file(tileMapPath, NULL);
+    SDL_free(tileMapPath);
 
     //...fill the tilemap object properties
     tm->tilesetFilename = (char *)map->tilesets->image.ptr;
     tm->tilemap = map;
     tm->tilesCount =  map->layers[0].data_count;
     int dataSize = tm->tilesCount * sizeof(int);
-    tm->tiles = (int *)malloc(dataSize);
+    tm->tiles = (int *)SDL_malloc(dataSize);
     SDL_memcpy(tm->tiles,  map->layers[0].data, dataSize);
 
     //...fill the gpu tilemap info
@@ -43,7 +44,7 @@ sot_tilemap *SOT_CreateTilemap(char *tilemapFilename, AppState *appState)
     sot_collider_node_t *previousNode = NULL;
     
     while (currentObject != NULL) {
-        sot_collider_node_t *currentNode = malloc(sizeof(sot_collider_node_t));
+        sot_collider_node_t *currentNode = SDL_malloc(sizeof(sot_collider_node_t));
         currentNode->collider = SOT_GetCollider(currentObject);
         currentNode->next = NULL;
         if (previousNode == NULL) { tm->colliders = currentNode; }
@@ -73,8 +74,8 @@ sot_collider_t *SOT_GetCollider(cute_tiled_object_t *tiledObject) {
     if (colliderType == NULL) return NULL;
 
     // create collider and return
-    sot_collider_t *collider = malloc(sizeof(sot_collider_t));
-    memset(collider, 0, sizeof(collider));
+    sot_collider_t *collider = SDL_malloc(sizeof(sot_collider_t));
+    memset(collider, 0, sizeof(*collider));
     
     if (strcmp(colliderType, "AABB") == 0) {
         collider->type = C2_TYPE_AABB; 
@@ -118,6 +119,7 @@ cute_tiled_object_t *SOT_GetObjectByName(cute_tiled_map_t *map, char *objectName
         if (strcmp(currentObject->name.ptr, objectName) == 0) {
             return currentObject;
         }
+        currentObject = currentObject->next;
     }
 
     return NULL;
@@ -129,5 +131,5 @@ cute_tiled_object_t *SOT_GetObjectByName(cute_tiled_map_t *map, char *objectName
 void DestroyTilemap(sot_tilemap *current_tilemap) {
     cute_tiled_free_map(current_tilemap->tilemap);
     DestroyColliders(current_tilemap->colliders);
-    free(current_tilemap);
+    SDL_free(current_tilemap);
 }

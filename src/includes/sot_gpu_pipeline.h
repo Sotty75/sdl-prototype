@@ -23,12 +23,12 @@ typedef enum SOT_PipelineID {
 } SOT_PipelineID;
 
 typedef enum {
-    SOT_RPF_NONE           = 0,
-    SOT_RPF_TEST           = 1 << 0,  // 1
-    SOT_RPF_SPRITES        = 1 << 1,  // 1
-    SOT_RPF_TILEMAP        = 1 << 2,  // 2
-    SOT_RPF_OVERLAY        = 1 << 3,  // 4
-    SOT_RPF_DEBUG          = 1 << 4,  // 8
+    SOT_RP_NONE_FLAG           = 0,
+    SOT_RP_TEST_FLAG           = 1 << 0,  // 1
+    SOT_RP_SPRITES_FLAG        = 1 << 1,  // 2
+    SOT_RP_TILEMAP_FLAG        = 1 << 2,  // 4
+    SOT_RP_OVERLAY_FLAG        = 1 << 3,  // 8
+    SOT_RP_DEBUG_FLAG          = 1 << 4,  // 16
 } SOT_GPU_PIPELINE_FLAGS;
 
 // GPU Buffers Management data structures
@@ -39,7 +39,7 @@ typedef enum {
     SOT_BUFFER_INDEX         = 1 << 1,  // 2
     SOT_BUFFER_TEXTURE       = 1 << 2,  // 4
     SOT_TILEMAP_SSB          = 1 << 3,  // 8
-    SOT_SPRITES_SSB          = 1 << 4,  // 8
+    SOT_SPRITES_SSB          = 1 << 4,  // 16
 } SOT_GPU_BUFFER_FLAGS;
 
 
@@ -68,14 +68,14 @@ typedef struct SOT_GPU_TransferBuffers {
 /// samplerCount       : Number of texture samplers
 /// uniformCount       : Number of uniforms
 /// storageBufferCount : Number of storage buffers
-/// sorageTextureCount : Number of storage textures
+/// storageTextureCount : Number of storage textures
 /// ```
 typedef struct SOT_GPU_ShaderInfo {
     char *name;              
     int samplerCount;        
     int uniformCount;        
     int storageBufferCount;  
-    int sorageTextureCount;  
+    int storageTextureCount;  
 } SOT_GPU_ShaderInfo;
 
 // Holds data describing the parameters required to initialize a 
@@ -145,14 +145,13 @@ typedef struct SOT_GPU_Data {
  */
 typedef struct SOT_GPU_State {
     SDL_Window *window;
-    SDL_Renderer *renderer;
     SDL_GPUDevice *device;
     SDL_GPUSampler *nearestSampler;
-    SOT_GPU_TransferBuffers transferBuffers;
-    uint32_t pipelineFlags;                     
     SDL_GPUGraphicsPipeline *pipeline[16];
+    SOT_GPU_TransferBuffers transferBuffers;
     SOT_GPU_Buffers buffers[16];
     SOT_GPU_DebugInfo *debugInfo;
+    uint32_t pipelineFlags;        
 } SOT_GPU_State;
 
 typedef struct SOT_GPU_RenderpassInfo {

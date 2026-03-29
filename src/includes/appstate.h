@@ -1,5 +1,5 @@
-#ifndef APPSTATE_H
-#define APPSTATE_H
+#ifndef SOT_APPSTATE_H_
+#define SOT_APPSTATE_H_
 
 #include <SDL3/SDL.h>
 #include "sot_gpu_pipeline.h"

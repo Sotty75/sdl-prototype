@@ -1,6 +1,6 @@
 #include "sot_camera.h"
 
-sot_camera CreateCameraWitInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo) {
+sot_camera CreateCameraWithInfo(SOT_CameraInfo cameraInfo, SOT_ProjectionInfo projectionInfo) {
     sot_camera t = {0};
     glm_mat4_identity(t.view);
     glm_mat4_identity(t.projection);

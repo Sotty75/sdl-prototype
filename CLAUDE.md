@@ -61,6 +61,8 @@ Multi-pipeline GPU rendering via SDL3's GPU API (Vulkan backend):
 - **SOT_RP_OVERLAY** — UI layer
 - **SOT_RP_DEBUG** — collision shape wireframes (toggle with `1` key)
 
+`SOT_GPU_InitRenderer()` takes a bitmask of `SOT_RPF_*` pipeline flags to select which pipelines to enable (e.g. `SOT_RPF_TILEMAP | SOT_RPF_DEBUG`). A `SOT_RPF_TEST` flag activates test geometry via `SOT_GPU_InitializeTestData()`.
+
 CGLM configured with `CGLM_FORCE_LEFT_HANDED` and `CGLM_FORCE_DEPTH_ZERO_TO_ONE`.
 
 ### Scene / Actor / Tilemap
@@ -75,7 +77,11 @@ Uses `cute_c2.h` (not Box2D, which is included but not integrated). Supports cir
 
 ### Asset Paths
 
-`SOT_Paths` global struct (in [sot_common.h](src/includes/sot_common.h)) resolves paths relative to the executable: `Textures`, `Shaders`, `TiledMaps`, `Animations`.
+`SOT_Paths` global struct (in [sot_common.h](src/includes/sot_common.h)) resolves paths relative to the executable: `Textures`, `Shaders`, `TiledMaps`, `Animations`, `Scenes`.
+
+### Scene Loading
+
+Scenes are defined as JSON descriptors in `assets/scenes/` (e.g. `scene_00_.json`). Each descriptor references a Tiled map file and up to 16 spritesheets. `SOT_LoadScene()` parses the descriptor; `SOT_InitializeScene()` allocates the `SOT_Scene` and loads all assets. The active scene is passed to `UpdateScene()` and `SOT_GPU_Render()` each frame.
 
 ### Texture Management
 

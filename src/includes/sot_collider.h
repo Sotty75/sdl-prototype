@@ -27,7 +27,7 @@ typedef struct sot_collider_node_t {
     struct sot_collider_node_t *next;
 } sot_collider_node_t;
 
-void AppendCollider(sot_collider_node_t* , sot_collider_t *);
+void AppendCollider(sot_collider_node_t** , sot_collider_t *);
 void AppendCollidersList(sot_collider_node_t** , sot_collider_node_t*);
 void DestroyColliders(sot_collider_node_t* );
 int CollidersCount(sot_collider_node_t* );

@@ -16,6 +16,7 @@ typedef struct SOT_Paths{
 	char *Shaders;
 	char *TiledMaps;
 	char *Animations;
+	char *Scenes;
 } SOT_Paths;
 
 typedef struct {
@@ -27,7 +28,6 @@ typedef struct {
 // Global Variables
 extern SOT_Paths Paths;
 
-void InitializePaths();
 void InitializeAssetsLoader();
 
 SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels);

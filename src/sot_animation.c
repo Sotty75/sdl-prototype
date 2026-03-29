@@ -1,106 +1,53 @@
 #include "sot_animation.h"
 
-/*
- * Create an animation structure made of frames where each frame is loaded
- * from a spritesheet. the sprites in the spitesheet have to be sorted in order so that we can index the source 
- * sprite efrom the spritesheet by providing the index of the first sprite, the index of the last sprite and the size of each sprite
- */
-SOT_Animation *CreateAnimation(char *name, SDL_Surface *spritesheet, int startIndex, int endIndex, int width, int height, 
-    int stepRateMillis, bool cycle,  AppState *appstate)
+
+
+SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) 
 {
-    /* // ..initialize the animation structure
-    SOT_Animation *animation = malloc(sizeof(SOT_Animation));
-    if (animation == NULL) return NULL; 
+	char *fullPath;
+	SDL_asprintf(&fullPath, "%s\\%s", Paths.Animations, animationsFilename);
 
-    animation->name = name;
-    animation->framesCount = (endIndex - startIndex) + 1;
-    animation->info->frameSize[0] = width;
-    animation->info->frameSize[1] = height;
-    animation->stepRateMillis = stepRateMillis;
-    animation->cycle = cycle;
-
-    // Load the spritesheet in a texture atlas
-    animation->atlas = GetTexture(appstate, "monkey-sheet-16.png");
-
-    // ...we use a variable to store the previous frame for the current iteration, 
-    // so that we can build the chain of frames.
-    Frame *previousFrame = NULL;
-
-    int spritesPerRow = animation->atlas->w / width;
-    int spritesPerColumn = animation->atlas->h / height;
-
-    // ...we iteratie across all the sprites in the spritesheet there are making up the animation
-    // and each iteration we recalculate the source rectangle to match the position of the sprite of
-    // for the frame with index i
-    for (int spriteIndex = startIndex; spriteIndex <= endIndex; spriteIndex++)
-    {
-        int xIndex =  spriteIndex % spritesPerRow;
-        int yIndex =  spriteIndex / spritesPerRow;
-
-        //...new sorce rectangle
-        SDL_FRect spriteRect = {
-            .x = xIndex * width,
-            .y = yIndex * height,
-            .w = width,
-            .h = height
-        };
-
-        // ...we can now build the Frame structure for the current frame, which basically
-        // is made of the frame surface and a link to the next frame.
-        Frame *currentFrame = malloc(sizeof(Frame));
-        currentFrame->sprite = malloc(sizeof(SDL_FRect));
-        memcpy(currentFrame->sprite, &spriteRect, sizeof(SDL_FRect));
-
-        if (currentFrame == NULL) return NULL;
-        if (previousFrame != NULL) {
-            previousFrame->next = currentFrame;
-        } else {
-            animation->currentFrame = currentFrame;     // we set the first frame of the animation
-        }
-        
-        // ...we also want the last frame of the animation to link the first frame, as we need a circular animation so we can 
-        // implement the animation in a while cycle.
-        if (spriteIndex == endIndex) 
-            currentFrame->next = animation->currentFrame;
-        else 
-            currentFrame->next = NULL; 
-
-        // ...we finally prepare for the next frame by setting  
-        // the currentFrame as previousFrame
-        previousFrame = currentFrame;
-    } */
-
-    return NULL; //animation;
-}
-
-
-SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
-	// open the file
-	char fullPath[256];
-	SDL_snprintf(fullPath, sizeof(fullPath), "%s\\%s", Paths.Animations, animationsFilename);
+    //...open the file and read the file contents into a string
     FILE *fp = fopen(fullPath, "r");
     if (fp == NULL) {
         SDL_Log("Error: Unable to open the animations file %s.\n", fullPath);
+        SDL_free(fullPath);
         return NULL;
     }
-
-	// read the file contents into a string
-    char buffer[4096];
-    int len = fread(buffer, 1, sizeof(buffer), fp);
+    SDL_free(fullPath);
+	
+    fseek(fp, 0, SEEK_END);
+    long fileSize = ftell(fp);
+    rewind(fp);
+    char *content = (char *)SDL_calloc(fileSize + 1, 1);
+    int len = fread(content, 1, fileSize, fp);
     fclose(fp);
 
 	// parse the JSON data
-    cJSON *json = cJSON_Parse(buffer);
+    cJSON *json = cJSON_Parse(content);
     if (json == NULL) {
         const char *error_ptr = cJSON_GetErrorPtr();
         if (error_ptr != NULL) {
             printf("Error: %s\n", error_ptr);
         }
         cJSON_Delete(json);
+        SDL_free(content);
         return NULL;
     }
 
-	SOT_AnimationInfo *animationInfo = (SOT_AnimationInfo *) malloc(sizeof(SOT_AnimationInfo));
+	SOT_AnimationInfo *animationInfo = (SOT_AnimationInfo *) SDL_calloc(1, sizeof(SOT_AnimationInfo));
+
+	// Allocate sequences array dynamically
+	cJSON *animations = cJSON_GetObjectItemCaseSensitive(json, "animations");
+	int sequenceCount = cJSON_GetArraySize(animations);
+	animationInfo->sequences = (SOT_AnimationSequence *) SDL_calloc(sequenceCount, sizeof(SOT_AnimationSequence));
+	if (animationInfo->sequences == NULL) {
+		SDL_Log("Error: Failed to allocate sequences array");
+		SDL_free(animationInfo);
+		cJSON_Delete(json);
+		SDL_free(content);
+		return NULL;
+	}
 
     // Access the JSON data
     cJSON *atlas_name = cJSON_GetObjectItemCaseSensitive(json, "atlas_name");
@@ -124,12 +71,20 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
 		SDL_strlcpy(animationInfo->collider, collider->valuestring, sl);
     }
 
-	int i = 0;
+	cJSON *step_ms = cJSON_GetObjectItemCaseSensitive(json, "step_ms");
+	if (cJSON_IsNumber(step_ms)) {
+		animationInfo->step_ms = (uint16_t)step_ms->valueint;
+	} else {
+		animationInfo->step_ms = 75;
+	}
+
+	animationInfo->count = 0;
 	cJSON *animation = NULL;
-	cJSON *animations = cJSON_GetObjectItemCaseSensitive(json, "animations");
 
 	cJSON_ArrayForEach(animation, animations)
 	{
+        int i = animationInfo->count;
+
 		if (animation->string != NULL)
 		{
 			int sl = SDL_strlen(animation->string) + 1;
@@ -138,58 +93,37 @@ SOT_AnimationInfo* SOT_LoadAnimations(char *animationsFilename) {
 		}
 
 		cJSON *frame_count = cJSON_GetObjectItemCaseSensitive(animation, "frame_count");
+		if (frame_count == NULL || !cJSON_IsNumber(frame_count)) continue;
 		animationInfo->sequences[i].count = frame_count->valueint;
-
 		animationInfo->sequences[i].frames = (vec4*) SDL_malloc(frame_count->valueint * sizeof(vec4));
+
+
 		int j = 0;
 		cJSON *frame = NULL;
 		cJSON *frames = cJSON_GetObjectItemCaseSensitive(animation, "frames");
 		cJSON_ArrayForEach(frame, frames) 
 		{
-			// read x value
 			cJSON *x_value = cJSON_GetObjectItemCaseSensitive(frame, "x");
-			animationInfo->sequences[i].frames[j][0] = x_value->valueint;
-	
-			// read y value
 			cJSON *y_value = cJSON_GetObjectItemCaseSensitive(frame, "y");
-			animationInfo->sequences[i].frames[j][1] = y_value->valueint;
-
-			// read w value
 			cJSON *w_value = cJSON_GetObjectItemCaseSensitive(frame, "w");
-			animationInfo->sequences[i].frames[j][2] = w_value->valueint;
-
-			// read h value
 			cJSON *h_value = cJSON_GetObjectItemCaseSensitive(frame, "h");
+			if (!x_value || !y_value || !w_value || !h_value) continue;
+
+			animationInfo->sequences[i].frames[j][0] = x_value->valueint;
+			animationInfo->sequences[i].frames[j][1] = y_value->valueint;
+			animationInfo->sequences[i].frames[j][2] = w_value->valueint;
 			animationInfo->sequences[i].frames[j][3] = h_value->valueint;
 
 			j++;
 		} 
 
-        i++;
+        animationInfo->count++;
 	}
 
-    animationInfo->count = i;
-
-    // delete the JSON object
     cJSON_Delete(json);
-	return animationInfo;
+    SDL_free(content);
+    
+    return animationInfo;
 }
 
 
-/*
-*   Free the memory allocated for the animation
-*   in the heap.
-*/
-void DestroyAnimation(SOT_Animation *animation) {
-    /* Frame *currentFrame = animation->currentFrame; 
-    for (int i = 0; i < animation->framesCount; i++) 
-    {
-        // free the sprite rect memory and the current sprite memory
-        free(currentFrame->sprite);
-        Frame *nextFrame = currentFrame->next;
-        free(currentFrame);
-
-        currentFrame = nextFrame;
-    }
-    free(animation); */
-}
