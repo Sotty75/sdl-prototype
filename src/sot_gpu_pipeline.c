@@ -2,6 +2,7 @@
 #include "sot_engine.h"
 
 
+
 SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags) {
     
     // Initilize SDL metadata information.
@@ -20,7 +21,7 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
     }
 
     // Initialize the window and renderer entities.
-    gpu->window =  SDL_CreateWindow("SDL GPU Prototype", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+    gpu->window = SDL_CreateWindow("SDL GPU Prototype", SOT_WINDOW_WIDTH, SOT_WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
     if (gpu->window == NULL) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
@@ -89,6 +90,13 @@ SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags)
 
 
     gpu->pipelineFlags = pipelinesFlags;
+
+    // Initialize the display system (virtual framebuffer)
+    SOT_Display_Init(gpu, SOT_INTERNAL_WIDTH, SOT_INTERNAL_HEIGHT);
+
+    // Initialize the blit pipeline (fullscreen triangle, no vertex input)
+    SOT_GPU_InitBlitPipeline(gpu);
+
     as->gpu = gpu;
 
     return SDL_APP_CONTINUE;
@@ -181,7 +189,7 @@ SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineI
         .target_info = {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-				.format = SDL_GetGPUSwapchainTextureFormat(gpu->device, gpu->window)
+				.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM
 			}},
 		},
 	};
@@ -198,6 +206,48 @@ SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State *gpu, SOT_GPU_PipelineI
     // Clean up shader resources
 	SDL_ReleaseGPUShader(gpu->device, vertexShader);
 	SDL_ReleaseGPUShader(gpu->device, fragmentShader);
+
+    return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SOT_GPU_InitBlitPipeline(SOT_GPU_State *gpu)
+{
+    SDL_GPUShader *vertexShader = LoadShader(gpu->device, "shaderBlit.vert", 0, 0, 0, 0);
+    if (vertexShader == NULL) {
+        SDL_Log("Failed to create blit vertex shader!");
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_GPUShader *fragmentShader = LoadShader(gpu->device, "shaderBlit.frag", 1, 0, 0, 0);
+    if (fragmentShader == NULL) {
+        SDL_Log("Failed to create blit fragment shader!");
+        SDL_ReleaseGPUShader(gpu->device, vertexShader);
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
+        .vertex_shader = vertexShader,
+        .fragment_shader = fragmentShader,
+        .vertex_input_state = { .num_vertex_buffers = 0, .num_vertex_attributes = 0 },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL,
+        .rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE,
+        .target_info = {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+                .format = SDL_GetGPUSwapchainTextureFormat(gpu->device, gpu->window)
+            }},
+        },
+    };
+
+    gpu->pipeline[SOT_RP_BLIT] = SDL_CreateGPUGraphicsPipeline(gpu->device, &pipelineCreateInfo);
+    if (gpu->pipeline[SOT_RP_BLIT] == NULL) {
+        SDL_Log("Failed to create blit pipeline: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_ReleaseGPUShader(gpu->device, vertexShader);
+    SDL_ReleaseGPUShader(gpu->device, fragmentShader);
 
     return SDL_APP_CONTINUE;
 }
@@ -591,7 +641,7 @@ SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint3
  * @param scene Pointer to the scene object containing the entities to render.
  * @return SDL_AppResult SDL_APP_CONTINUE on success, or SDL_APP_FAILURE if a critical GPU error occurs.
  */
-SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene) 
+SDL_AppResult SOT_GPU_RenderSceneToFramebuffer(SOT_GPU_State *gpu, SOT_Scene *scene)
 {
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->device);
     if (cmdbuf == NULL)
@@ -599,64 +649,43 @@ SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, SOT_Scene *scene)
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    
-    SDL_GPUTexture* swapchainTexture;
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, gpu->window, &swapchainTexture, NULL, NULL)) {
-        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
+
+    SDL_GPUColorTargetInfo fbTargetInfo = {
+        .texture = gpu->display.framebuffer,
+        .clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f },
+        .load_op = SDL_GPU_LOADOP_CLEAR,
+        .store_op = SDL_GPU_STOREOP_STORE,
+    };
+
+    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cmdbuf, &fbTargetInfo, 1, NULL);
+
+    SOT_GPU_RenderpassInfo *rpi = &(SOT_GPU_RenderpassInfo) {
+        .cmdBuffer = cmdbuf,
+        .renderpass = renderPass,
+    };
+
+    if (gpu->pipelineFlags & SOT_RP_TEST_FLAG)
+    {
+        SDL_GPUTextureSamplerBinding textureBindings[gpu->buffers[SOT_RP_TEST].texturesCount];
+        for (int i = 0; i < gpu->buffers[SOT_RP_TEST].texturesCount; i++) {
+            textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
+                .texture = gpu->buffers[SOT_RP_TEST].textures[i],
+                .sampler = gpu->nearestSampler
+            };
+        }
+        SDL_BindGPUGraphicsPipeline(rpi->renderpass, gpu->pipeline[SOT_RP_TEST]);
+        SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, textureBindings, gpu->buffers[SOT_RP_TEST].texturesCount);
+        SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 0, scene->worldCamera.pvMatrix, sizeof(mat4));
+        SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers[SOT_RP_TEST].vertexBuffer, .offset = 0}, 1);
+        SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers[SOT_RP_TEST].indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, 1, 0, 0, 0);
     }
 
-    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-	colorTargetInfo.texture = swapchainTexture;
-	colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };
-	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    SOT_GPU_RenderScene(scene, gpu, rpi);
 
-
-	if (swapchainTexture != NULL)
-	{
-        // Create the render pass object
-		SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(
-			cmdbuf,
-			&colorTargetInfo,
-			1,
-			NULL
-		);
-
-        // Initialize the render pass info structure
-        SOT_GPU_RenderpassInfo *rpi = &(SOT_GPU_RenderpassInfo) {
-            .cmdBuffer = cmdbuf,
-            .renderpass = renderPass,
-        };
-
-        if (gpu->pipelineFlags & SOT_RP_TEST_FLAG)
-        {
-            
-            SDL_GPUTextureSamplerBinding textureBindings[gpu->buffers[SOT_RP_TEST].texturesCount];
-            for (int i = 0; i < gpu->buffers[SOT_RP_TEST].texturesCount; i++ ) {
-                textureBindings[i] = (SDL_GPUTextureSamplerBinding) {
-                    .texture = gpu->buffers[SOT_RP_TEST].textures[i], 
-                    .sampler = gpu->nearestSampler
-                };
-            }
-            SDL_BindGPUGraphicsPipeline(rpi->renderpass, gpu->pipeline[SOT_RP_TEST]);
-            SDL_BindGPUFragmentSamplers(rpi->renderpass, 0, textureBindings, gpu->buffers[SOT_RP_TEST_FLAG].texturesCount);
-            SDL_PushGPUVertexUniformData(rpi->cmdBuffer, 0, scene->worldCamera.pvMatrix, sizeof(mat4));
-            SDL_BindGPUVertexBuffers(rpi->renderpass, 0, &(SDL_GPUBufferBinding) { .buffer = gpu->buffers[SOT_RP_TEST_FLAG].vertexBuffer, .offset = 0}, 1);
-            SDL_BindGPUIndexBuffer(rpi->renderpass, &(SDL_GPUBufferBinding) {.buffer = gpu->buffers[SOT_RP_TEST_FLAG].indexBuffer, .offset = 0}, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-
-            // Draw all the tiles of the shader
-            SDL_DrawGPUIndexedPrimitives(rpi->renderpass, 6, 1, 0, 0, 0);
-        }
-
-        SOT_GPU_RenderScene(scene, gpu, rpi);
-        
-        
-        SDL_EndGPURenderPass(renderPass);
-	}
-
-	SDL_SubmitGPUCommandBuffer(cmdbuf);
-    return SDL_APP_CONTINUE;  
+    SDL_EndGPURenderPass(renderPass);
+    SDL_SubmitGPUCommandBuffer(cmdbuf);
+    return SDL_APP_CONTINUE;
 }
 
 void SOT_GPU_InitializeTestData(SOT_GPU_State *gpu) {

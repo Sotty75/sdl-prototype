@@ -5,6 +5,7 @@
 #include <SDL3/SDL_gpu.h>
 #include "sot_common.h"
 #include "sot_gpu_debug_info.h"
+#include "sot_display.h"
 
 // Forward-declare AppState to break circular dependency
 struct AppState;
@@ -20,6 +21,7 @@ typedef enum SOT_PipelineID {
     SOT_RP_SPRITE,
     SOT_RP_OVERLAY,
     SOT_RP_DEBUG,
+    SOT_RP_BLIT,
 } SOT_PipelineID;
 
 typedef enum {
@@ -106,6 +108,8 @@ typedef struct SOT_GPU_SpriteInstance {
     ivec2 frameSize;
     ivec2 atlasSize;
     uint32_t atlasIndex;
+    uint32_t flipFlags;     // bit 0 = horizontal flip, bit 1 = vertical flip
+    vec4 tintColor;         // RGBA tint multiplier (1,1,1,1 = no tint)
 } SOT_GPU_SpriteInstance;
 
 // CPU bound structure holding the data
@@ -151,7 +155,8 @@ typedef struct SOT_GPU_State {
     SOT_GPU_TransferBuffers transferBuffers;
     SOT_GPU_Buffers buffers[16];
     SOT_GPU_DebugInfo *debugInfo;
-    uint32_t pipelineFlags;        
+    SOT_Display display;
+    uint32_t pipelineFlags;
 } SOT_GPU_State;
 
 typedef struct SOT_GPU_RenderpassInfo {
@@ -164,6 +169,7 @@ typedef struct SOT_GPU_RenderpassInfo {
 
 SDL_AppResult SOT_GPU_InitRenderer(struct AppState *as, uint32_t pipelinesFlags);
 SDL_AppResult SOT_GPU_InitPipelineWithInfo(SOT_GPU_State* gpu, SOT_GPU_PipelineInfo *pipelineInfo);
+SDL_AppResult SOT_GPU_InitBlitPipeline(SOT_GPU_State *gpu);
 
 // ------------------------------------------- Buffers Data Management --------------------------------------//
 SDL_AppResult SOT_MapVertexBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data);
@@ -177,7 +183,7 @@ SDL_AppResult SOT_UploadTextureData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_
 SDL_AppResult SOT_UploadTilemapData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
 SDL_AppResult SOT_UploadSpritesData(SOT_GPU_State *gpu, SOT_GPU_Data *data, SDL_GPUCopyPass *copyPass);
 SDL_AppResult SOT_UploadBufferData(SOT_GPU_State *gpu, SOT_GPU_Data *data, uint32_t bufferFlags);
-SDL_AppResult SOT_GPU_Render(SOT_GPU_State *gpu, struct SOT_Scene *scene);
+SDL_AppResult SOT_GPU_RenderSceneToFramebuffer(SOT_GPU_State *gpu, struct SOT_Scene *scene);
 
 // Helper methods
 

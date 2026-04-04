@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Project definition: name and language
-project(sdl-prototype LANGUAGES C)
+project(sdl-prototype LANGUAGES C CXX)
 
 # C Version Required
 set(CMAKE_C_STANDARD 11)
@@ -41,11 +41,59 @@ FetchContent_Declare(
     GIT_TAG        release-3.2.4
 )
 
+# ==========================================
+# 4. SETUP LUA 5.4 (FetchContent)
+# ==========================================
+# ==========================================
+# 5. SETUP cimgui (Dear ImGui C bindings) via FetchContent
+# ==========================================
+message(STATUS "Downloading cimgui (Dear ImGui C bindings)...")
+FetchContent_Declare(
+    cimgui
+    GIT_REPOSITORY https://github.com/cimgui/cimgui.git
+    GIT_TAG        docking_inter
+)
+
+message(STATUS "Downloading Lua 5.4.7 source...")
+FetchContent_Declare(
+    lua
+    GIT_REPOSITORY https://github.com/lua/lua.git
+    GIT_TAG        v5.4.7
+)
+
 # Make the content available to the project.
 # This will download, configure, and add the targets (e.g., SDL3::SDL3)
 FetchContent_MakeAvailable(box2d)
 FetchContent_MakeAvailable(sdl3)
 FetchContent_MakeAvailable(sdl3_image)
+FetchContent_MakeAvailable(lua)
+
+# Build cimgui as static library
+set(IMGUI_STATIC "yes" CACHE STRING "" FORCE)
+FetchContent_MakeAvailable(cimgui)
+
+# Add the SDL3 + SDL3 GPU backend sources to cimgui
+target_sources(cimgui PRIVATE
+    "${cimgui_SOURCE_DIR}/imgui/backends/imgui_impl_sdl3.cpp"
+    "${cimgui_SOURCE_DIR}/imgui/backends/imgui_impl_sdlgpu3.cpp"
+    "${cimgui_SOURCE_DIR}/cimgui_impl.cpp"
+)
+target_include_directories(cimgui PUBLIC
+    "${cimgui_SOURCE_DIR}"
+    "${cimgui_SOURCE_DIR}/imgui"
+    "${cimgui_SOURCE_DIR}/imgui/backends"
+)
+target_link_libraries(cimgui SDL3::SDL3)
+
+# Build Lua as a static library from source (Lua doesn't have a CMakeLists.txt)
+# The GitHub mirror places sources directly in the root directory
+file(GLOB LUA_SOURCES "${lua_SOURCE_DIR}/*.c")
+# Remove lua.c (standalone interpreter) and luac.c (compiler) from the library
+list(FILTER LUA_SOURCES EXCLUDE REGEX "/(lua|luac|onelua)\\.c$")
+add_library(lua_static STATIC ${LUA_SOURCES})
+target_include_directories(lua_static PUBLIC "${lua_SOURCE_DIR}")
+# Suppress warnings in Lua source
+target_compile_options(lua_static PRIVATE -w)
 
 # List all your project's source files here.
 # This is the recommended and most reliable way to manage sources.
@@ -65,6 +113,8 @@ target_link_libraries(sdl-prototype PRIVATE
     SDL3::SDL3
     SDL3_image::SDL3_image
     box2d
+    lua_static
+    cimgui
 )
 
 # Include header libraries
@@ -74,6 +124,9 @@ target_include_directories(sdl-prototype PRIVATE
     "${PROJECT_SOURCE_DIR}/include/cglm"
     "${PROJECT_SOURCE_DIR}/src/includes"
     "${box2d_SOURCE_DIR}/include"
+    "${cimgui_SOURCE_DIR}"
+    "${cimgui_SOURCE_DIR}/imgui"
+    "${cimgui_SOURCE_DIR}/imgui/backends"
 )
 
 # Set project-wide preprocessor definitions for cglm configuration
@@ -81,6 +134,8 @@ target_include_directories(sdl-prototype PRIVATE
 target_compile_definitions(sdl-prototype PRIVATE
     CGLM_FORCE_LEFT_HANDED
     CGLM_FORCE_DEPTH_ZERO_TO_ONE
+    CIMGUI_DEFINE_ENUMS_AND_STRUCTS=1
+    CIMGUI_USE_SDL3=1
 )
 
 # ==========================================
@@ -107,6 +162,9 @@ add_custom_command(
             "$<TARGET_FILE_DIR:sdl-prototype>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:SDL3_image::SDL3_image>"
+            "$<TARGET_FILE_DIR:sdl-prototype>"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:box2d>"
             "$<TARGET_FILE_DIR:sdl-prototype>"
     # SDL_image may have its own dependencies (like libpng, libjpeg).
     # We need to copy those as well. This expression gets them.

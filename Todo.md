@@ -63,3 +63,17 @@ texCoord = uvOffset + (inTexCoord * vec2(spriteUVWidth, spriteUVHeight));
 - **UI system** — No dedicated UI system exists. Add menus, HUD elements, etc. using the overlay render pipeline.
 - **Audio** — No audio system at all. Integrate SDL3 audio for sound effects and music.
 - **Error handling** — Add robust error handling throughout (GPU calls, file loading, JSON parsing, etc.).
+
+### TODO 2.0
+
+- Update the engine to use C++ instead of language C, if it makes sense
+- Review the editor:
+    - [DONE] Asset Browser
+    - [DONE]Hierarchy Tree
+    - Actor Inspector
+    - Tilemap Editor
+        - When the tilemap is displayed, display a button on top right of the scene editor to enable the tilemap editor. basically it will show another dialog with the tileset, the grid, and it will allow the user to set a tile in the set based on the selection. The format will still be the one from tiled.a tile can be cleared pressing on the right mouse button.
+    - Add Prefabs for actors
+        Prefab Editor for different type of prefabs
+    - 1Add Gameplay entity to be attached to an actor, the gameplay will dictate how an object moves, so the Physics engine setup, the fact it is connected to a controller and how the   controller drives the character. It could be interesting to set-up a state machine to decide how a particular actor behaves.
+    ![alt text](image.png)

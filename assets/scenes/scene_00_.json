@@ -5,5 +5,12 @@
         {"name":"monkey-sheet-16.png"},
         {"name":"snow.png"},
         {"name":"wall.png"}
+    ],
+    "actors": [
+        {
+            "template": "player",
+            "name": "Player",
+            "spawn_point": "player_start"
+        }
     ]
 }

@@ -1,0 +1,23 @@
+{
+    "animation_file": "monkey.json",
+    "body_type": "dynamic",
+    "fixed_rotation": true,
+    "gravity_scale": 1.0,
+    "collider": {
+        "type": "box",
+        "half_width": 6,
+        "half_height": 8,
+        "offset_x": 0,
+        "offset_y": 0,
+        "is_sensor": false,
+        "category_bits": 2,
+        "mask_bits": 4294967295
+    },
+    "script": "player.lua",
+    "tags": ["player"],
+    "properties": {
+        "health": 100,
+        "speed": 80,
+        "jump_force": 200
+    }
+}

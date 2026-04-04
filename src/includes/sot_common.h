@@ -7,8 +7,10 @@
 #include <cglm.h>
 #include <cJSON.h>
 
-#define SCREEN_WIDTH 1980.0f
-#define SCREEN_HEIGHT 1080.0f
+// Game rendering uses the internal (virtual framebuffer) resolution.
+// These match SOT_INTERNAL_WIDTH/HEIGHT in sot_display.h.
+#define SCREEN_WIDTH  320.0f
+#define SCREEN_HEIGHT 240.0f
 
 typedef struct SOT_Paths{
 	char *Base;

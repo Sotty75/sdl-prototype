@@ -2,6 +2,7 @@
 
 #include "sot_common.h"
 #include "sot_scene.h"
+#include "sot_lua.h"
 
 
 SOT_SceneDescriptor SOT_LoadScene(char *sceneName) {
@@ -72,6 +73,73 @@ SOT_SceneDescriptor SOT_LoadScene(char *sceneName) {
     SDL_strlcpy(sceneDesc.map, mapName, size);
     
 
+    // Parse actors array
+    cJSON *actors = cJSON_GetObjectItemCaseSensitive(json, "actors");
+    if (actors && cJSON_IsArray(actors)) {
+        cJSON *actorItem = NULL;
+        cJSON_ArrayForEach(actorItem, actors) {
+            if (sceneDesc.actorSpawnCount >= 64) break;
+            SOT_ActorSpawnDef *def = &sceneDesc.actorSpawns[sceneDesc.actorSpawnCount];
+            memset(def, 0, sizeof(SOT_ActorSpawnDef));
+
+            cJSON *tmplItem = cJSON_GetObjectItemCaseSensitive(actorItem, "template");
+            if (tmplItem && cJSON_IsString(tmplItem))
+                SDL_strlcpy(def->templateName, tmplItem->valuestring, sizeof(def->templateName));
+
+            cJSON *nameItem2 = cJSON_GetObjectItemCaseSensitive(actorItem, "name");
+            if (nameItem2 && cJSON_IsString(nameItem2))
+                SDL_strlcpy(def->instanceName, nameItem2->valuestring, sizeof(def->instanceName));
+
+            cJSON *spawnItem = cJSON_GetObjectItemCaseSensitive(actorItem, "spawn_point");
+            if (spawnItem && cJSON_IsString(spawnItem))
+                SDL_strlcpy(def->spawnPoint, spawnItem->valuestring, sizeof(def->spawnPoint));
+
+            cJSON *posXItem = cJSON_GetObjectItemCaseSensitive(actorItem, "x");
+            cJSON *posYItem = cJSON_GetObjectItemCaseSensitive(actorItem, "y");
+            if (posXItem && cJSON_IsNumber(posXItem)) def->posX = (float)posXItem->valuedouble;
+            if (posYItem && cJSON_IsNumber(posYItem)) def->posY = (float)posYItem->valuedouble;
+
+            sceneDesc.actorSpawnCount++;
+        }
+    }
+
+    // Parse camera config
+    cJSON *camObj = cJSON_GetObjectItemCaseSensitive(json, "camera");
+    if (camObj && cJSON_IsObject(camObj)) {
+        sceneDesc.hasCameraConfig = true;
+        SDL_memset(&sceneDesc.cameraFollow, 0, sizeof(SOT_CameraFollow));
+
+        cJSON *v;
+        if ((v = cJSON_GetObjectItem(camObj, "followMode")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.mode = (SOT_CameraFollowMode)v->valueint;
+        if ((v = cJSON_GetObjectItem(camObj, "targetActor")) && cJSON_IsNumber(v))
+            sceneDesc.cameraTargetActor = v->valueint;
+        if ((v = cJSON_GetObjectItem(camObj, "deadZoneX")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.deadZoneX = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "deadZoneY")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.deadZoneY = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "smoothSpeed")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.smoothSpeed = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "scrollSpeedX")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.scrollSpeedX = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "scrollSpeedY")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.scrollSpeedY = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "roomWidth")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.roomWidth = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "roomHeight")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.roomHeight = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "hasBounds")) && cJSON_IsBool(v))
+            sceneDesc.cameraFollow.hasBounds = cJSON_IsTrue(v);
+        if ((v = cJSON_GetObjectItem(camObj, "boundsMinX")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.boundsMinX = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "boundsMinY")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.boundsMinY = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "boundsMaxX")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.boundsMaxX = (float)v->valuedouble;
+        if ((v = cJSON_GetObjectItem(camObj, "boundsMaxY")) && cJSON_IsNumber(v))
+            sceneDesc.cameraFollow.boundsMaxY = (float)v->valuedouble;
+    }
+
     cJSON_Delete(json);
     SDL_free(content);
 
@@ -91,12 +159,33 @@ SOT_Scene *SOT_InitializeScene(AppState *as, char *sceneName) {
     if (sceneDesc.id == 0)
         return NULL;
 
-    // set the scene ID
+    // set the scene ID and name
     scene->id = sceneDesc.id;
+    SDL_strlcpy(scene->name, sceneName, sizeof(scene->name));
+    scene->editorShowTilemap = true;
+    scene->editorShowDebug = false;
+    scene->descriptor = sceneDesc;
+
+    // Apply camera config from scene descriptor (or defaults)
+    if (sceneDesc.hasCameraConfig) {
+        scene->cameraFollow = sceneDesc.cameraFollow;
+        scene->cameraTargetActor = sceneDesc.cameraTargetActor;
+    } else {
+        SDL_memset(&scene->cameraFollow, 0, sizeof(SOT_CameraFollow));
+        scene->cameraTargetActor = -1;
+    }
+
+    // Create the physics world (gravity: 0 X, 9.81 m/s² downward in Box2D Y)
+    // Note: Box2D Y-down = positive gravity Y. Our game uses Y-up, so we negate
+    // positions at the conversion boundary (SOT_PixelsToMeters/MetersToPixels).
+    SOT_Physics_CreateWorld(&scene->physics, 0.0f, 9.81f);
 
     // ...create the tilemap and include it into the scene
     scene->tilemap = SOT_CreateTilemap(sceneDesc.map, as);
     if (scene->tilemap == NULL) return NULL;
+
+    // Convert tilemap collision shapes to Box2D static bodies
+    SOT_Physics_CreateTilemapBodies(&scene->physics, scene->tilemap);
 
     // calculate the z-camera distance (fov / 2)
     float fov = 45.0;
@@ -122,21 +211,62 @@ SOT_Scene *SOT_InitializeScene(AppState *as, char *sceneName) {
 
         
 
-    // Create the player actor and add it to the scene.
-    // Get the player start position from the marker in the tiled-map
-    cute_tiled_object_t *playerObject = SOT_GetObjectByName(scene->tilemap->tilemap, "player_start");
-    if (playerObject == NULL) {
-        SDL_Log("Error: 'player_start' object not found in tilemap.");
-        SDL_free(scene);
-        return NULL;
-    }
-    vec2 startPosition = { playerObject->x, playerObject->y };
-    scene->actors[0] = SOT_CreateActor(as, "Player", startPosition, "monkey.json");
-    scene->actorsCount++;
+    // Spawn actors from scene descriptor
+    scene->actorsCount = 0;
+    for (int a = 0; a < sceneDesc.actorSpawnCount; a++) {
+        SOT_ActorSpawnDef *def = &sceneDesc.actorSpawns[a];
 
-    ///////////////////////////////////////////////////
-    // TODO:: Load other actors in the scene if present
-    ///////////////////////////////////////////////////
+        // Determine spawn position
+        vec2 spawnPos = { def->posX, def->posY };
+        if (def->spawnPoint[0] != '\0') {
+            cute_tiled_object_t *obj = SOT_GetObjectByName(scene->tilemap->tilemap, def->spawnPoint);
+            if (obj) {
+                spawnPos[0] = obj->x;
+                spawnPos[1] = obj->y;
+            } else {
+                SDL_Log("Warning: spawn point '%s' not found in tilemap, using (%.0f, %.0f)",
+                        def->spawnPoint, def->posX, def->posY);
+            }
+        }
+
+        // Load template if specified, otherwise fall back to legacy creation
+        if (def->templateName[0] != '\0') {
+            SOT_ActorTemplate *tmpl = SOT_LoadActorTemplate(def->templateName);
+            if (tmpl) {
+                int idx = scene->actorsCount;
+                scene->actors[idx] = SOT_CreateActorFromTemplate(
+                    as, tmpl, spawnPos, def->instanceName);
+                scene->actors[idx].actorID = idx;
+                SOT_Actor_CreatePhysicsBody(&scene->actors[idx], &scene->physics, tmpl);
+
+                // Load Lua script if specified in template
+                // Note: on_create is deferred to main.c after Lua APIs are registered
+                if (tmpl->scriptFile[0] != '\0' && as->lua.initialized) {
+                    SOT_Lua_LoadActorScript(&as->lua, &scene->actors[idx], tmpl->scriptFile);
+                }
+
+                scene->actorsCount++;
+                SOT_FreeActorTemplate(tmpl);
+            }
+        } else {
+            // Legacy: no template, just use animation file directly
+            int idx = scene->actorsCount;
+            scene->actors[idx] = SOT_CreateActor(as, def->instanceName, spawnPos, "monkey.json");
+            scene->actors[idx].actorID = idx;
+            scene->actorsCount++;
+        }
+    }
+
+    // Fallback: if no actors defined in descriptor, create player from Tiled marker (legacy path)
+    if (sceneDesc.actorSpawnCount == 0) {
+        cute_tiled_object_t *playerObject = SOT_GetObjectByName(scene->tilemap->tilemap, "player_start");
+        if (playerObject) {
+            vec2 startPosition = { playerObject->x, playerObject->y };
+            scene->actors[0] = SOT_CreateActor(as, "Player", startPosition, "monkey.json");
+            scene->actors[0].actorID = 0;
+            scene->actorsCount++;
+        }
+    }
 
     if (as->gpu->pipelineFlags & SOT_RP_TILEMAP_FLAG)
         SOT_GPU_InitializeTilemap(scene->tilemap, as->gpu);
@@ -149,11 +279,28 @@ SOT_Scene *SOT_InitializeScene(AppState *as, char *sceneName) {
 
 void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
 
-    // receives the input from the player as an appstate
-    // recalculate actors position (collision check)
-    // update game status
-    UpdateActor(as, &scene->actors[0], deltaTime);
-    UpdateCameraPan(&scene->worldCamera, (vec3) {0,0,0}, deltaTime, 50);
+    // Step the physics world (fixed timestep internally)
+    SOT_Physics_Step(&scene->physics, deltaTime);
+
+    // Update actors (sync transforms from Box2D, fire callbacks)
+    for (int i = 0; i < scene->actorsCount; i++) {
+        if (!scene->actors[i].enabled) continue;
+        UpdateActor(as, &scene->actors[i], deltaTime);
+
+        // Fire Lua on_update if scripted
+        if (as->lua.initialized)
+            SOT_Lua_CallOnUpdate(&as->lua, &scene->actors[i], deltaTime);
+    }
+
+    // Camera follow logic
+    if (scene->cameraTargetActor >= 0 && scene->cameraTargetActor < scene->actorsCount
+        && scene->cameraFollow.mode != SOT_CAM_FREE) {
+        SOT_Actor *target = &scene->actors[scene->cameraTargetActor];
+        SOT_Camera_FollowTarget(&scene->worldCamera, &scene->cameraFollow,
+            target->transform.position[0], target->transform.position[1], deltaTime);
+    } else {
+        UpdateCameraPan(&scene->worldCamera, (vec3) {0,0,0}, deltaTime, 50);
+    }
 
     // Populate GPU sprite instance data from each actor's current animation frame
     for (int i = 0; i < scene->actorsCount; i++) {
@@ -171,6 +318,11 @@ void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
         scene->gpuSpritesInfo[i].atlasSize[0]   = anim->atlasSize[0];
         scene->gpuSpritesInfo[i].atlasSize[1]   = anim->atlasSize[1];
         scene->gpuSpritesInfo[i].atlasIndex     = anim->atlasIndex;
+        scene->gpuSpritesInfo[i].flipFlags      = 0;  // TODO: read from actor state
+        scene->gpuSpritesInfo[i].tintColor[0]   = 1.0f;
+        scene->gpuSpritesInfo[i].tintColor[1]   = 1.0f;
+        scene->gpuSpritesInfo[i].tintColor[2]   = 1.0f;
+        scene->gpuSpritesInfo[i].tintColor[3]   = 1.0f;
     }
 
     return;
@@ -178,20 +330,27 @@ void UpdateScene(AppState *as, SOT_Scene * scene, float deltaTime) {
 
 void SOT_GPU_RenderScene(SOT_Scene *scene, SOT_GPU_State *gpu, SOT_GPU_RenderpassInfo *rpi)
 {
+    // Temporarily mask debug flag if editor toggle is off
+    uint32_t savedFlags = gpu->pipelineFlags;
+    if (!scene->editorShowDebug)
+        gpu->pipelineFlags &= ~SOT_RP_DEBUG_FLAG;
+
     // ------------------------------------------------- Render Tilemap Section ----------------------------------------------------------//
-    if (gpu->pipelineFlags & SOT_RP_TILEMAP_FLAG) {
-        SOT_GPU_RenderTilemap(scene->tilemap, gpu, rpi, scene->worldCamera.pvMatrix);        
+    if ((gpu->pipelineFlags & SOT_RP_TILEMAP_FLAG) && scene->editorShowTilemap) {
+        SOT_GPU_RenderTilemap(scene->tilemap, gpu, rpi, scene->worldCamera.pvMatrix);
     }
-    
+
     // ------------------------------------------------- Render Actors Section ----------------------------------------------------------//
     if (gpu->pipelineFlags & SOT_RP_SPRITES_FLAG) {
         SOT_GPU_RenderActors(scene, gpu, rpi, scene->worldCamera.pvMatrix);
     }
-    
-    // ------------------------------------------------- Render UI Section --------------------------------------------------------------//    
+
+    // ------------------------------------------------- Render UI Section --------------------------------------------------------------//
     if (gpu->pipelineFlags & SOT_RP_OVERLAY_FLAG) {
-        
+
     }
+
+    gpu->pipelineFlags = savedFlags;
 }
 
 
@@ -431,6 +590,110 @@ void DestroyScene(SOT_Scene * scene) {
     for (int i = 0; i < scene->actorsCount; i++) {
         DestroyActor(&scene->actors[i]);
     }
+    // Destroy physics world (must happen after actors, since DestroyActor destroys Box2D bodies)
+    SOT_Physics_DestroyWorld(&scene->physics);
     DestroyTilemap(scene->tilemap);
     SDL_free(scene);
+}
+
+// ---- Scene manager ----
+
+void SOT_SceneManager_Init(SOT_SceneManager *mgr)
+{
+    SDL_memset(mgr, 0, sizeof(SOT_SceneManager));
+}
+
+void SOT_SceneManager_RequestLoad(SOT_SceneManager *mgr, const char *sceneName, float transitionDuration)
+{
+    SDL_strlcpy(mgr->pendingScene, sceneName, sizeof(mgr->pendingScene));
+    mgr->transitionDuration = transitionDuration;
+    mgr->transitionTimer = 0.0f;
+    mgr->transitionActive = (transitionDuration > 0.0f);
+    SDL_Log("SOT_Scene: Requested load of '%s' (transition=%.1fs)", sceneName, transitionDuration);
+}
+
+bool SOT_SceneManager_HasPending(const SOT_SceneManager *mgr)
+{
+    return mgr->pendingScene[0] != '\0';
+}
+
+// ---- Scene Save ----
+
+bool SOT_SaveScene(const SOT_Scene *scene, const char *sceneName)
+{
+    cJSON *root = cJSON_CreateObject();
+    if (!root) return false;
+
+    cJSON_AddNumberToObject(root, "id", scene->id);
+
+    // Map name from stored descriptor
+    if (scene->descriptor.map)
+        cJSON_AddStringToObject(root, "map", scene->descriptor.map);
+
+    // Spritesheets from descriptor
+    cJSON *sheets = cJSON_AddArrayToObject(root, "spritesheets");
+    for (int i = 0; i < scene->descriptor.spritesheetCount; i++) {
+        if (scene->descriptor.spritesheet[i]) {
+            cJSON *item = cJSON_CreateObject();
+            cJSON_AddStringToObject(item, "name", scene->descriptor.spritesheet[i]);
+            cJSON_AddItemToArray(sheets, item);
+        }
+    }
+
+    // Actors with current positions
+    cJSON *actors = cJSON_AddArrayToObject(root, "actors");
+    for (int i = 0; i < scene->actorsCount; i++) {
+        const SOT_Actor *a = &scene->actors[i];
+        cJSON *actorObj = cJSON_CreateObject();
+
+        if (a->templateName[0] != '\0')
+            cJSON_AddStringToObject(actorObj, "template", a->templateName);
+        if (a->actorName[0] != '\0')
+            cJSON_AddStringToObject(actorObj, "name", a->actorName);
+
+        cJSON_AddNumberToObject(actorObj, "x", a->transform.position[0]);
+        cJSON_AddNumberToObject(actorObj, "y", a->transform.position[1]);
+
+        cJSON_AddItemToArray(actors, actorObj);
+    }
+
+    // Camera config
+    cJSON *camera = cJSON_AddObjectToObject(root, "camera");
+    cJSON_AddNumberToObject(camera, "followMode", (int)scene->cameraFollow.mode);
+    cJSON_AddNumberToObject(camera, "targetActor", scene->cameraTargetActor);
+    cJSON_AddNumberToObject(camera, "deadZoneX", scene->cameraFollow.deadZoneX);
+    cJSON_AddNumberToObject(camera, "deadZoneY", scene->cameraFollow.deadZoneY);
+    cJSON_AddNumberToObject(camera, "smoothSpeed", scene->cameraFollow.smoothSpeed);
+    cJSON_AddNumberToObject(camera, "scrollSpeedX", scene->cameraFollow.scrollSpeedX);
+    cJSON_AddNumberToObject(camera, "scrollSpeedY", scene->cameraFollow.scrollSpeedY);
+    cJSON_AddNumberToObject(camera, "roomWidth", scene->cameraFollow.roomWidth);
+    cJSON_AddNumberToObject(camera, "roomHeight", scene->cameraFollow.roomHeight);
+    cJSON_AddBoolToObject(camera, "hasBounds", scene->cameraFollow.hasBounds);
+    cJSON_AddNumberToObject(camera, "boundsMinX", scene->cameraFollow.boundsMinX);
+    cJSON_AddNumberToObject(camera, "boundsMinY", scene->cameraFollow.boundsMinY);
+    cJSON_AddNumberToObject(camera, "boundsMaxX", scene->cameraFollow.boundsMaxX);
+    cJSON_AddNumberToObject(camera, "boundsMaxY", scene->cameraFollow.boundsMaxY);
+
+    char *jsonStr = cJSON_Print(root);
+    cJSON_Delete(root);
+
+    if (!jsonStr) return false;
+
+    // Write to file
+    char *savePath = NULL;
+    SDL_asprintf(&savePath, "%s\\%s", Paths.Scenes, sceneName);
+
+    FILE *fp = fopen(savePath, "w");
+    SDL_free(savePath);
+    if (!fp) {
+        SDL_free(jsonStr);
+        return false;
+    }
+
+    fputs(jsonStr, fp);
+    fclose(fp);
+    SDL_free(jsonStr);
+
+    SDL_Log("SOT_Scene: Saved scene to %s", sceneName);
+    return true;
 }
